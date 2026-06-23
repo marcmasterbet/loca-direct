@@ -1,7 +1,8 @@
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
+import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import VitrineClient from './VitrineClient'
-import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,30 +11,51 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-export default async function VitrinePage({ params }: { params: Promise<{ id: string }> }) {
+type Props = { params: Promise<{ id: string }> }
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params
+
+  const { data: vitrine } = await supabase
+    .from('vitrines')
+    .select('titre, ville, prix_nuit, description_courte, photos')
+    .eq('id', id)
+    .single()
+
+  if (!vitrine) {
+    return { title: 'Annonce introuvable' }
+  }
+
+  const title = `${vitrine.titre} — ${vitrine.ville}`
+  const description =
+    vitrine.description_courte ||
+    `${vitrine.titre} à ${vitrine.ville}, à partir de ${vitrine.prix_nuit}€/nuit. Location directe sans commission sur LocaDirect.`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `${title} | LocaDirect`,
+      description,
+      images: vitrine.photos?.[0] ? [vitrine.photos[0]] : undefined,
+    },
+  }
+}
+
+export default async function VitrinePage({ params }: Props) {
   const { id } = await params
   const cookieStore = await cookies()
-  const userId = cookieStore.get('loca_session')?.value
-
-  if (!userId) {
-    redirect(`/inscription?redirect=/vitrine/${id}`)
-  }
+  const isLoggedIn = !!cookieStore.get('loca_session')?.value
 
   const { data: vitrine, error } = await supabase
     .from('vitrines')
     .select('*')
     .eq('id', id)
+    .in('statut', ['active', 'deja_loue', 'bientot_dispo'])
     .single()
 
   if (error || !vitrine) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '-apple-system, sans-serif', padding: 20 }}>
-        <div style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: 48, marginBottom: 16 }}>❌</p>
-          <p style={{ fontSize: 16, fontWeight: 700, color: '#1F2937' }}>Cette annonce n'existe pas ou plus.</p>
-        </div>
-      </div>
-    )
+    notFound()
   }
 
   // Incrémente le compteur de vues (sans bloquer l'affichage)
@@ -48,5 +70,5 @@ export default async function VitrinePage({ params }: { params: Promise<{ id: st
     .insert({ vitrine_id: id })
     .then(() => {})
 
-  return <VitrineClient vitrine={vitrine} />
+  return <VitrineClient vitrine={vitrine} isLoggedIn={isLoggedIn} />
 }

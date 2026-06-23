@@ -1,15 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
-import { Resend } from 'resend'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-
-const resend = new Resend(process.env.RESEND_API_KEY)
-const ADMIN_EMAIL = 'marc.masterbet@gmail.com'
 
 export async function POST(req: Request) {
   try {
@@ -19,19 +15,27 @@ export async function POST(req: Request) {
 
     const data = await req.json()
 
+    if (!data.id) return NextResponse.json({ error: 'ID manquant' }, { status: 400 })
     if (!data.titre || !data.ville || !data.prix_nuit || !data.whatsapp) {
       return NextResponse.json({ error: 'Champs obligatoires manquants' }, { status: 400 })
     }
-    if (!data.photos || data.photos.length === 0) {
-      return NextResponse.json({ error: 'Au moins 1 photo est requise' }, { status: 400 })
+
+    // Vérifie que la vitrine appartient bien à cet utilisateur
+    const { data: existing, error: fetchError } = await supabase
+      .from('vitrines')
+      .select('id')
+      .eq('id', data.id)
+      .eq('user_id', userId)
+      .single()
+
+    if (fetchError || !existing) {
+      return NextResponse.json({ error: 'Annonce introuvable ou non autorisée' }, { status: 403 })
     }
 
     const { data: vitrine, error } = await supabase
       .from('vitrines')
-      .insert({
-        user_id: userId,
+      .update({
         titre: data.titre,
-        numero_enregistrement: data.numero_enregistrement || null,
         description_courte: data.description_courte,
         description_longue: data.description_longue,
         type_logement: data.type_logement,
@@ -65,42 +69,20 @@ export async function POST(req: Request) {
         },
         whatsapp: data.whatsapp,
         photos: data.photos,
-        statut: 'en_attente',
       })
+      .eq('id', data.id)
+      .eq('user_id', userId)
       .select()
       .single()
 
     if (error) {
-      console.error('Erreur création vitrine:', error)
+      console.error('Erreur update vitrine:', error)
       return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 })
-    }
-
-    // Notification email à l'admin — ne bloque jamais la réponse si ça échoue
-    try {
-      await resend.emails.send({
-        from: 'LocaDirect <bienvenue@loca-direct.fr>',
-        to: ADMIN_EMAIL,
-        subject: `🏠 Nouvelle annonce à valider : ${vitrine.titre}`,
-        html: `
-          <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 20px;">
-            <h1 style="color: #EA580C; font-size: 22px;">🏠 Nouvelle annonce LocaDirect</h1>
-            <p style="font-size: 15px; color: #1F2937; line-height: 1.6;">
-              <strong>${vitrine.titre}</strong><br />
-              ${vitrine.ville} · ${vitrine.prix_nuit}€/nuit · ${vitrine.type_logement}
-            </p>
-            <a href="https://loca-direct.fr/admin/vitrines" style="display: inline-block; background: #EA580C; color: white; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; margin: 20px 0;">
-              Voir et valider l'annonce
-            </a>
-          </div>
-        `,
-      })
-    } catch (e) {
-      console.error('Erreur envoi email notification admin:', e)
     }
 
     return NextResponse.json({ success: true, vitrine })
   } catch (e) {
-    console.error('Erreur save-vitrine:', e)
+    console.error('Erreur update-vitrine:', e)
     return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 })
   }
 }

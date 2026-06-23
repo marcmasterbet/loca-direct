@@ -29,6 +29,7 @@ function InscriptionForm() {
     motDePasse: '',
     estVoyageur: false,
     estHebergeur: false,
+    estPrestataire: false,
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
@@ -52,7 +53,7 @@ function InscriptionForm() {
     } else if (!/[!@#$%^&*(),.?":{}|<>_\-]/.test(form.motDePasse)) {
       errs.motDePasse = 'Un caractère spécial requis (!@#$%...)'
     }
-    if (!form.estVoyageur && !form.estHebergeur) errs.profil = 'Sélectionnez au moins un profil'
+    if (!form.estVoyageur && !form.estHebergeur && !form.estPrestataire) errs.profil = 'Sélectionnez au moins un profil'
     return errs
   }
 
@@ -172,6 +173,7 @@ function InscriptionForm() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
               <ProfilOption icon="✈️" label="Voyageur" desc="Je cherche un logement" checked={form.estVoyageur} onClick={() => set('estVoyageur', !form.estVoyageur)} />
               <ProfilOption icon="🏠" label="Hébergeur" desc="Je veux publier mon logement" checked={form.estHebergeur} onClick={() => set('estHebergeur', !form.estHebergeur)} />
+              <ProfilOption icon="🛠️" label="Prestataire" desc="Je propose un service (ménage, conciergerie, photo...)" checked={form.estPrestataire} onClick={() => set('estPrestataire', !form.estPrestataire)} />
             </div>
 
             <button onClick={handleSubmit} disabled={loading} style={{ width: '100%', background: ORANGE, color: WHITE, borderRadius: 12, padding: 15, fontSize: 15, fontWeight: 700, opacity: loading ? 0.7 : 1 }}>
@@ -180,7 +182,7 @@ function InscriptionForm() {
 
             <p style={{ fontSize: 12, color: TEXT_DIM, textAlign: 'center', marginTop: 16, lineHeight: 1.6 }}>
               En vous inscrivant, vous acceptez nos{' '}
-              <Link href="/cgv" style={{ color: ORANGE }}>CGV</Link> et notre{' '}
+              <Link href="/cgu" style={{ color: ORANGE }}>CGU</Link> et notre{' '}
               <Link href="/politique-confidentialite" style={{ color: ORANGE }}>politique de confidentialité</Link>.
             </p>
           </div>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import PhotoLightbox from '@/components/PhotoLightbox'
 
 const ORANGE = '#EA580C'
 const ORANGE_LIGHT = '#FFF7ED'
@@ -45,8 +46,9 @@ const statutInfo: Record<string, { label: string, color: string, bg: string }> =
   suspendue: { label: '⏸️ Indisponible', color: TEXT_DIM, bg: GRAY },
 }
 
-export default function VitrineClient({ vitrine }: { vitrine: any }) {
+export default function VitrineClient({ vitrine, isLoggedIn }: { vitrine: any, isLoggedIn: boolean }) {
   const [photoIndex, setPhotoIndex] = useState(0)
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
   const photos = vitrine.photos || []
   const equipements = vitrine.equipements || []
@@ -78,11 +80,11 @@ export default function VitrineClient({ vitrine }: { vitrine: any }) {
 
       {/* HEADER */}
       <div style={{ borderBottom: `1px solid ${BORDER}`, padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, background: WHITE, zIndex: 10 }}>
-        <Link href="/espace" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ width: 32, height: 32, background: ORANGE, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🏠</div>
           <span style={{ fontSize: 16, fontWeight: 800, color: TEXT }}>Loca<span style={{ color: ORANGE }}>Direct</span></span>
         </Link>
-        <Link href="/espace" style={{ fontSize: 13, color: TEXT_DIM }}>← Retour</Link>
+        <Link href={isLoggedIn ? '/espace' : '/'} style={{ fontSize: 13, color: TEXT_DIM }}>← Retour</Link>
       </div>
 
       {/* GALERIE PHOTOS */}
@@ -94,8 +96,8 @@ export default function VitrineClient({ vitrine }: { vitrine: any }) {
                 src={photos[photoIndex]}
                 alt={vitrine.titre}
                 className="photo-main-img"
-                style={{ cursor: photos.length > 1 ? 'pointer' : 'default' }}
-                onClick={() => photos.length > 1 && setPhotoIndex(i => (i + 1) % photos.length)}
+                style={{ cursor: 'zoom-in' }}
+                onClick={() => setLightboxIndex(photoIndex)}
               />
               {photos.length > 1 && (
                 <>
@@ -122,6 +124,7 @@ export default function VitrineClient({ vitrine }: { vitrine: any }) {
                 key={i}
                 src={p}
                 onClick={() => setPhotoIndex(i)}
+                onDoubleClick={() => setLightboxIndex(i)}
                 style={{ width: 56, height: 56, borderRadius: 8, objectFit: 'cover', flexShrink: 0, cursor: 'pointer', border: i === photoIndex ? `2px solid ${ORANGE}` : '2px solid transparent' }}
               />
             ))}
@@ -208,7 +211,11 @@ export default function VitrineClient({ vitrine }: { vitrine: any }) {
 
         {/* Contact */}
         <div style={{ background: ORANGE_LIGHT, border: `1px solid ${ORANGE}`, borderRadius: 16, padding: 20, marginBottom: 24 }}>
-          {canContact ? (
+          {!canContact ? (
+            <p style={{ fontSize: 14, color: TEXT_DIM, textAlign: 'center' }}>
+              Ce logement n'est pas disponible au contact pour le moment.
+            </p>
+          ) : isLoggedIn ? (
             <>
               <p style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 12 }}>Intéressé par ce logement ?</p>
               <a href={whatsappLink} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#25D366', color: WHITE, borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700 }}>
@@ -216,9 +223,13 @@ export default function VitrineClient({ vitrine }: { vitrine: any }) {
               </a>
             </>
           ) : (
-            <p style={{ fontSize: 14, color: TEXT_DIM, textAlign: 'center' }}>
-              Ce logement n'est pas disponible au contact pour le moment.
-            </p>
+            <>
+              <p style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 8 }}>Intéressé par ce logement ?</p>
+              <p style={{ fontSize: 13, color: TEXT_DIM, marginBottom: 14 }}>Inscrivez-vous gratuitement pour contacter directement le propriétaire sur WhatsApp.</p>
+              <Link href={`/inscription?redirect=/vitrine/${vitrine.id}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: ORANGE, color: WHITE, borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700 }}>
+                🔓 S'inscrire pour contacter
+              </Link>
+            </>
           )}
         </div>
 
@@ -237,6 +248,15 @@ export default function VitrineClient({ vitrine }: { vitrine: any }) {
         </div>
 
       </div>
+
+      {/* Visionneuse plein écran */}
+      {lightboxIndex !== null && (
+        <PhotoLightbox
+          photos={photos}
+          startIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
     </div>
   )
 }

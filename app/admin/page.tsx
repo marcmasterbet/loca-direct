@@ -30,7 +30,7 @@ export default function AdminLoginPage() {
         setLoading(false)
         return
       }
-      router.push('/admin/vitrines')
+      router.push('/admin/dashboard')
     } catch (e) {
       setError('Une erreur est survenue')
       setLoading(false)

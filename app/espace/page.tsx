@@ -30,6 +30,12 @@ export default async function EspacePage() {
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
 
+  const { data: prestataires } = await supabase
+    .from('prestataires')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
   const { data: favorisData } = await supabase
     .from('favoris')
     .select('*, vitrines(*)')
@@ -53,6 +59,7 @@ export default async function EspacePage() {
     <EspaceClient
       user={user}
       vitrines={vitrines || []}
+      prestataires={prestataires || []}
       favoris={favorisData || []}
       alertes={alertes || []}
       toutesVitrines={toutesVitrines || []}

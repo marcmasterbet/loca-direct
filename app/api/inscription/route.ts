@@ -10,10 +10,11 @@ const supabase = createClient(
 )
 
 const resend = new Resend(process.env.RESEND_API_KEY)
+const ADMIN_EMAIL = 'marc.masterbet@gmail.com'
 
 export async function POST(req: Request) {
   try {
-    const { email, motDePasse, estVoyageur, estHebergeur, redirect } = await req.json()
+    const { email, motDePasse, estVoyageur, estHebergeur, estPrestataire, redirect } = await req.json()
 
     if (!email || !motDePasse) {
       return NextResponse.json({ error: 'Tous les champs sont requis' }, { status: 400 })
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
     if (motDePasse.length < 8 || !/[A-Z]/.test(motDePasse) || !/[0-9]/.test(motDePasse) || !/[!@#$%^&*(),.?":{}|<>_\-]/.test(motDePasse)) {
       return NextResponse.json({ error: 'Mot de passe trop faible (8 car. min, majuscule, chiffre, caractère spécial)' }, { status: 400 })
     }
-    if (!estVoyageur && !estHebergeur) {
+    if (!estVoyageur && !estHebergeur && !estPrestataire) {
       return NextResponse.json({ error: 'Sélectionnez au moins un profil' }, { status: 400 })
     }
 
@@ -48,6 +49,7 @@ export async function POST(req: Request) {
         mot_de_passe: hashedPassword,
         est_voyageur: !!estVoyageur,
         est_hebergeur: !!estHebergeur,
+        est_prestataire: !!estPrestataire,
         ref_code: refCode,
         statut: 'actif',
         email_valide: false,
@@ -85,6 +87,33 @@ export async function POST(req: Request) {
       })
     } catch (e) {
       console.error('Erreur envoi email:', e)
+    }
+
+    // Notification email à l'admin — ne bloque jamais la réponse si ça échoue
+    try {
+      const profils = [estVoyageur && 'Voyageur', estHebergeur && 'Hébergeur', estPrestataire && 'Prestataire']
+        .filter(Boolean)
+        .join(' + ')
+
+      await resend.emails.send({
+        from: 'LocaDirect <bienvenue@loca-direct.fr>',
+        to: ADMIN_EMAIL,
+        subject: `🎉 Nouvel inscrit : ${newUser.email}`,
+        html: `
+          <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 20px;">
+            <h1 style="color: #EA580C; font-size: 22px;">🎉 Nouvelle inscription LocaDirect</h1>
+            <p style="font-size: 15px; color: #1F2937; line-height: 1.6;">
+              <strong>${newUser.email}</strong><br />
+              Profil : ${profils}
+            </p>
+            <p style="font-size: 13px; color: #6B7280;">
+              L'utilisateur doit encore confirmer son email avant d'être actif.
+            </p>
+          </div>
+        `,
+      })
+    } catch (e) {
+      console.error('Erreur envoi email notification admin:', e)
     }
 
     return NextResponse.json({ success: true })

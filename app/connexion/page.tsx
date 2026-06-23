@@ -109,7 +109,7 @@ function ConnexionForm() {
               />
             </div>
 
-            <div style={{ marginBottom: 14 }}>
+            <div style={{ marginBottom: 8 }}>
               <label style={{ fontSize: 12, fontWeight: 600, color: TEXT, marginBottom: 6, display: 'block' }}>Mot de passe</label>
               <div style={{ position: 'relative' }}>
                 <input
@@ -130,6 +130,12 @@ function ConnexionForm() {
                 </button>
               </div>
             </div>
+
+            <p style={{ textAlign: 'right', marginBottom: 8 }}>
+              <Link href="/mot-de-passe-oublie" style={{ fontSize: 12, color: ORANGE, fontWeight: 600 }}>
+                Mot de passe oublié ?
+              </Link>
+            </p>
 
             <button onClick={handleSubmit} disabled={loading} style={{ width: '100%', background: ORANGE, color: WHITE, borderRadius: 12, padding: 15, fontSize: 15, fontWeight: 700, opacity: loading ? 0.7 : 1, marginTop: 8 }}>
               {loading ? 'Connexion en cours...' : 'Se connecter'}
