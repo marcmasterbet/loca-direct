@@ -11,96 +11,114 @@ const GRAY = '#F9FAFB'
 const TEXT = '#1F2937'
 const TEXT_DIM = '#6B7280'
 const BORDER = '#E5E7EB'
-const WHATSAPP = '#25D366'
 
-export default function PrestataireDetailClient({ prestataire: p }: { prestataire: any }) {
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+export default function PrestataireDetailClient({ prestataire, isLoggedIn }: { prestataire: any, isLoggedIn: boolean }) {
+  const [lightbox, setLightbox] = useState<{ photos: string[]; index: number } | null>(null)
 
-  const whatsappLink = `https://wa.me/${p.whatsapp.replace(/[^0-9]/g, '')}`
-  const telLink = `tel:${p.telephone.replace(/\s/g, '')}`
-  const photos: string[] = p.photos || []
+  const photos = prestataire.photos || []
+  const allPhotos = [...(prestataire.flyer_url ? [prestataire.flyer_url] : []), ...photos]
 
-  // Galerie complète pour le lightbox : flyer en premier (s'il existe), puis les réalisations
-  const allPhotos: string[] = [...(p.flyer_url ? [p.flyer_url] : []), ...photos]
+  const rawPhone = (prestataire.whatsapp || '').replace(/[^0-9+]/g, '')
+  const formattedPhone = rawPhone.startsWith('00') ? rawPhone.slice(2) : rawPhone.startsWith('0') ? '33' + rawPhone.slice(1) : rawPhone.startsWith('+') ? rawPhone.slice(1) : rawPhone
+  const whatsappLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(`Bonjour ${prestataire.prenom}, j'ai trouvé votre profil sur LocaDirect et je souhaite vous contacter.`)}`
+
+  const siteWebUrl = prestataire.site_web
+    ? prestataire.site_web.startsWith('http') ? prestataire.site_web : `https://${prestataire.site_web}`
+    : null
 
   return (
-    <div style={{ background: WHITE, color: TEXT, fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', minHeight: '100vh' }}>
-      <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } a { text-decoration: none; color: inherit; } button { font-family: inherit; cursor: pointer; border: none; }`}</style>
+    <div style={{ background: WHITE, minHeight: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}>
+      <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } a { text-decoration: none; } button { font-family: inherit; cursor: pointer; border: none; }`}</style>
 
-      <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: WHITE, borderBottom: `1px solid ${BORDER}`, padding: '12px 20px' }}>
-        <Link href="/prestataires" style={{ fontSize: 14, color: ORANGE, fontWeight: 600 }}>← Retour à l'annuaire</Link>
-      </nav>
+      <div style={{ borderBottom: `1px solid ${BORDER}`, padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, background: WHITE, zIndex: 10 }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 32, height: 32, background: ORANGE, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🏠</div>
+          <span style={{ fontSize: 16, fontWeight: 800, color: TEXT }}>Loca<span style={{ color: ORANGE }}>Direct</span></span>
+        </Link>
+        <Link href="/prestataires" style={{ fontSize: 13, color: TEXT_DIM }}>← Annuaire</Link>
+      </div>
 
-      <div style={{ maxWidth: 700, margin: '0 auto', padding: '32px 20px 80px' }}>
-        <div
-          style={{ width: '100%', aspectRatio: '16/9', borderRadius: 16, overflow: 'hidden', background: GRAY, marginBottom: 24, cursor: p.flyer_url ? 'zoom-in' : 'default' }}
-          onClick={() => p.flyer_url && setLightboxIndex(0)}
-        >
-          {p.flyer_url ? (
-            <img src={p.flyer_url} alt={`${p.prenom} ${p.nom}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48 }}>🛠️</div>
-          )}
+      {/* FLYER PRINCIPAL */}
+      {prestataire.flyer_url && (
+        <div style={{ maxWidth: 700, margin: '0 auto', padding: '16px 20px 0' }}>
+          <img
+            src={prestataire.flyer_url}
+            alt={`${prestataire.prenom} ${prestataire.nom}`}
+            style={{ width: '100%', borderRadius: 16, display: 'block', cursor: 'zoom-in' }}
+            onClick={() => setLightbox({ photos: allPhotos, index: 0 })}
+          />
+        </div>
+      )}
+
+      <div style={{ maxWidth: 700, margin: '0 auto', padding: '20px 20px 100px' }}>
+
+        {/* IDENTITÉ */}
+        <p style={{ fontSize: 11, color: ORANGE, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>{prestataire.activite}</p>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: TEXT, marginBottom: 6 }}>{prestataire.prenom} {prestataire.nom}</h1>
+        <p style={{ fontSize: 14, color: TEXT_DIM, marginBottom: 16 }}>📍 {prestataire.ville}{prestataire.region ? ` (${prestataire.region})` : ''}</p>
+
+        {/* TARIF */}
+        <div style={{ background: ORANGE_LIGHT, borderRadius: 14, padding: 16, marginBottom: 20 }}>
+          <p style={{ fontSize: 20, fontWeight: 800, color: ORANGE }}>
+            {prestataire.sur_devis ? 'Sur devis' : prestataire.tarif_horaire ? `${prestataire.tarif_horaire}€/h` : 'Tarif non précisé'}
+          </p>
         </div>
 
-        <p style={{ fontSize: 11, color: ORANGE, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>{p.activite}</p>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: TEXT, marginBottom: 8 }}>{p.prenom} {p.nom}</h1>
-        <p style={{ fontSize: 14, color: TEXT_DIM, marginBottom: 20 }}>📍 {p.ville}{p.region ? ` (${p.region})` : ''}</p>
-
-        <p style={{ fontSize: 18, fontWeight: 800, color: ORANGE, marginBottom: 24 }}>
-          {p.sur_devis ? 'Sur devis' : p.tarif_horaire ? `${p.tarif_horaire}€/h` : 'Tarif non précisé'}
-        </p>
-
-        {p.description && (
-          <div style={{ marginBottom: 28 }}>
-            <h2 style={{ fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 10 }}>À propos</h2>
-            <p style={{ fontSize: 14, color: TEXT_DIM, lineHeight: 1.7, whiteSpace: 'pre-line' }}>{p.description}</p>
+        {/* DESCRIPTION */}
+        {prestataire.description && (
+          <div style={{ marginBottom: 24 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: TEXT, marginBottom: 10 }}>À propos</h2>
+            <p style={{ fontSize: 14, color: TEXT, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{prestataire.description}</p>
           </div>
         )}
 
+        {/* PHOTOS DE RÉALISATIONS */}
         {photos.length > 0 && (
-          <div style={{ marginBottom: 28 }}>
-            <h2 style={{ fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 12 }}>Réalisations</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-              {photos.map((url, i) => {
-                // Index dans allPhotos = i + 1 si un flyer existe, sinon i
-                const globalIndex = p.flyer_url ? i + 1 : i
-                return (
-                  <div
-                    key={i}
-                    style={{ aspectRatio: '1', borderRadius: 10, overflow: 'hidden', background: GRAY, cursor: 'zoom-in' }}
-                    onClick={() => setLightboxIndex(globalIndex)}
-                  >
-                    <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
-                )
-              })}
+          <div style={{ marginBottom: 24 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: TEXT, marginBottom: 10 }}>Réalisations</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+              {photos.map((url: string, i: number) => (
+                <div key={i} style={{ aspectRatio: '1', borderRadius: 10, overflow: 'hidden', cursor: 'zoom-in' }} onClick={() => setLightbox({ photos: allPhotos, index: prestataire.flyer_url ? i + 1 : i })}>
+                  <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              ))}
             </div>
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 10, marginBottom: 28 }}>
-          <a href={whatsappLink} target="_blank" rel="noreferrer" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: WHATSAPP, color: WHITE, borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 700 }}>
-            💬 WhatsApp
-          </a>
-          <a href={telLink} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: ORANGE, color: WHITE, borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 700 }}>
-            📞 Appeler
-          </a>
-        </div>
-
-        <div style={{ background: ORANGE_LIGHT, border: `1px solid ${ORANGE}`, borderRadius: 12, padding: 16 }}>
-          <p style={{ fontSize: 12, color: ORANGE, lineHeight: 1.6 }}>
-            ✅ Profil vérifié par notre équipe LocaDirect.
-          </p>
+        {/* CONTACT */}
+        <div style={{ background: ORANGE_LIGHT, border: `1px solid ${ORANGE}`, borderRadius: 16, padding: 20, marginBottom: 24 }}>
+          {isLoggedIn ? (
+            <>
+              <p style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 12 }}>Contacter ce prestataire</p>
+              <a href={whatsappLink} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#25D366', color: WHITE, borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, marginBottom: 10 }}>
+                💬 Contacter sur WhatsApp
+              </a>
+              {prestataire.telephone && (
+                <a href={`tel:${prestataire.telephone}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: WHITE, color: TEXT, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 12, fontSize: 14, fontWeight: 600, marginBottom: siteWebUrl ? 10 : 0 }}>
+                  📞 Appeler : {prestataire.telephone}
+                </a>
+              )}
+              {siteWebUrl && (
+                <a href={siteWebUrl} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: WHITE, color: ORANGE, border: `1.5px solid ${ORANGE}`, borderRadius: 12, padding: 12, fontSize: 14, fontWeight: 600 }}>
+                  🌐 Voir le site du prestataire
+                </a>
+              )}
+            </>
+          ) : (
+            <>
+              <p style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 8 }}>Intéressé par ce prestataire ?</p>
+              <p style={{ fontSize: 13, color: TEXT_DIM, marginBottom: 14 }}>Inscrivez-vous gratuitement pour contacter ce prestataire directement.</p>
+              <Link href="/inscription" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: ORANGE, color: WHITE, borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700 }}>
+                🔓 S'inscrire pour contacter
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
-      {lightboxIndex !== null && (
-        <PhotoLightbox
-          photos={allPhotos}
-          startIndex={lightboxIndex}
-          onClose={() => setLightboxIndex(null)}
-        />
+      {lightbox && (
+        <PhotoLightbox photos={lightbox.photos} startIndex={lightbox.index} onClose={() => setLightbox(null)} />
       )}
     </div>
   )

@@ -14,7 +14,6 @@ export async function POST(req: Request) {
     if (!userId) return NextResponse.json({ error: 'Non connecté' }, { status: 401 })
 
     const data = await req.json()
-
     if (!data.id) return NextResponse.json({ error: 'ID manquant' }, { status: 400 })
     if (!data.titre || !data.ville || !data.prix_nuit || !data.whatsapp) {
       return NextResponse.json({ error: 'Champs obligatoires manquants' }, { status: 400 })
@@ -39,6 +38,8 @@ export async function POST(req: Request) {
         description_courte: data.description_courte,
         description_longue: data.description_longue,
         type_logement: data.type_logement,
+        pays: data.pays || 'France',
+        region: data.region || null,
         ville: data.ville,
         code_postal: data.code_postal,
         quartier: data.quartier,
@@ -68,6 +69,7 @@ export async function POST(req: Request) {
           heure_depart: data.heure_depart,
         },
         whatsapp: data.whatsapp,
+        site_web: data.site_web || null,
         photos: data.photos,
       })
       .eq('id', data.id)

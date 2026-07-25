@@ -52,7 +52,8 @@ function ConnexionForm() {
         return
       }
 
-      router.push(redirect || '/espace')
+      // ✅ CORRECTION : après connexion → page d'accueil (ou redirect si spécifié)
+      router.push(redirect || '/')
     } catch (e) {
       setError('Une erreur est survenue')
       setLoading(false)
@@ -124,7 +125,6 @@ function ConnexionForm() {
                   type="button"
                   onClick={() => setShowPassword(s => !s)}
                   style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'transparent', padding: 6, fontSize: 18, color: TEXT_DIM }}
-                  aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                 >
                   {showPassword ? '🙈' : '👁️'}
                 </button>

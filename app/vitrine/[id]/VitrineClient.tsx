@@ -16,6 +16,10 @@ const GREEN = '#16A34A'
 const EQUIPEMENTS_LABELS: Record<string, { icon: string, label: string }> = {
   wifi: { icon: '📶', label: 'WiFi' },
   parking: { icon: '🅿️', label: 'Parking' },
+  chien_10kg: { icon: '🐕', label: 'Chiens +10 kg acceptés' },
+  cuisine_ext: { icon: '🍖', label: 'Cuisine extérieure' },
+  piscine_spa: { icon: '🛁', label: 'Spa / Jacuzzi' },
+  piscine_priv: { icon: '🏊', label: 'Piscine privée' },
   piscine: { icon: '🌊', label: 'Piscine' },
   baignoire: { icon: '🛁', label: 'Baignoire' },
   douche: { icon: '🚿', label: 'Douche' },
@@ -52,11 +56,22 @@ export default function VitrineClient({ vitrine, isLoggedIn }: { vitrine: any, i
 
   const photos = vitrine.photos || []
   const equipements = vitrine.equipements || []
-  const regles = vitrine.regles || {}
+  const hasChien = equipements.includes('chien_10kg')
+
+  const regles = typeof vitrine.regles === 'object' && vitrine.regles !== null && !Array.isArray(vitrine.regles)
+    ? vitrine.regles
+    : {}
+
   const statut = statutInfo[vitrine.statut] || statutInfo.suspendue
   const canContact = vitrine.statut === 'active'
 
-  const whatsappLink = `https://wa.me/${(vitrine.whatsapp || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par votre annonce "${vitrine.titre}" sur LocaDirect.`)}`
+  const rawPhone = (vitrine.whatsapp || '').replace(/[^0-9+]/g, '')
+  const formattedPhone = rawPhone.startsWith('00') ? rawPhone.slice(2) : rawPhone.startsWith('0') ? '33' + rawPhone.slice(1) : rawPhone.startsWith('+') ? rawPhone.slice(1) : rawPhone
+  const whatsappLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par votre annonce "${vitrine.titre}" sur LocaDirect.`)}`
+
+  const siteWebUrl = vitrine.site_web
+    ? vitrine.site_web.startsWith('http') ? vitrine.site_web : `https://${vitrine.site_web}`
+    : null
 
   return (
     <div style={{ background: WHITE, minHeight: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}>
@@ -66,39 +81,28 @@ export default function VitrineClient({ vitrine, isLoggedIn }: { vitrine: any, i
         button { font-family: inherit; cursor: pointer; border: none; }
         .grid-equip { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         @media (min-width: 640px) { .grid-equip { grid-template-columns: 1fr 1fr 1fr; } }
-
         .photo-outer { padding: 0; background: ${GRAY}; }
         @media (min-width: 640px) { .photo-outer { padding: 16px 20px 0; } }
-
         .photo-main-wrap { position: relative; width: 100%; max-width: 700px; margin: 0 auto; aspect-ratio: 4 / 3; background: #e5e5e5; overflow: hidden; }
         @media (min-width: 640px) { .photo-main-wrap { aspect-ratio: 16 / 9; border-radius: 16px; } }
-
-        .photo-main-img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; image-rendering: auto; }
-
+        .photo-main-img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
         .photo-thumbs { display: flex; gap: 6px; padding: 10px 16px; overflow-x: auto; max-width: 700px; margin: 0 auto; }
       `}</style>
 
-      {/* HEADER */}
+      {/* ✅ Logo = <a> natif pour préserver la session */}
       <div style={{ borderBottom: `1px solid ${BORDER}`, padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, background: WHITE, zIndex: 10 }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
           <div style={{ width: 32, height: 32, background: ORANGE, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🏠</div>
           <span style={{ fontSize: 16, fontWeight: 800, color: TEXT }}>Loca<span style={{ color: ORANGE }}>Direct</span></span>
-        </Link>
-        <Link href={isLoggedIn ? '/espace' : '/'} style={{ fontSize: 13, color: TEXT_DIM }}>← Retour</Link>
+        </a>
+        <a href={isLoggedIn ? '/espace' : '/'} style={{ fontSize: 13, color: TEXT_DIM, textDecoration: 'none' }}>← Retour</a>
       </div>
 
-      {/* GALERIE PHOTOS */}
       <div className="photo-outer">
         <div className="photo-main-wrap">
           {photos.length > 0 ? (
             <>
-              <img
-                src={photos[photoIndex]}
-                alt={vitrine.titre}
-                className="photo-main-img"
-                style={{ cursor: 'zoom-in' }}
-                onClick={() => setLightboxIndex(photoIndex)}
-              />
+              <img src={photos[photoIndex]} alt={vitrine.titre} className="photo-main-img" style={{ cursor: 'zoom-in' }} onClick={() => setLightboxIndex(photoIndex)} />
               {photos.length > 1 && (
                 <>
                   <div style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(0,0,0,0.6)', color: WHITE, fontSize: 12, fontWeight: 600, borderRadius: 20, padding: '4px 12px' }}>
@@ -115,18 +119,10 @@ export default function VitrineClient({ vitrine, isLoggedIn }: { vitrine: any, i
             </div>
           )}
         </div>
-
-        {/* Miniatures */}
         {photos.length > 1 && (
           <div className="photo-thumbs">
             {photos.map((p: string, i: number) => (
-              <img
-                key={i}
-                src={p}
-                onClick={() => setPhotoIndex(i)}
-                onDoubleClick={() => setLightboxIndex(i)}
-                style={{ width: 56, height: 56, borderRadius: 8, objectFit: 'cover', flexShrink: 0, cursor: 'pointer', border: i === photoIndex ? `2px solid ${ORANGE}` : '2px solid transparent' }}
-              />
+              <img key={i} src={p} onClick={() => setPhotoIndex(i)} onDoubleClick={() => setLightboxIndex(i)} style={{ width: 56, height: 56, borderRadius: 8, objectFit: 'cover', flexShrink: 0, cursor: 'pointer', border: i === photoIndex ? `2px solid ${ORANGE}` : '2px solid transparent' }} />
             ))}
           </div>
         )}
@@ -134,22 +130,27 @@ export default function VitrineClient({ vitrine, isLoggedIn }: { vitrine: any, i
 
       <div style={{ maxWidth: 700, margin: '0 auto', padding: '16px 20px 100px' }}>
 
-        {/* Statut */}
-        <div style={{ display: 'inline-block', background: statut.bg, color: statut.color, borderRadius: 20, padding: '6px 14px', fontSize: 12, fontWeight: 700, marginBottom: 14 }}>
-          {statut.label}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+          <div style={{ display: 'inline-block', background: statut.bg, color: statut.color, borderRadius: 20, padding: '6px 14px', fontSize: 12, fontWeight: 700 }}>
+            {statut.label}
+          </div>
+          {/* ✅ Badge chiens +10 kg */}
+          {hasChien && (
+            <div style={{ display: 'inline-block', background: '#FFFBEB', color: '#78350F', borderRadius: 20, padding: '6px 14px', fontSize: 12, fontWeight: 700, border: '1px solid #FCD34D' }}>
+              🐕 Chiens +10 kg bienvenus
+            </div>
+          )}
         </div>
 
-        {/* Titre & lieu */}
         <h1 style={{ fontSize: 22, fontWeight: 800, color: TEXT, marginBottom: 6 }}>{vitrine.titre}</h1>
         <p style={{ fontSize: 14, color: TEXT_DIM, marginBottom: 6 }}>
-          {vitrine.type_logement} · {vitrine.ville} {vitrine.quartier && `(${vitrine.quartier})`} · {vitrine.surface}m²
+          {vitrine.type_logement} · {vitrine.ville}{vitrine.quartier ? ` (${vitrine.quartier})` : ''}{vitrine.surface ? ` · ${vitrine.surface}m²` : ''}
         </p>
         {vitrine.numero_enregistrement && (
           <p style={{ fontSize: 12, color: TEXT_DIM, marginBottom: 16 }}>📋 N° d'enregistrement : {vitrine.numero_enregistrement}</p>
         )}
 
-        {/* Prix */}
-        <div style={{ background: ORANGE_LIGHT, borderRadius: 14, padding: 18, marginBottom: 20, marginTop: vitrine.numero_enregistrement ? 0 : 10 }}>
+        <div style={{ background: ORANGE_LIGHT, borderRadius: 14, padding: 18, marginBottom: 20, marginTop: 10 }}>
           <p style={{ fontSize: 26, fontWeight: 800, color: ORANGE }}>
             {vitrine.prix_nuit}€<span style={{ fontSize: 14, fontWeight: 400, color: TEXT_DIM }}>/nuit</span>
           </p>
@@ -159,14 +160,12 @@ export default function VitrineClient({ vitrine, isLoggedIn }: { vitrine: any, i
           </div>
         </div>
 
-        {/* Infos clés */}
         <div className="grid-equip" style={{ marginBottom: 24 }}>
           <InfoBox icon="👥" label="Capacité" value={`${vitrine.capacite || '-'} pers.`} />
           <InfoBox icon="🛏️" label="Chambres" value={`${vitrine.nb_chambres || '-'}`} />
           <InfoBox icon="🚪" label="Pièces" value={`${vitrine.nb_pieces || '-'}`} />
         </div>
 
-        {/* Description */}
         {vitrine.description_longue && (
           <div style={{ marginBottom: 24 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, color: TEXT, marginBottom: 10 }}>Description</h2>
@@ -174,7 +173,6 @@ export default function VitrineClient({ vitrine, isLoggedIn }: { vitrine: any, i
           </div>
         )}
 
-        {/* Équipements */}
         {equipements.length > 0 && (
           <div style={{ marginBottom: 24 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, color: TEXT, marginBottom: 10 }}>Équipements</h2>
@@ -183,9 +181,9 @@ export default function VitrineClient({ vitrine, isLoggedIn }: { vitrine: any, i
                 const eq = EQUIPEMENTS_LABELS[id]
                 if (!eq) return null
                 return (
-                  <div key={id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: GRAY, borderRadius: 10 }}>
+                  <div key={id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: id === 'chien_10kg' ? '#FFFBEB' : GRAY, borderRadius: 10, border: id === 'chien_10kg' ? '1px solid #FCD34D' : 'none' }}>
                     <span style={{ fontSize: 16 }}>{eq.icon}</span>
-                    <span style={{ fontSize: 13, color: TEXT }}>{eq.label}</span>
+                    <span style={{ fontSize: 13, color: TEXT, fontWeight: id === 'chien_10kg' ? 700 : 400 }}>{eq.label}</span>
                   </div>
                 )
               })}
@@ -193,69 +191,58 @@ export default function VitrineClient({ vitrine, isLoggedIn }: { vitrine: any, i
           </div>
         )}
 
-        {/* Règles */}
         <div style={{ marginBottom: 24 }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: TEXT, marginBottom: 10 }}>Règles du logement</h2>
           <div style={{ background: GRAY, borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {regles.heure_arrivee && <RuleRow label="Arrivée" value={regles.heure_arrivee} />}
-            {regles.heure_depart && <RuleRow label="Départ" value={regles.heure_depart} />}
-            <RuleRow label="Animaux" value={regles.animaux || 'Non précisé'} />
-            <RuleRow label="Fumeurs" value={regles.fumeurs || 'Non précisé'} />
-            <RuleRow label="Fêtes" value={regles.fetes || 'Non précisé'} />
-            <RuleRow label="Enfants" value={regles.enfants || 'Non précisé'} />
+            {regles.heure_arrivee && <RuleRow label="Arrivée" value={String(regles.heure_arrivee)} />}
+            {regles.heure_depart && <RuleRow label="Départ" value={String(regles.heure_depart)} />}
+            {regles.animaux && <RuleRow label="Animaux" value={String(regles.animaux)} />}
+            {regles.fumeurs && <RuleRow label="Fumeurs" value={String(regles.fumeurs)} />}
+            {regles.fetes && <RuleRow label="Fêtes" value={String(regles.fetes)} />}
+            {regles.enfants && <RuleRow label="Enfants" value={String(regles.enfants)} />}
             {regles.texte && (
-              <p style={{ fontSize: 13, color: TEXT, lineHeight: 1.6, marginTop: 8, paddingTop: 8, borderTop: `1px solid ${BORDER}` }}>{regles.texte}</p>
+              <p style={{ fontSize: 13, color: TEXT, lineHeight: 1.6, marginTop: 8, paddingTop: 8, borderTop: `1px solid ${BORDER}` }}>{String(regles.texte)}</p>
             )}
           </div>
         </div>
 
-        {/* Contact */}
+        {/* ✅ Contact : visible sans connexion, WhatsApp réservé aux inscrits */}
         <div style={{ background: ORANGE_LIGHT, border: `1px solid ${ORANGE}`, borderRadius: 16, padding: 20, marginBottom: 24 }}>
           {!canContact ? (
-            <p style={{ fontSize: 14, color: TEXT_DIM, textAlign: 'center' }}>
-              Ce logement n'est pas disponible au contact pour le moment.
-            </p>
+            <p style={{ fontSize: 14, color: TEXT_DIM, textAlign: 'center' }}>Ce logement n'est pas disponible au contact pour le moment.</p>
           ) : isLoggedIn ? (
             <>
               <p style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 12 }}>Intéressé par ce logement ?</p>
-              <a href={whatsappLink} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#25D366', color: WHITE, borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700 }}>
+              <a href={whatsappLink} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#25D366', color: WHITE, borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, marginBottom: siteWebUrl ? 10 : 0 }}>
                 💬 Contacter sur WhatsApp
               </a>
+              {siteWebUrl && (
+                <a href={siteWebUrl} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: WHITE, color: ORANGE, border: `1.5px solid ${ORANGE}`, borderRadius: 12, padding: 12, fontSize: 14, fontWeight: 600 }}>
+                  🌐 Voir le site du propriétaire
+                </a>
+              )}
             </>
           ) : (
             <>
               <p style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 8 }}>Intéressé par ce logement ?</p>
               <p style={{ fontSize: 13, color: TEXT_DIM, marginBottom: 14 }}>Inscrivez-vous gratuitement pour contacter directement le propriétaire sur WhatsApp.</p>
-              <Link href={`/inscription?redirect=/vitrine/${vitrine.id}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: ORANGE, color: WHITE, borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700 }}>
+              <a href={`/inscription?redirect=/vitrine/${vitrine.id}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: ORANGE, color: WHITE, borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>
                 🔓 S'inscrire pour contacter
-              </Link>
+              </a>
+              <a href={`/connexion?redirect=/vitrine/${vitrine.id}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: WHITE, color: ORANGE, border: `1.5px solid ${ORANGE}`, borderRadius: 12, padding: 12, fontSize: 14, fontWeight: 600, marginTop: 8, textDecoration: 'none' }}>
+                Déjà inscrit ? Se connecter
+              </a>
             </>
           )}
         </div>
 
-        {/* Signalement */}
         <button style={{ background: 'transparent', color: TEXT_DIM, fontSize: 12, textDecoration: 'underline', display: 'block', margin: '0 auto 20px' }}>
           ⚑ Signaler cette annonce
         </button>
-
-        {/* Bandeau Mon Tableau Digital */}
-        <div style={{ background: GRAY, borderRadius: 16, padding: 20, textAlign: 'center' }}>
-          <p style={{ fontSize: 13, color: TEXT_DIM, marginBottom: 10 }}>🖼️ Vous êtes hébergeur Airbnb ?</p>
-          <p style={{ fontSize: 13, color: TEXT, marginBottom: 14 }}>Offrez un guide digital premium à vos voyageurs</p>
-          <a href="https://montableaudigital.fr" target="_blank" rel="noreferrer" style={{ fontSize: 13, color: ORANGE, fontWeight: 700 }}>
-            Découvrir Mon Tableau Digital →
-          </a>
-        </div>
-
       </div>
 
-      {/* Visionneuse plein écran */}
       {lightboxIndex !== null && (
-        <PhotoLightbox
-          photos={photos}
-          startIndex={lightboxIndex}
-          onClose={() => setLightboxIndex(null)}
-        />
+        <PhotoLightbox photos={photos} startIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} />
       )}
     </div>
   )

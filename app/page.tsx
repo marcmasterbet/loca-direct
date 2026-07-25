@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { cookies } from 'next/headers'
 import HomeClient from './HomeClient'
 
 export const dynamic = 'force-dynamic'
@@ -9,12 +10,16 @@ const supabase = createClient(
 )
 
 export default async function Home() {
+  // ✅ Détection session sans redirection
+  const cookieStore = await cookies()
+  const isLoggedIn = !!cookieStore.get('loca_session')?.value
+
   const { data: vitrines } = await supabase
     .from('vitrines')
     .select('*')
     .in('statut', ['active', 'deja_loue', 'bientot_dispo'])
     .order('created_at', { ascending: false })
-    .limit(8)
+    .limit(50)
 
   const { data: prestataires } = await supabase
     .from('prestataires')
@@ -23,5 +28,5 @@ export default async function Home() {
     .order('created_at', { ascending: false })
     .limit(4)
 
-  return <HomeClient vitrines={vitrines || []} prestataires={prestataires || []} />
+  return <HomeClient vitrines={vitrines || []} prestataires={prestataires || []} isLoggedIn={isLoggedIn} />
 }

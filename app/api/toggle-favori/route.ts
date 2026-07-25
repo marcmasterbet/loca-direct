@@ -12,20 +12,20 @@ export async function POST(req: Request) {
   const userId = cookieStore.get('loca_session')?.value
   if (!userId) return NextResponse.json({ error: 'Non connecté' }, { status: 401 })
 
-  const { vitrineId } = await req.json()
+  const { prestataireId } = await req.json()
 
   const { data: existing } = await supabase
-    .from('favoris')
+    .from('favoris_prestataires')
     .select('id')
     .eq('user_id', userId)
-    .eq('vitrine_id', vitrineId)
+    .eq('prestataire_id', prestataireId)
     .single()
 
   if (existing) {
-    await supabase.from('favoris').delete().eq('id', existing.id)
+    await supabase.from('favoris_prestataires').delete().eq('id', existing.id)
     return NextResponse.json({ success: true, action: 'removed' })
   } else {
-    await supabase.from('favoris').insert({ user_id: userId, vitrine_id: vitrineId })
+    await supabase.from('favoris_prestataires').insert({ user_id: userId, prestataire_id: prestataireId })
     return NextResponse.json({ success: true, action: 'added' })
   }
 }

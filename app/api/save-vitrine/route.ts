@@ -35,6 +35,8 @@ export async function POST(req: Request) {
         description_courte: data.description_courte,
         description_longue: data.description_longue,
         type_logement: data.type_logement,
+        pays: data.pays || 'France',
+        region: data.region || null,
         ville: data.ville,
         code_postal: data.code_postal,
         quartier: data.quartier,
@@ -64,6 +66,7 @@ export async function POST(req: Request) {
           heure_depart: data.heure_depart,
         },
         whatsapp: data.whatsapp,
+        site_web: data.site_web || null,
         photos: data.photos,
         statut: 'en_attente',
       })
@@ -75,7 +78,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 })
     }
 
-    // Notification email à l'admin — ne bloque jamais la réponse si ça échoue
     try {
       await resend.emails.send({
         from: 'LocaDirect <bienvenue@loca-direct.fr>',
@@ -86,9 +88,9 @@ export async function POST(req: Request) {
             <h1 style="color: #EA580C; font-size: 22px;">🏠 Nouvelle annonce LocaDirect</h1>
             <p style="font-size: 15px; color: #1F2937; line-height: 1.6;">
               <strong>${vitrine.titre}</strong><br />
-              ${vitrine.ville} · ${vitrine.prix_nuit}€/nuit · ${vitrine.type_logement}
+              ${vitrine.ville}${vitrine.region ? `, ${vitrine.region}` : ''} · ${vitrine.pays || 'France'} · ${vitrine.prix_nuit}€/nuit · ${vitrine.type_logement}
             </p>
-            <a href="https://loca-direct.fr/admin/vitrines" style="display: inline-block; background: #EA580C; color: white; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; margin: 20px 0;">
+            <a href="https://loca-direct.fr/admin/dashboard" style="display: inline-block; background: #EA580C; color: white; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; margin: 20px 0;">
               Voir et valider l'annonce
             </a>
           </div>

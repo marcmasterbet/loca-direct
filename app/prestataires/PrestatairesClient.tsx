@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { REGIONS_FRANCE } from '@/lib/regions'
+import { REGIONS_FRANCE, REGIONS_BELGIQUE, REGIONS_SUISSE, REGIONS_ESPAGNE } from '@/lib/regions'
 
 const ORANGE = '#EA580C'
 const ORANGE_LIGHT = '#FFF7ED'
@@ -25,7 +25,12 @@ const ACTIVITES = [
   'Autre',
 ]
 
-const REGIONS = ['Toutes les régions', ...REGIONS_FRANCE]
+const REGIONS_PAR_PAYS: Record<string, string[]> = {
+  'France': REGIONS_FRANCE,
+  'Belgique': REGIONS_BELGIQUE,
+  'Suisse': REGIONS_SUISSE,
+  'Espagne': REGIONS_ESPAGNE,
+}
 
 type Prestataire = {
   id: string
@@ -33,6 +38,7 @@ type Prestataire = {
   prenom: string
   ville: string
   region: string | null
+  pays: string | null
   activite: string
   description: string
   tarif_horaire: number | null
@@ -40,17 +46,32 @@ type Prestataire = {
   flyer_url: string | null
 }
 
-export default function PrestatairesClient({ prestataires }: { prestataires: Prestataire[] }) {
+export default function PrestatairesClient({ prestataires, isLoggedIn = false }: { prestataires: Prestataire[], isLoggedIn?: boolean }) {
+  const [pays, setPays] = useState('Tous les pays')
   const [region, setRegion] = useState('Toutes les régions')
   const [searchVille, setSearchVille] = useState('')
   const [activite, setActivite] = useState('Toutes')
 
+  const regionsDisponibles = pays === 'Tous les pays'
+    ? ['Toutes les régions']
+    : ['Toutes les régions', ...(REGIONS_PAR_PAYS[pays] || [])]
+
+  const handlePaysChange = (p: string) => {
+    setPays(p)
+    setRegion('Toutes les régions')
+  }
+
   const filtered = prestataires.filter(p => {
+    const matchPays = pays === 'Tous les pays' || !p.pays || p.pays === pays
     const matchRegion = region === 'Toutes les régions' || p.region === region
     const matchVille = !searchVille || p.ville.toLowerCase().includes(searchVille.toLowerCase())
     const matchActivite = activite === 'Toutes' || p.activite === activite
-    return matchRegion && matchVille && matchActivite
+    return matchPays && matchRegion && matchVille && matchActivite
   })
+
+  const devenirPrestataireLien = isLoggedIn
+    ? '/espace/devenir-prestataire'
+    : '/connexion?redirect=/espace/devenir-prestataire'
 
   return (
     <div style={{ background: WHITE, color: TEXT, fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', minHeight: '100vh' }}>
@@ -71,39 +92,44 @@ export default function PrestatairesClient({ prestataires }: { prestataires: Pre
       `}</style>
 
       <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: WHITE, borderBottom: `1px solid ${BORDER}`, padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
           <div style={{ width: 34, height: 34, background: ORANGE, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🏠</div>
           <span style={{ fontSize: 18, fontWeight: 800, color: TEXT }}>Loca<span style={{ color: ORANGE }}>Direct</span></span>
-        </Link>
-        <Link href="/espace/devenir-prestataire" style={{ background: ORANGE, color: WHITE, borderRadius: 10, padding: '10px 18px', fontSize: 14, fontWeight: 700 }}>
-          Devenir prestataire
-        </Link>
+        </a>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {isLoggedIn ? (
+            <a href="/espace" style={{ fontSize: 14, color: TEXT_DIM, padding: '8px 14px', borderRadius: 8, textDecoration: 'none' }}>
+              Mon espace
+            </a>
+          ) : (
+            <a href="/connexion" style={{ fontSize: 14, color: TEXT_DIM, padding: '8px 14px', borderRadius: 8, textDecoration: 'none' }}>
+              Connexion
+            </a>
+          )}
+          <a href={devenirPrestataireLien} style={{ background: ORANGE, color: WHITE, borderRadius: 10, padding: '10px 18px', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
+            Devenir prestataire
+          </a>
+        </div>
       </nav>
 
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '40px 20px 80px' }}>
         <p style={{ fontSize: 11, color: ORANGE, letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>Annuaire</p>
         <h1 style={{ fontSize: 28, fontWeight: 800, color: TEXT, marginBottom: 8 }}>Prestataires partenaires</h1>
-        <p style={{ fontSize: 14, color: TEXT_DIM, marginBottom: 28 }}>Conciergerie, ménage, photographe, digital... trouvez les bons partenaires pour votre logement, gratuitement.</p>
+        <p style={{ fontSize: 14, color: TEXT_DIM, marginBottom: 28 }}>Conciergerie, ménage, photographe, digital... trouvez les bons partenaires pour votre logement.</p>
 
         <div className="filters" style={{ marginBottom: 28 }}>
-          <select
-            value={region}
-            onChange={e => setRegion(e.target.value)}
-            style={{ padding: '12px 16px', borderRadius: 12, border: `1px solid ${BORDER}`, fontSize: 14, outline: 'none', background: WHITE, fontWeight: 600 }}
-          >
-            {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+          <select value={pays} onChange={e => handlePaysChange(e.target.value)} style={{ padding: '12px 16px', borderRadius: 12, border: `1px solid ${BORDER}`, fontSize: 14, outline: 'none', background: WHITE, fontWeight: 600 }}>
+            <option value="Tous les pays">🌍 Tous les pays</option>
+            <option value="France">🇫🇷 France</option>
+            <option value="Belgique">🇧🇪 Belgique</option>
+            <option value="Suisse">🇨🇭 Suisse</option>
+            <option value="Espagne">🇪🇸 Espagne</option>
           </select>
-          <input
-            value={searchVille}
-            onChange={e => setSearchVille(e.target.value)}
-            placeholder="🔍 Affiner par ville..."
-            style={{ flex: 1, minWidth: 180, padding: '12px 16px', borderRadius: 12, border: `1px solid ${BORDER}`, fontSize: 14, outline: 'none' }}
-          />
-          <select
-            value={activite}
-            onChange={e => setActivite(e.target.value)}
-            style={{ padding: '12px 16px', borderRadius: 12, border: `1px solid ${BORDER}`, fontSize: 14, outline: 'none', background: WHITE }}
-          >
+          <select value={region} onChange={e => setRegion(e.target.value)} style={{ padding: '12px 16px', borderRadius: 12, border: `1px solid ${BORDER}`, fontSize: 14, outline: 'none', background: WHITE, fontWeight: 600 }}>
+            {regionsDisponibles.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+          <input value={searchVille} onChange={e => setSearchVille(e.target.value)} placeholder="🔍 Affiner par ville..." style={{ flex: 1, minWidth: 180, padding: '12px 16px', borderRadius: 12, border: `1px solid ${BORDER}`, fontSize: 14, outline: 'none' }} />
+          <select value={activite} onChange={e => setActivite(e.target.value)} style={{ padding: '12px 16px', borderRadius: 12, border: `1px solid ${BORDER}`, fontSize: 14, outline: 'none', background: WHITE }}>
             {ACTIVITES.map(a => <option key={a} value={a}>{a}</option>)}
           </select>
         </div>
@@ -112,14 +138,14 @@ export default function PrestatairesClient({ prestataires }: { prestataires: Pre
           <div style={{ background: GRAY, borderRadius: 16, padding: 48, textAlign: 'center', border: `1px solid ${BORDER}` }}>
             <p style={{ fontSize: 40, marginBottom: 12 }}>🛠️</p>
             <p style={{ fontSize: 15, color: TEXT_DIM, marginBottom: 20 }}>Aucun prestataire trouvé pour cette sélection.</p>
-            <Link href="/espace/devenir-prestataire" style={{ background: ORANGE, color: WHITE, borderRadius: 12, padding: '12px 24px', fontSize: 14, fontWeight: 700, display: 'inline-block' }}>
+            <a href={devenirPrestataireLien} style={{ background: ORANGE, color: WHITE, borderRadius: 12, padding: '12px 24px', fontSize: 14, fontWeight: 700, display: 'inline-block', textDecoration: 'none' }}>
               Soyez le premier inscrit →
-            </Link>
+            </a>
           </div>
         ) : (
           <div className="grid-3">
             {filtered.map(p => (
-              <Link key={p.id} href={`/prestataires/${p.id}`} style={{ border: `1px solid ${BORDER}`, borderRadius: 16, overflow: 'hidden', display: 'block', background: WHITE }}>
+              <a key={p.id} href={`/prestataires/${p.id}`} style={{ border: `1px solid ${BORDER}`, borderRadius: 16, overflow: 'hidden', display: 'block', background: WHITE, textDecoration: 'none' }}>
                 <div style={{ width: '100%', aspectRatio: '16/9', background: GRAY }}>
                   {p.flyer_url ? (
                     <img src={p.flyer_url} alt={`${p.prenom} ${p.nom}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -130,12 +156,14 @@ export default function PrestatairesClient({ prestataires }: { prestataires: Pre
                 <div style={{ padding: 14 }}>
                   <p style={{ fontSize: 11, color: ORANGE, fontWeight: 700, marginBottom: 4 }}>{p.activite}</p>
                   <p style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{p.prenom} {p.nom}</p>
-                  <p style={{ fontSize: 12, color: TEXT_DIM, marginBottom: 8 }}>📍 {p.ville}{p.region ? ` · ${p.region}` : ''}</p>
+                  <p style={{ fontSize: 12, color: TEXT_DIM, marginBottom: 8 }}>
+                    📍 {p.ville}{p.region ? ` (${p.region})` : ''}{p.pays && p.pays !== 'France' ? ` · ${p.pays}` : ''}
+                  </p>
                   <p style={{ fontSize: 13, fontWeight: 700, color: ORANGE }}>
                     {p.sur_devis ? 'Sur devis' : p.tarif_horaire ? `${p.tarif_horaire}€/h` : ''}
                   </p>
                 </div>
-              </Link>
+              </a>
             ))}
           </div>
         )}

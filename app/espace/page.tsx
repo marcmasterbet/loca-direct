@@ -42,6 +42,13 @@ export default async function EspacePage() {
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
 
+  // ✅ Favoris prestataires
+  const { data: favorisPrestatairesData } = await supabase
+    .from('favoris_prestataires')
+    .select('*, prestataires(*)')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
   const { data: alertes } = await supabase
     .from('alertes')
     .select('*')
@@ -61,6 +68,7 @@ export default async function EspacePage() {
       vitrines={vitrines || []}
       prestataires={prestataires || []}
       favoris={favorisData || []}
+      favorisPrestataires={favorisPrestatairesData || []}
       alertes={alertes || []}
       toutesVitrines={toutesVitrines || []}
     />

@@ -26,6 +26,8 @@ export const metadata: Metadata = {
     "location sans commission",
     "alternative Airbnb",
     "location particulier à particulier",
+    "location vacances chiens acceptés",
+    "location saisonnière grands chiens",
     "conciergerie",
     "location saisonnière",
   ],
@@ -48,24 +50,30 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  verification: {
+    google: 'LSycZNSAAZpW2aR1hGhZhbcjRplhAoorX5M',
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="fr" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <head>
-        <Script
+        {/* Google Analytics — dans le head pour validation Search Console */}
+        <script
+          async
           src="https://www.googletagmanager.com/gtag/js?id=G-Q5WD3F2NJD"
-          strategy="afterInteractive"
         />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-Q5WD3F2NJD');
-          `}
-        </Script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-Q5WD3F2NJD');
+            `,
+          }}
+        />
       </head>
       <body className="min-h-screen flex flex-col bg-white">
         <main className="flex-1">{children}</main>
@@ -78,7 +86,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <a href="/politique-confidentialite" className="hover:text-orange-600 transition">Confidentialité</a>
               <a href="/cookies" className="hover:text-orange-600 transition">Cookies</a>
             </div>
-
             <p className="text-center text-xs text-gray-500">© 2026 LocaDirect - Tous droits réservés</p>
           </div>
         </footer>
