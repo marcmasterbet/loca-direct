@@ -198,10 +198,10 @@ export default function HomeClient({ vitrines, prestataires, isLoggedIn = false 
             Partenaire officiel
           </p>
           <p style={{ fontSize: 16, fontWeight: 800, color: '#ffffff', marginBottom: 2 }}>
-            FaireDesDevis — 
+            FaireDesDevis — Le devis pro pour les prestataires
           </p>
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
-            Signature électronique · Envoi par email · Factures en 1 clic
+            Conciergerie, ménage, photographe · Signature électronique · Factures en 1 clic
           </p>
         </div>
       </div>
@@ -215,12 +215,7 @@ export default function HomeClient({ vitrines, prestataires, isLoggedIn = false 
         whiteSpace: 'nowrap',
         flexShrink: 0,
       }}>
-        <p style={{ fontSize: 16, fontWeight: 800, color: '#ffffff', marginBottom: 2 }}>
-  FaireDesDevis — Le devis pro pour les prestataires
-</p>
-<p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
-  Conciergerie, ménage, photographe
-</p>
+        Essayer 7 jours gratuits →
       </div>
     </div>
   </a>
