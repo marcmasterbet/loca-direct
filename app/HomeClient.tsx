@@ -176,23 +176,55 @@ export default function HomeClient({ vitrines, prestataires, isLoggedIn = false 
         </div>
       </section>
 
-      {/* ESPACE PUBLICITAIRE */}
-      <div style={{ maxWidth: 1000, margin: '0 auto', padding: '24px 20px 0' }}>
-        <div style={{
-          width: '100%',
-          minHeight: 90,
-          borderRadius: 14,
-          border: `1px solid ${BORDER}`,
-          background: GRAY,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-        }}>
-          {/* Remplacez ce bloc par votre bannière image ou HTML publicitaire */}
-          <span style={{ fontSize: 12, color: '#D1D5DB' }}>Espace partenaire</span>
+      {/* BANNIÈRE FAIREDESDEVIS */}
+<div style={{ maxWidth: 1000, margin: '0 auto', padding: '24px 20px 0' }}>
+  <a href="https://fairedesdevis.fr" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'block' }}>
+    <div style={{
+      width: '100%',
+      borderRadius: 14,
+      background: 'linear-gradient(135deg, #1e40af 0%, #2563eb 100%)',
+      padding: '18px 28px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+      gap: 16,
+      cursor: 'pointer',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ fontSize: 36, flexShrink: 0 }}>📄</div>
+        <div>
+          <p style={{ fontSize: 11, color: '#93c5fd', letterSpacing: '0.15em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>
+            Partenaire officiel
+          </p>
+          <p style={{ fontSize: 16, fontWeight: 800, color: '#ffffff', marginBottom: 2 }}>
+            FaireDesDevis — 
+          </p>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
+            Signature électronique · Envoi par email · Factures en 1 clic
+          </p>
         </div>
       </div>
+      <div style={{
+        background: '#ffffff',
+        color: '#2563eb',
+        borderRadius: 10,
+        padding: '10px 20px',
+        fontSize: 13,
+        fontWeight: 800,
+        whiteSpace: 'nowrap',
+        flexShrink: 0,
+      }}>
+        <p style={{ fontSize: 16, fontWeight: 800, color: '#ffffff', marginBottom: 2 }}>
+  FaireDesDevis — Le devis pro pour les prestataires
+</p>
+<p style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
+  Conciergerie, ménage, photographe
+</p>
+      </div>
+    </div>
+  </a>
+</div>
 
       {/* RUBRIQUE CHIENS +10 KG */}
       <section id="logements-chiens" className="section-pad" style={{ padding: '48px 20px', maxWidth: 1000, margin: '0 auto' }}>
