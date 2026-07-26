@@ -192,7 +192,7 @@ export default function HomeClient({ vitrines, prestataires, isLoggedIn = false 
       cursor: 'pointer',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <div style={{ fontSize: 36, flexShrink: 0 }}>📄</div>
+        <img src="https://xkwdwragibeingoaizwq.supabase.co/storage/v1/object/public/logos/ChatGPT%20Image%2026%20juil.%202026,%2010_29_20.png" alt="FaireDesDevis" style={{ height: 60, width: 'auto', flexShrink: 0 }} />
         <div>
           <p style={{ fontSize: 11, color: '#93c5fd', letterSpacing: '0.15em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>
             Partenaire officiel
