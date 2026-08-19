@@ -68,8 +68,7 @@ async function getVilleData(
   regionSlug: string,
   villeSlug: string
 ) {
-  const regionName =
-    REGIONS_SLUGS[regionSlug]
+  const regionName = REGIONS_SLUGS[regionSlug]
 
   if (!regionName) {
     return {
@@ -118,23 +117,19 @@ async function getVilleData(
     }
   }
 
-  const normalizedVilleSlug =
-    slugify(villeSlug)
+  const normalizedVilleSlug = slugify(villeSlug)
 
-  const logements =
-    ((data || []) as Logement[]).filter(
-      logement => {
-        if (!logement.ville) return false
+  const logements = ((data || []) as Logement[]).filter(
+    logement => {
+      if (!logement.ville) return false
 
-        return (
-          slugify(logement.ville) ===
-          normalizedVilleSlug
-        )
-      }
-    )
+      return (
+        slugify(logement.ville) === normalizedVilleSlug
+      )
+    }
+  )
 
-  const villeName =
-    logements[0]?.ville || null
+  const villeName = logements[0]?.ville || null
 
   return {
     regionName,
@@ -146,17 +141,13 @@ async function getVilleData(
 export async function generateMetadata({
   params,
 }: Props): Promise<Metadata> {
-  const { region, ville } =
-    await params
+  const { region, ville } = await params
 
   const {
     regionName,
     villeName,
     logements,
-  } = await getVilleData(
-    region,
-    ville
-  )
+  } = await getVilleData(region, ville)
 
   if (
     !regionName ||
@@ -164,8 +155,7 @@ export async function generateMetadata({
     logements.length === 0
   ) {
     return {
-      title:
-        'Location de vacances | LocaDirect',
+      title: 'Location de vacances | LocaDirect',
       robots: {
         index: false,
         follow: true,
@@ -205,17 +195,13 @@ export async function generateMetadata({
 export default async function VillePage({
   params,
 }: Props) {
-  const { region, ville } =
-    await params
+  const { region, ville } = await params
 
   const {
     regionName,
     villeName,
     logements,
-  } = await getVilleData(
-    region,
-    ville
-  )
+  } = await getVilleData(region, ville)
 
   if (
     !regionName ||
@@ -225,31 +211,22 @@ export default async function VillePage({
     notFound()
   }
 
-  const cookieStore =
-    await cookies()
+  const cookieStore = await cookies()
 
   const isLoggedIn =
-    !!cookieStore.get(
-      'loca_session'
-    )?.value
+    !!cookieStore.get('loca_session')?.value
 
   const canonical =
     `https://www.loca-direct.fr/location-vacances/${region}/${ville}`
 
-  const logementsAvecChien =
-    logements.filter(
-      logement =>
-        Array.isArray(
-          logement.equipements
-        ) &&
-        logement.equipements.includes(
-          'chien_10kg'
-        )
-    ).length
+  const logementsAvecChien = logements.filter(
+    logement =>
+      Array.isArray(logement.equipements) &&
+      logement.equipements.includes('chien_10kg')
+  ).length
 
   const jsonLd = {
-    '@context':
-      'https://schema.org',
+    '@context': 'https://schema.org',
     '@type': 'ItemList',
 
     name:
@@ -257,27 +234,23 @@ export default async function VillePage({
 
     url: canonical,
 
-    numberOfItems:
-      logements.length,
+    numberOfItems: logements.length,
 
-    itemListElement:
-      logements.map(
-        (logement, index) => ({
-          '@type': 'ListItem',
-          position: index + 1,
-          name: logement.titre,
-          url:
-            `https://www.loca-direct.fr/vitrine/${logement.id}`,
-        })
-      ),
+    itemListElement: logements.map(
+      (logement, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: logement.titre,
+        url:
+          `https://www.loca-direct.fr/vitrine/${logement.id}`,
+      })
+    ),
   }
 
   const breadcrumbLd = {
-    '@context':
-      'https://schema.org',
+    '@context': 'https://schema.org',
 
-    '@type':
-      'BreadcrumbList',
+    '@type': 'BreadcrumbList',
 
     itemListElement: [
       {
@@ -308,18 +281,14 @@ export default async function VillePage({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html:
-            JSON.stringify(jsonLd),
+          __html: JSON.stringify(jsonLd),
         }}
       />
 
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html:
-            JSON.stringify(
-              breadcrumbLd
-            ),
+          __html: JSON.stringify(breadcrumbLd),
         }}
       />
 
@@ -332,6 +301,8 @@ export default async function VillePage({
             '-apple-system, BlinkMacSystemFont, sans-serif',
         }}
       >
+
+        {/* NAVIGATION */}
 
         <nav
           style={{
@@ -346,8 +317,7 @@ export default async function VillePage({
               maxWidth: 1100,
               margin: '0 auto',
               display: 'flex',
-              justifyContent:
-                'space-between',
+              justifyContent: 'space-between',
               alignItems: 'center',
             }}
           >
@@ -365,14 +335,11 @@ export default async function VillePage({
                 style={{
                   width: 34,
                   height: 34,
-                  background:
-                    '#EA580C',
+                  background: '#EA580C',
                   borderRadius: 10,
                   display: 'flex',
-                  alignItems:
-                    'center',
-                  justifyContent:
-                    'center',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
                 🏠
@@ -386,8 +353,7 @@ export default async function VillePage({
                 Loca
                 <span
                   style={{
-                    color:
-                      '#EA580C',
+                    color: '#EA580C',
                   }}
                 >
                   Direct
@@ -399,15 +365,11 @@ export default async function VillePage({
               <Link
                 href="/espace"
                 style={{
-                  background:
-                    '#EA580C',
-                  color:
-                    '#FFFFFF',
-                  padding:
-                    '10px 18px',
+                  background: '#EA580C',
+                  color: '#FFFFFF',
+                  padding: '10px 18px',
                   borderRadius: 10,
-                  textDecoration:
-                    'none',
+                  textDecoration: 'none',
                   fontWeight: 700,
                 }}
               >
@@ -418,17 +380,15 @@ export default async function VillePage({
                 style={{
                   display: 'flex',
                   gap: 8,
-                  alignItems:
-                    'center',
+                  alignItems: 'center',
                 }}
               >
                 <Link
                   href="/connexion"
                   style={{
-                    color:
-                      '#6B7280',
-                    padding:
-                      '8px 14px',
+                    color: '#6B7280',
+                    padding: '8px 14px',
+                    textDecoration: 'none',
                   }}
                 >
                   Connexion
@@ -437,14 +397,12 @@ export default async function VillePage({
                 <Link
                   href="/inscription"
                   style={{
-                    background:
-                      '#EA580C',
-                    color:
-                      '#FFFFFF',
-                    padding:
-                      '10px 18px',
+                    background: '#EA580C',
+                    color: '#FFFFFF',
+                    padding: '10px 18px',
                     borderRadius: 10,
                     fontWeight: 700,
+                    textDecoration: 'none',
                   }}
                 >
                   🏠 Publier
@@ -458,10 +416,11 @@ export default async function VillePage({
           style={{
             maxWidth: 1100,
             margin: '0 auto',
-            padding:
-              '32px 20px 80px',
+            padding: '32px 20px 80px',
           }}
         >
+
+          {/* FIL D'ARIANE */}
 
           <div
             style={{
@@ -470,7 +429,13 @@ export default async function VillePage({
               marginBottom: 24,
             }}
           >
-            <Link href="/">
+            <Link
+              href="/"
+              style={{
+                color: 'inherit',
+                textDecoration: 'none',
+              }}
+            >
               Accueil
             </Link>
 
@@ -480,6 +445,10 @@ export default async function VillePage({
               href={
                 `/location-vacances/${region}`
               }
+              style={{
+                color: 'inherit',
+                textDecoration: 'none',
+              }}
             >
               {regionName}
             </Link>
@@ -491,25 +460,23 @@ export default async function VillePage({
             </span>
           </div>
 
+          {/* HERO */}
+
           <section
             style={{
               background:
                 'linear-gradient(135deg,#FFF7ED 0%,#FFFFFF 100%)',
               borderRadius: 20,
-              padding:
-                '36px 32px',
+              padding: '36px 32px',
               marginBottom: 36,
             }}
           >
             <p
               style={{
-                color:
-                  '#EA580C',
+                color: '#EA580C',
                 fontSize: 11,
-                textTransform:
-                  'uppercase',
-                letterSpacing:
-                  '0.2em',
+                textTransform: 'uppercase',
+                letterSpacing: '0.2em',
                 fontWeight: 700,
                 marginBottom: 8,
               }}
@@ -524,27 +491,20 @@ export default async function VillePage({
                 marginBottom: 12,
               }}
             >
-              Location vacances à{' '}
-              {villeName}
+              Location vacances à {villeName}
             </h1>
 
             <p
               style={{
-                color:
-                  '#6B7280',
+                color: '#6B7280',
                 lineHeight: 1.7,
                 maxWidth: 750,
               }}
             >
-              Découvrez les locations
-              de vacances disponibles à{' '}
-              {villeName}, en{' '}
-              {regionName}. Contactez
-              directement les
-              propriétaires et
-              organisez votre séjour
-              sans commission de
-              réservation.
+              Découvrez les locations de vacances disponibles à{' '}
+              {villeName}, en {regionName}. Contactez directement
+              les propriétaires et organisez votre séjour sans
+              commission de réservation.
             </p>
 
             <div
@@ -554,8 +514,7 @@ export default async function VillePage({
                 gap: 16,
                 marginTop: 20,
                 fontSize: 13,
-                color:
-                  '#6B7280',
+                color: '#6B7280',
               }}
             >
               <span>
@@ -570,22 +529,19 @@ export default async function VillePage({
                 ✓ Annonces vérifiées
               </span>
 
-              {logementsAvecChien >
-                0 && (
+              {logementsAvecChien > 0 && (
                 <span>
-                  🐕{' '}
-                  {logementsAvecChien}{' '}
-                  logement
-                  {logementsAvecChien >
-                  1
+                  🐕 {logementsAvecChien} logement
+                  {logementsAvecChien > 1
                     ? 's'
                     : ''}{' '}
-                  acceptant les grands
-                  chiens
+                  acceptant les grands chiens
                 </span>
               )}
             </div>
           </section>
+
+          {/* TEXTE SEO */}
 
           <section
             style={{
@@ -599,30 +555,24 @@ export default async function VillePage({
                 marginBottom: 12,
               }}
             >
-              Trouver une location de
-              vacances à {villeName}
+              Trouver une location de vacances à {villeName}
             </h2>
 
             <p
               style={{
-                color:
-                  '#4B5563',
+                color: '#4B5563',
                 lineHeight: 1.8,
               }}
             >
-              LocaDirect met en relation
-              les voyageurs avec les
-              propriétaires proposant
-              leur logement à{' '}
-              {villeName}. Consultez les
-              annonces et contactez
-              directement le
-              propriétaire pour
-              connaître les
-              disponibilités et les
-              conditions du séjour.
+              LocaDirect met en relation les voyageurs avec les
+              propriétaires proposant leur logement à {villeName}.
+              Consultez les annonces et contactez directement le
+              propriétaire pour connaître les disponibilités et
+              les conditions du séjour.
             </p>
           </section>
+
+          {/* LOGEMENTS */}
 
           <section>
             <h2
@@ -631,8 +581,7 @@ export default async function VillePage({
                 marginBottom: 20,
               }}
             >
-              {logements.length}{' '}
-              location
+              {logements.length} location
               {logements.length > 1
                 ? 's'
                 : ''}{' '}
@@ -642,9 +591,18 @@ export default async function VillePage({
             <div
               style={{
                 display: 'grid',
+
+                /*
+                 * IMPORTANT :
+                 * les cartes ne s'étirent plus
+                 * sur toute la largeur.
+                 */
+
                 gridTemplateColumns:
-                  'repeat(auto-fit,minmax(240px,1fr))',
+                  'repeat(auto-fill, minmax(240px, 260px))',
+
                 gap: 18,
+                justifyContent: 'start',
               }}
             >
               {logements.map(
@@ -660,58 +618,51 @@ export default async function VillePage({
 
                   return (
                     <Link
-                      key={
-                        logement.id
-                      }
+                      key={logement.id}
                       href={
                         `/vitrine/${logement.id}`
                       }
                       style={{
+                        width: '100%',
+                        maxWidth: 260,
                         border:
                           '1px solid #E5E7EB',
                         borderRadius: 16,
-                        overflow:
-                          'hidden',
-                        textDecoration:
-                          'none',
-                        color:
-                          '#1F2937',
-                        background:
-                          '#FFFFFF',
+                        overflow: 'hidden',
+                        textDecoration: 'none',
+                        color: '#1F2937',
+                        background: '#FFFFFF',
+                        display: 'block',
                       }}
                     >
-                      {logement
-                        .photos?.[0] ? (
+
+                      {/* PHOTO */}
+
+                      {logement.photos?.[0] ? (
                         <img
                           src={
-                            logement
-                              .photos[0]
+                            logement.photos[0]
                           }
                           alt={
                             `${logement.titre} - location vacances ${villeName}`
                           }
+                          loading="lazy"
                           style={{
-                            width:
-                              '100%',
-                            height: 180,
-                            objectFit:
-                              'cover',
-                            display:
-                              'block',
+                            width: '100%',
+                            height: 170,
+                            objectFit: 'cover',
+                            display: 'block',
                           }}
                         />
                       ) : (
                         <div
                           style={{
-                            height: 180,
-                            background:
-                              '#F9FAFB',
-                            display:
-                              'flex',
-                            alignItems:
-                              'center',
-                            justifyContent:
-                              'center',
+                            width: '100%',
+                            height: 170,
+                            background: '#F9FAFB',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                             fontSize: 40,
                           }}
                         >
@@ -719,22 +670,21 @@ export default async function VillePage({
                         </div>
                       )}
 
+                      {/* CONTENU CARTE */}
+
                       <div
                         style={{
-                          padding: 16,
+                          padding: 14,
                         }}
                       >
                         <p
                           style={{
                             fontSize: 12,
-                            color:
-                              '#6B7280',
+                            color: '#6B7280',
                             marginBottom: 5,
                           }}
                         >
-                          {
-                            logement.type_logement
-                          }
+                          {logement.type_logement}
 
                           {logement.surface
                             ? ` · ${logement.surface} m²`
@@ -743,13 +693,12 @@ export default async function VillePage({
 
                         <h3
                           style={{
-                            fontSize: 15,
+                            fontSize: 14,
+                            lineHeight: 1.4,
                             marginBottom: 10,
                           }}
                         >
-                          {
-                            logement.titre
-                          }
+                          {logement.titre}
                         </h3>
 
                         {accepteChien && (
@@ -759,37 +708,29 @@ export default async function VillePage({
                               marginBottom: 10,
                             }}
                           >
-                            🐕 Grand chien
-                            +10 kg bienvenu
+                            🐕 Grand chien +10 kg bienvenu
                           </p>
                         )}
 
                         <div
                           style={{
-                            display:
-                              'flex',
+                            display: 'flex',
                             justifyContent:
                               'space-between',
-                            alignItems:
-                              'center',
+                            alignItems: 'center',
                           }}
                         >
                           <strong
                             style={{
-                              color:
-                                '#EA580C',
+                              color: '#EA580C',
                               fontSize: 17,
                             }}
                           >
-                            {
-                              logement.prix_nuit
-                            }{' '}
-                            €
+                            {logement.prix_nuit} €
 
                             <span
                               style={{
-                                color:
-                                  '#6B7280',
+                                color: '#6B7280',
                                 fontWeight: 400,
                                 fontSize: 11,
                               }}
@@ -798,19 +739,14 @@ export default async function VillePage({
                             </span>
                           </strong>
 
-                          {logement.nb_chambres !=
-                            null && (
+                          {logement.nb_chambres != null && (
                             <span
                               style={{
-                                color:
-                                  '#6B7280',
+                                color: '#6B7280',
                                 fontSize: 12,
                               }}
                             >
-                              {
-                                logement.nb_chambres
-                              }{' '}
-                              ch.
+                              {logement.nb_chambres} ch.
                             </span>
                           )}
                         </div>
@@ -822,12 +758,13 @@ export default async function VillePage({
             </div>
           </section>
 
+          {/* TEXTE SEO BAS */}
+
           <section
             style={{
               marginTop: 50,
               padding: 28,
-              background:
-                '#F9FAFB',
+              background: '#F9FAFB',
               borderRadius: 16,
             }}
           >
@@ -837,43 +774,35 @@ export default async function VillePage({
                 marginBottom: 12,
               }}
             >
-              Réserver directement une
-              location à {villeName}
+              Réserver directement une location à {villeName}
             </h2>
 
             <p
               style={{
-                color:
-                  '#4B5563',
+                color: '#4B5563',
                 lineHeight: 1.8,
                 marginBottom: 14,
               }}
             >
-              La location directe
-              permet d'échanger avec le
-              propriétaire avant votre
-              séjour et de lui poser vos
-              questions sur le logement,
-              ses équipements et ses
+              La location directe permet d'échanger avec le
+              propriétaire avant votre séjour et de lui poser vos
+              questions sur le logement, ses équipements et ses
               disponibilités.
             </p>
 
             <p
               style={{
-                color:
-                  '#4B5563',
+                color: '#4B5563',
                 lineHeight: 1.8,
               }}
             >
-              LocaDirect ne prélève pas
-              de commission de
-              réservation. La mise en
-              relation s'effectue
-              directement entre le
-              voyageur et le
-              propriétaire.
+              LocaDirect ne prélève pas de commission de réservation.
+              La mise en relation s'effectue directement entre le
+              voyageur et le propriétaire.
             </p>
           </section>
+
+          {/* RETOUR RÉGION */}
 
           <div
             style={{
@@ -885,15 +814,15 @@ export default async function VillePage({
                 `/location-vacances/${region}`
               }
               style={{
-                color:
-                  '#EA580C',
+                color: '#EA580C',
                 fontWeight: 700,
+                textDecoration: 'none',
               }}
             >
-              ← Toutes les locations en{' '}
-              {regionName}
+              ← Toutes les locations en {regionName}
             </Link>
           </div>
+
         </div>
       </main>
     </>
