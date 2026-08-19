@@ -31,11 +31,12 @@ const statutBadge: Record<string, { label: string; bg: string }> = {
 }
 
 function slugify(value: string) {
-  return value
+  return decodeURIComponent(value)
+    .trim()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
-    .replace(/['’]/g, '-')
+    .replace(/['’]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
 }
@@ -53,31 +54,46 @@ export default function RegionClient({
 }) {
   const [searchVille, setSearchVille] = useState('')
 
-  const filtered = logements.filter(logement =>
-    !searchVille ||
-    logement.ville?.toLowerCase().includes(searchVille.toLowerCase())
-  )
+  const filtered = logements.filter(logement => {
+    if (!searchVille) return true
+    if (!logement.ville) return false
+
+    return logement.ville
+      .toLowerCase()
+      .includes(searchVille.toLowerCase())
+  })
 
   const villes = Object.values(
-    logements.reduce((acc, logement) => {
-      if (!logement.ville) return acc
+    logements.reduce(
+      (acc, logement) => {
+        if (!logement.ville) return acc
 
-      const nom = logement.ville.trim()
-      if (!nom) return acc
+        const nom = logement.ville.trim()
+        if (!nom) return acc
 
-      const key = nom.toLowerCase()
+        const villeSlug = slugify(nom)
 
-      if (!acc[key]) {
-        acc[key] = {
-          nom,
-          slug: slugify(nom),
-          count: 0,
+        if (!acc[villeSlug]) {
+          acc[villeSlug] = {
+            nom,
+            slug: villeSlug,
+            count: 0,
+          }
         }
-      }
 
-      acc[key].count += 1
-      return acc
-    }, {} as Record<string, { nom: string; slug: string; count: number }>)
+        acc[villeSlug].count += 1
+
+        return acc
+      },
+      {} as Record<
+        string,
+        {
+          nom: string
+          slug: string
+          count: number
+        }
+      >
+    )
   ).sort((a, b) => a.nom.localeCompare(b.nom, 'fr'))
 
   return (
@@ -89,9 +105,20 @@ export default function RegionClient({
       }}
     >
       <style>{`
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        a { text-decoration: none; color: inherit; }
-        input { font-family: inherit; }
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
+
+        a {
+          text-decoration: none;
+          color: inherit;
+        }
+
+        input {
+          font-family: inherit;
+        }
 
         .grid-4 {
           display: grid;
@@ -99,27 +126,34 @@ export default function RegionClient({
           gap: 16px;
         }
 
-        .destination-link,
-        .logement-card {
-          transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+        .destination-link {
+          transition: all 0.15s ease;
         }
 
         .destination-link:hover {
+          border-color: #EA580C !important;
           transform: translateY(-1px);
-          border-color: ${ORANGE} !important;
+        }
+
+        .logement-card {
+          transition: all 0.15s ease;
         }
 
         .logement-card:hover {
           transform: translateY(-2px);
-          box-shadow: 0 8px 24px rgba(0,0,0,.08);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.08);
         }
 
         @media (max-width: 900px) {
-          .grid-4 { grid-template-columns: 1fr 1fr; }
+          .grid-4 {
+            grid-template-columns: 1fr 1fr;
+          }
         }
 
         @media (max-width: 480px) {
-          .grid-4 { grid-template-columns: 1fr; }
+          .grid-4 {
+            grid-template-columns: 1fr;
+          }
         }
       `}</style>
 
@@ -136,7 +170,14 @@ export default function RegionClient({
           justifyContent: 'space-between',
         }}
       >
-        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <a
+          href="/"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
           <div
             style={{
               width: 34,
@@ -152,12 +193,26 @@ export default function RegionClient({
             🏠
           </div>
 
-          <span style={{ fontSize: 18, fontWeight: 800, color: TEXT }}>
-            Loca<span style={{ color: ORANGE }}>Direct</span>
+          <span
+            style={{
+              fontSize: 18,
+              fontWeight: 800,
+              color: TEXT,
+            }}
+          >
+            Loca
+            <span style={{ color: ORANGE }}>
+              Direct
+            </span>
           </span>
         </a>
 
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+          }}
+        >
           {isLoggedIn ? (
             <a
               href="/espace"
@@ -210,8 +265,6 @@ export default function RegionClient({
           padding: '40px 20px 80px',
         }}
       >
-        {/* HERO */}
-
         <section
           style={{
             background: `linear-gradient(135deg, ${ORANGE_LIGHT} 0%, ${WHITE} 100%)`,
@@ -252,19 +305,31 @@ export default function RegionClient({
               lineHeight: 1.6,
             }}
           >
-            {logements.length} logement{logements.length > 1 ? 's' : ''} en
-            location directe en {regionName} — sans commission, contact direct
-            avec les propriétaires.
+            {logements.length} logement
+            {logements.length > 1 ? 's' : ''} en location directe en{' '}
+            {regionName} — sans commission, contact direct avec les propriétaires.
           </p>
 
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 13, color: TEXT_DIM }}>✓ Sans commission</span>
-            <span style={{ fontSize: 13, color: TEXT_DIM }}>✓ Contact direct</span>
-            <span style={{ fontSize: 13, color: TEXT_DIM }}>✓ Annonces vérifiées</span>
+          <div
+            style={{
+              display: 'flex',
+              gap: 16,
+              flexWrap: 'wrap',
+            }}
+          >
+            <span style={{ fontSize: 13, color: TEXT_DIM }}>
+              ✓ Sans commission
+            </span>
+
+            <span style={{ fontSize: 13, color: TEXT_DIM }}>
+              ✓ Contact direct
+            </span>
+
+            <span style={{ fontSize: 13, color: TEXT_DIM }}>
+              ✓ Annonces vérifiées
+            </span>
           </div>
         </section>
-
-        {/* VILLES */}
 
         {villes.length > 0 && (
           <section
@@ -296,10 +361,17 @@ export default function RegionClient({
               }}
             >
               Découvrez les locations de vacances disponibles en contact direct
-              avec les propriétaires dans les différentes destinations de {regionName}.
+              avec les propriétaires dans les différentes destinations de{' '}
+              {regionName}.
             </p>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 10,
+              }}
+            >
               {villes.map(ville => (
                 <a
                   key={ville.slug}
@@ -316,6 +388,7 @@ export default function RegionClient({
                   }}
                 >
                   📍 {ville.nom}
+
                   <span
                     style={{
                       color: TEXT_DIM,
@@ -331,9 +404,11 @@ export default function RegionClient({
           </section>
         )}
 
-        {/* RECHERCHE */}
-
-        <div style={{ marginBottom: 24 }}>
+        <div
+          style={{
+            marginBottom: 24,
+          }}
+        >
           <input
             value={searchVille}
             onChange={e => setSearchVille(e.target.value)}
@@ -350,13 +425,18 @@ export default function RegionClient({
             }}
           />
 
-          <p style={{ fontSize: 13, color: TEXT_DIM, marginTop: 8 }}>
-            {filtered.length} logement{filtered.length > 1 ? 's' : ''} trouvé
+          <p
+            style={{
+              fontSize: 13,
+              color: TEXT_DIM,
+              marginTop: 8,
+            }}
+          >
+            {filtered.length} logement
+            {filtered.length > 1 ? 's' : ''} trouvé
             {filtered.length > 1 ? 's' : ''}
           </p>
         </div>
-
-        {/* LOGEMENTS */}
 
         {filtered.length === 0 ? (
           <div
@@ -368,9 +448,17 @@ export default function RegionClient({
               border: `1px solid ${BORDER}`,
             }}
           >
-            <p style={{ fontSize: 40, marginBottom: 12 }}>🏠</p>
+            <p style={{ fontSize: 40, marginBottom: 12 }}>
+              🏠
+            </p>
 
-            <p style={{ fontSize: 15, color: TEXT_DIM, marginBottom: 20 }}>
+            <p
+              style={{
+                fontSize: 15,
+                color: TEXT_DIM,
+                marginBottom: 20,
+              }}
+            >
               Aucune annonce pour le moment en {regionName}.
             </p>
 
@@ -392,10 +480,11 @@ export default function RegionClient({
         ) : (
           <div className="grid-4">
             {filtered.map(logement => {
-              const badge = statutBadge[logement.statut] || {
-                label: logement.statut,
-                bg: TEXT_DIM,
-              }
+              const badge =
+                statutBadge[logement.statut] || {
+                  label: logement.statut,
+                  bg: TEXT_DIM,
+                }
 
               const hasChien =
                 Array.isArray(logement.equipements) &&
@@ -414,7 +503,11 @@ export default function RegionClient({
                     background: WHITE,
                   }}
                 >
-                  <div style={{ position: 'relative' }}>
+                  <div
+                    style={{
+                      position: 'relative',
+                    }}
+                  >
                     {logement.photos?.[0] ? (
                       <img
                         src={logement.photos[0]}
@@ -483,7 +576,11 @@ export default function RegionClient({
                     </div>
                   </div>
 
-                  <div style={{ padding: 14 }}>
+                  <div
+                    style={{
+                      padding: 14,
+                    }}
+                  >
                     <p
                       style={{
                         fontSize: 12,
@@ -492,7 +589,9 @@ export default function RegionClient({
                       }}
                     >
                       {logement.type_logement}
-                      {logement.surface ? ` · ${logement.surface}m²` : ''}
+                      {logement.surface
+                        ? ` · ${logement.surface}m²`
+                        : ''}
                       {' · '}
                       {logement.ville}
                     </p>
@@ -538,7 +637,12 @@ export default function RegionClient({
                       </p>
 
                       {logement.nb_chambres != null && (
-                        <p style={{ fontSize: 12, color: TEXT_DIM }}>
+                        <p
+                          style={{
+                            fontSize: 12,
+                            color: TEXT_DIM,
+                          }}
+                        >
                           {logement.nb_chambres} ch.
                         </p>
                       )}
@@ -549,8 +653,6 @@ export default function RegionClient({
             })}
           </div>
         )}
-
-        {/* SEO */}
 
         <section
           style={{
@@ -584,60 +686,6 @@ export default function RegionClient({
             votre séjour sans commission de réservation ajoutée par la plateforme.
           </p>
         </section>
-
-        {/* AUTRES RÉGIONS */}
-
-        <div
-          style={{
-            marginTop: 32,
-            padding: '28px 24px',
-            background: GRAY,
-            borderRadius: 16,
-            border: `1px solid ${BORDER}`,
-          }}
-        >
-          <h2
-            style={{
-              fontSize: 16,
-              fontWeight: 700,
-              color: TEXT,
-              marginBottom: 16,
-            }}
-          >
-            Explorer d&apos;autres régions
-          </h2>
-
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {[
-              { slug: 'bretagne', name: 'Bretagne' },
-              { slug: 'nouvelle-aquitaine', name: 'Nouvelle-Aquitaine' },
-              { slug: 'occitanie', name: 'Occitanie' },
-              { slug: 'provence-alpes-cote-dazur', name: "Provence-Alpes-Côte d'Azur" },
-              { slug: 'auvergne-rhone-alpes', name: 'Auvergne-Rhône-Alpes' },
-              { slug: 'normandie', name: 'Normandie' },
-              { slug: 'grand-est', name: 'Grand Est' },
-              { slug: 'pays-de-la-loire', name: 'Pays de la Loire' },
-            ]
-              .filter(region => region.slug !== slug)
-              .map(region => (
-                <a
-                  key={region.slug}
-                  href={`/location-vacances/${region.slug}`}
-                  style={{
-                    background: WHITE,
-                    border: `1px solid ${BORDER}`,
-                    borderRadius: 20,
-                    padding: '6px 14px',
-                    fontSize: 13,
-                    color: TEXT,
-                    fontWeight: 500,
-                  }}
-                >
-                  {region.name}
-                </a>
-              ))}
-          </div>
-        </div>
       </div>
     </div>
   )
