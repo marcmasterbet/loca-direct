@@ -1,20 +1,49 @@
-'use client'
+import { createClient } from '@supabase/supabase-js'
+import { cookies } from 'next/headers'
+import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
+import Link from 'next/link'
 
-import { useState } from 'react'
+export const dynamic = 'force-dynamic'
 
-const ORANGE = '#EA580C'
-const ORANGE_LIGHT = '#FFF7ED'
-const WHITE = '#FFFFFF'
-const GRAY = '#F9FAFB'
-const TEXT = '#1F2937'
-const TEXT_DIM = '#6B7280'
-const BORDER = '#E5E7EB'
-const GREEN = '#16A34A'
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
+const REGIONS_SLUGS: Record<string, string> = {
+  'auvergne-rhone-alpes': 'Auvergne-Rhône-Alpes',
+  'bourgogne-franche-comte': 'Bourgogne-Franche-Comté',
+  'bretagne': 'Bretagne',
+  'centre-val-de-loire': 'Centre-Val de Loire',
+  'corse': 'Corse',
+  'grand-est': 'Grand Est',
+  'hauts-de-france': 'Hauts-de-France',
+  'ile-de-france': 'Île-de-France',
+  'normandie': 'Normandie',
+  'nouvelle-aquitaine': 'Nouvelle-Aquitaine',
+  'occitanie': 'Occitanie',
+  'pays-de-la-loire': 'Pays de la Loire',
+  'provence-alpes-cote-dazur': "Provence-Alpes-Côte d'Azur",
+  'guadeloupe': 'Guadeloupe',
+  'martinique': 'Martinique',
+  'guyane': 'Guyane',
+  'la-reunion': 'La Réunion',
+  'mayotte': 'Mayotte',
+}
+
+type Props = {
+  params: Promise<{
+    region: string
+    ville: string
+  }>
+}
 
 type Logement = {
   id: string
   titre: string
   ville: string
+  region: string
   type_logement: string
   prix_nuit: number
   surface?: number
@@ -24,32 +53,6 @@ type Logement = {
   equipements?: string[]
 }
 
-const statutBadge: Record<
-  string,
-  { label: string; bg: string }
-> = {
-  active: {
-    label: '✅ Disponible',
-    bg: GREEN,
-  },
-  deja_loue: {
-    label: '🔴 Déjà loué',
-    bg: '#EF4444',
-  },
-  bientot_dispo: {
-    label: '🟡 Bientôt dispo',
-    bg: '#F59E0B',
-  },
-}
-
-/*
- * Transforme automatiquement le nom d'une ville
- * en URL propre pour le référencement.
- *
- * Exemples :
- * Cannes -> cannes
- * Saint-Rémy-de-Provence -> saint-remy-de-provence
- */
 function slugify(value: string) {
   return value
     .normalize('NFD')
@@ -60,844 +63,895 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, '')
 }
 
-export default function RegionClient({
-  logements,
-  regionName,
-  slug,
-  isLoggedIn = false,
-}: {
-  logements: Logement[]
-  regionName: string
-  slug: string
-  isLoggedIn?: boolean
-}) {
-  const [searchVille, setSearchVille] = useState('')
+/*
+ * On récupère les logements de la région.
+ *
+ * Ensuite on compare le slug de la ville.
+ *
+ * C'est volontaire :
+ * l'URL contient "saint-remy-de-provence"
+ * alors que Supabase contient
+ * "Saint Rémy de Provence".
+ */
+async function getVilleData(
+  regionSlug: string,
+  villeSlug: string
+) {
+  const regionName = REGIONS_SLUGS[regionSlug]
 
-  /*
-   * FILTRE DE RECHERCHE
-   */
+  if (!regionName) {
+    return {
+      regionName: null,
+      villeName: null,
+      logements: [] as Logement[],
+    }
+  }
 
-  const filtered = logements.filter(logement => {
-    if (!searchVille) return true
+  const { data, error } = await supabase
+    .from('vitrines')
+    .select(
+      `
+        id,
+        titre,
+        ville,
+        region,
+        type_logement,
+        prix_nuit,
+        surface,
+        nb_chambres,
+        statut,
+        photos,
+        equipements,
+        created_at
+      `
+    )
+    .eq('region', regionName)
+    .in('statut', [
+      'active',
+      'deja_loue',
+      'bientot_dispo',
+    ])
+    .order('created_at', {
+      ascending: false,
+    })
 
-    return logement.ville
-      ?.toLowerCase()
-      .includes(searchVille.toLowerCase())
-  })
+  if (error) {
+    console.error(
+      'Erreur récupération page ville :',
+      error
+    )
 
-  /*
-   * CRÉATION AUTOMATIQUE DES DESTINATIONS
-   *
-   * On récupère toutes les villes présentes dans
-   * les logements de la région.
-   *
-   * Plusieurs logements dans une même ville
-   * = une seule destination avec compteur.
-   */
+    return {
+      regionName,
+      villeName: null,
+      logements: [] as Logement[],
+    }
+  }
 
-  const villes = Object.values(
-    logements.reduce((acc, logement) => {
-      if (!logement.ville) return acc
+  const logementsRegion =
+    (data || []) as Logement[]
 
-      const nom = logement.ville.trim()
-
-      if (!nom) return acc
-
-      const key = nom.toLowerCase()
-
-      if (!acc[key]) {
-        acc[key] = {
-          nom,
-          slug: slugify(nom),
-          count: 0,
-        }
-      }
-
-      acc[key].count += 1
-
-      return acc
-    }, {} as Record<
-      string,
-      {
-        nom: string
-        slug: string
-        count: number
-      }
-    >)
-  ).sort((a, b) =>
-    a.nom.localeCompare(b.nom, 'fr')
+  const logements = logementsRegion.filter(
+    logement =>
+      logement.ville &&
+      slugify(logement.ville) === villeSlug
   )
 
+  const villeName =
+    logements.length > 0
+      ? logements[0].ville
+      : null
+
+  return {
+    regionName,
+    villeName,
+    logements,
+  }
+}
+
+/*
+ * SEO
+ */
+
+export async function generateMetadata({
+  params,
+}: Props): Promise<Metadata> {
+  const { region, ville } = await params
+
+  const {
+    regionName,
+    villeName,
+    logements,
+  } = await getVilleData(region, ville)
+
+  if (
+    !regionName ||
+    !villeName ||
+    logements.length === 0
+  ) {
+    return {
+      title: 'Location de vacances | LocaDirect',
+      robots: {
+        index: false,
+        follow: true,
+      },
+    }
+  }
+
+  const title =
+    `Location vacances ${villeName} — sans commission | LocaDirect`
+
+  const description =
+    `${logements.length} location` +
+    `${logements.length > 1 ? 's' : ''} de vacances à ${villeName}, ` +
+    `${regionName}. Contact direct avec les propriétaires ` +
+    `et réservation sans commission LocaDirect.`
+
+  const canonical =
+    `https://www.loca-direct.fr/location-vacances/${region}/${ville}`
+
+  return {
+    title,
+    description,
+
+    alternates: {
+      canonical,
+    },
+
+    openGraph: {
+      title:
+        `Location vacances ${villeName} | LocaDirect`,
+      description,
+      url: canonical,
+      siteName: 'LocaDirect',
+      type: 'website',
+    },
+
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  }
+}
+
+/*
+ * PAGE
+ */
+
+export default async function VillePage({
+  params,
+}: Props) {
+  const { region, ville } = await params
+
+  const {
+    regionName,
+    villeName,
+    logements,
+  } = await getVilleData(region, ville)
+
+  if (
+    !regionName ||
+    !villeName ||
+    logements.length === 0
+  ) {
+    notFound()
+  }
+
+  const cookieStore = await cookies()
+
+  const isLoggedIn =
+    !!cookieStore.get('loca_session')?.value
+
+  const canonical =
+    `https://www.loca-direct.fr/location-vacances/${region}/${ville}`
+
+  const logementsAvecChien =
+    logements.filter(
+      logement =>
+        Array.isArray(logement.equipements) &&
+        logement.equipements.includes(
+          'chien_10kg'
+        )
+    ).length
+
+  /*
+   * DONNÉES STRUCTURÉES GOOGLE
+   */
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+
+    name:
+      `Locations de vacances à ${villeName}`,
+
+    description:
+      `Locations de vacances à ${villeName} ` +
+      `en contact direct avec les propriétaires.`,
+
+    url: canonical,
+
+    numberOfItems: logements.length,
+
+    itemListElement:
+      logements
+        .slice(0, 20)
+        .map((logement, index) => ({
+          '@type': 'ListItem',
+
+          position: index + 1,
+
+          item: {
+            '@type': 'LodgingBusiness',
+
+            name: logement.titre,
+
+            url:
+              `https://www.loca-direct.fr/vitrine/${logement.id}`,
+
+            address: {
+              '@type': 'PostalAddress',
+
+              addressLocality:
+                villeName,
+
+              addressRegion:
+                regionName,
+
+              addressCountry:
+                'FR',
+            },
+          },
+        })),
+  }
+
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Accueil',
+        item:
+          'https://www.loca-direct.fr/',
+      },
+
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: regionName,
+        item:
+          `https://www.loca-direct.fr/location-vacances/${region}`,
+      },
+
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: villeName,
+        item: canonical,
+      },
+    ],
+  }
+
   return (
-    <div
-      style={{
-        background: WHITE,
-        minHeight: '100vh',
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, sans-serif',
-      }}
-    >
-      <style>{`
-        * {
-          box-sizing: border-box;
-          margin: 0;
-          padding: 0;
-        }
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html:
+            JSON.stringify(jsonLd),
+        }}
+      />
 
-        a {
-          text-decoration: none;
-          color: inherit;
-        }
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html:
+            JSON.stringify(
+              breadcrumbLd
+            ),
+        }}
+      />
 
-        button {
-          font-family: inherit;
-          cursor: pointer;
-          border: none;
-        }
-
-        input {
-          font-family: inherit;
-        }
-
-        .grid-4 {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 16px;
-        }
-
-        .destination-link {
-          transition:
-            transform 0.15s ease,
-            border-color 0.15s ease,
-            box-shadow 0.15s ease;
-        }
-
-        .destination-link:hover {
-          transform: translateY(-1px);
-          border-color: #EA580C !important;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-        }
-
-        .logement-card {
-          transition:
-            transform 0.15s ease,
-            box-shadow 0.15s ease;
-        }
-
-        .logement-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-        }
-
-        @media (max-width: 900px) {
-          .grid-4 {
-            grid-template-columns: 1fr 1fr;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .grid-4 {
-            grid-template-columns: 1fr;
-          }
-        }
-      `}</style>
-
-      {/* NAVIGATION */}
-
-      <nav
+      <main
         style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 100,
-          background: WHITE,
-          borderBottom: `1px solid ${BORDER}`,
-          padding: '12px 20px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          minHeight: '100vh',
+          background: '#FFFFFF',
+          color: '#1F2937',
+          fontFamily:
+            '-apple-system, BlinkMacSystemFont, sans-serif',
         }}
       >
-        <a
-          href="/"
+
+        {/* NAVIGATION */}
+
+        <nav
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
+            borderBottom:
+              '1px solid #E5E7EB',
+            padding: '12px 20px',
+            background: '#FFFFFF',
           }}
         >
           <div
             style={{
-              width: 34,
-              height: 34,
-              background: ORANGE,
-              borderRadius: 10,
+              maxWidth: 1100,
+              margin: '0 auto',
               display: 'flex',
+              justifyContent:
+                'space-between',
               alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 18,
             }}
           >
-            🏠
-          </div>
 
-          <span
-            style={{
-              fontSize: 18,
-              fontWeight: 800,
-              color: TEXT,
-            }}
-          >
-            Loca
-            <span style={{ color: ORANGE }}>
-              Direct
-            </span>
-          </span>
-        </a>
-
-        <div
-          style={{
-            display: 'flex',
-            gap: 8,
-          }}
-        >
-          {isLoggedIn ? (
-            <a
-              href="/espace"
+            <Link
+              href="/"
               style={{
-                background: ORANGE,
-                color: WHITE,
-                borderRadius: 10,
-                padding: '10px 18px',
-                fontSize: 14,
-                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                textDecoration: 'none',
+                color: '#1F2937',
               }}
             >
-              Mon espace →
-            </a>
-          ) : (
-            <>
-              <a
-                href="/connexion"
+              <span
                 style={{
-                  fontSize: 14,
-                  color: TEXT_DIM,
-                  padding: '8px 14px',
-                  borderRadius: 8,
-                }}
-              >
-                Connexion
-              </a>
-
-              <a
-                href="/inscription"
-                style={{
-                  background: ORANGE,
-                  color: WHITE,
+                  width: 34,
+                  height: 34,
+                  background: '#EA580C',
                   borderRadius: 10,
-                  padding: '10px 18px',
-                  fontSize: 14,
-                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems:
+                    'center',
+                  justifyContent:
+                    'center',
                 }}
               >
-                🏠 Publier
-              </a>
-            </>
-          )}
-        </div>
-      </nav>
+                🏠
+              </span>
 
-      <div
-        style={{
-          maxWidth: 1100,
-          margin: '0 auto',
-          padding: '40px 20px 80px',
-        }}
-      >
-        {/* HERO RÉGION */}
+              <strong
+                style={{
+                  fontSize: 18,
+                }}
+              >
+                Loca
+                <span
+                  style={{
+                    color: '#EA580C',
+                  }}
+                >
+                  Direct
+                </span>
+              </strong>
+            </Link>
+
+            {isLoggedIn ? (
+              <Link
+                href="/espace"
+                style={{
+                  background:
+                    '#EA580C',
+                  color: '#FFFFFF',
+                  padding:
+                    '10px 18px',
+                  borderRadius: 10,
+                  textDecoration:
+                    'none',
+                  fontWeight: 700,
+                  fontSize: 14,
+                }}
+              >
+                Mon espace →
+              </Link>
+            ) : (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <Link
+                  href="/connexion"
+                  style={{
+                    color: '#6B7280',
+                    padding:
+                      '8px 14px',
+                    textDecoration:
+                      'none',
+                    fontSize: 14,
+                  }}
+                >
+                  Connexion
+                </Link>
+
+                <Link
+                  href="/inscription"
+                  style={{
+                    background:
+                      '#EA580C',
+                    color: '#FFFFFF',
+                    padding:
+                      '10px 18px',
+                    borderRadius: 10,
+                    textDecoration:
+                      'none',
+                    fontWeight: 700,
+                    fontSize: 14,
+                  }}
+                >
+                  🏠 Publier
+                </Link>
+              </div>
+            )}
+
+          </div>
+        </nav>
 
         <div
           style={{
-            background: `linear-gradient(
-              135deg,
-              ${ORANGE_LIGHT} 0%,
-              ${WHITE} 100%
-            )`,
-            borderRadius: 20,
-            padding: '36px 32px',
-            marginBottom: 36,
+            maxWidth: 1100,
+            margin: '0 auto',
+            padding:
+              '32px 20px 80px',
           }}
         >
-          <p
-            style={{
-              fontSize: 11,
-              color: ORANGE,
-              letterSpacing: '0.2em',
-              textTransform: 'uppercase',
-              fontWeight: 700,
-              marginBottom: 8,
-            }}
-          >
-            Location vacances
-          </p>
 
-          <h1
-            style={{
-              fontSize: 32,
-              fontWeight: 800,
-              color: TEXT,
-              marginBottom: 8,
-            }}
-          >
-            Location vacances {regionName}
-          </h1>
-
-          <p
-            style={{
-              fontSize: 15,
-              color: TEXT_DIM,
-              marginBottom: 20,
-              lineHeight: 1.6,
-            }}
-          >
-            {logements.length} logement
-            {logements.length > 1 ? 's' : ''} en
-            location directe en {regionName} —
-            sans commission, contact direct avec
-            les propriétaires.
-          </p>
+          {/* FIL D'ARIANE */}
 
           <div
             style={{
-              display: 'flex',
-              gap: 16,
-              flexWrap: 'wrap',
+              fontSize: 13,
+              color: '#6B7280',
+              marginBottom: 24,
             }}
           >
-            <span
-              style={{
-                fontSize: 13,
-                color: TEXT_DIM,
-              }}
-            >
-              ✓ Sans commission
-            </span>
+            <Link href="/">
+              Accueil
+            </Link>
 
-            <span
-              style={{
-                fontSize: 13,
-                color: TEXT_DIM,
-              }}
-            >
-              ✓ Contact direct
-            </span>
+            {' › '}
 
-            <span
-              style={{
-                fontSize: 13,
-                color: TEXT_DIM,
-              }}
+            <Link
+              href={
+                `/location-vacances/${region}`
+              }
             >
-              ✓ Annonces vérifiées
+              {regionName}
+            </Link>
+
+            {' › '}
+
+            <span>
+              {villeName}
             </span>
           </div>
-        </div>
 
-        {/* DESTINATIONS DE LA RÉGION */}
+          {/* HERO */}
 
-        {villes.length > 0 && (
           <section
             style={{
-              marginBottom: 32,
-              padding: '24px',
-              background: GRAY,
-              borderRadius: 16,
-              border: `1px solid ${BORDER}`,
+              background:
+                'linear-gradient(135deg,#FFF7ED 0%,#FFFFFF 100%)',
+              borderRadius: 20,
+              padding:
+                '36px 32px',
+              marginBottom: 36,
             }}
           >
-            <h2
-              style={{
-                fontSize: 20,
-                fontWeight: 800,
-                color: TEXT,
-                marginBottom: 8,
-              }}
-            >
-              Destinations en {regionName}
-            </h2>
 
             <p
               style={{
-                fontSize: 14,
-                color: TEXT_DIM,
-                lineHeight: 1.6,
-                marginBottom: 18,
+                color: '#EA580C',
+                fontSize: 11,
+                textTransform:
+                  'uppercase',
+                letterSpacing:
+                  '0.2em',
+                fontWeight: 700,
+                marginBottom: 8,
               }}
             >
-              Découvrez les locations de vacances
-              disponibles en contact direct avec les
-              propriétaires dans les différentes
-              destinations de {regionName}.
+              LOCATION VACANCES
+            </p>
+
+            <h1
+              style={{
+                fontSize: 34,
+                lineHeight: 1.2,
+                marginBottom: 12,
+              }}
+            >
+              Location vacances à{' '}
+              {villeName}
+            </h1>
+
+            <p
+              style={{
+                color: '#6B7280',
+                lineHeight: 1.7,
+                maxWidth: 750,
+              }}
+            >
+              Découvrez les locations
+              de vacances disponibles à{' '}
+              {villeName}, en{' '}
+              {regionName}. Contactez
+              directement les
+              propriétaires et
+              organisez votre séjour
+              sans commission de
+              réservation LocaDirect.
             </p>
 
             <div
               style={{
                 display: 'flex',
                 flexWrap: 'wrap',
-                gap: 10,
+                gap: 16,
+                marginTop: 20,
+                fontSize: 13,
+                color: '#6B7280',
               }}
             >
-              {villes.map(ville => (
-                <a
-                  key={ville.slug}
-                  className="destination-link"
-                  href={`/location-vacances/${slug}/${ville.slug}`}
-                  style={{
-                    background: WHITE,
-                    border: `1px solid ${BORDER}`,
-                    borderRadius: 30,
-                    padding: '9px 15px',
-                    fontSize: 13,
-                    color: TEXT,
-                    fontWeight: 600,
-                  }}
-                >
-                  📍 {ville.nom}
+              <span>
+                ✓ Sans commission
+              </span>
 
-                  <span
-                    style={{
-                      color: TEXT_DIM,
-                      fontWeight: 400,
-                      marginLeft: 5,
-                    }}
-                  >
-                    ({ville.count})
-                  </span>
-                </a>
-              ))}
+              <span>
+                ✓ Contact direct
+              </span>
+
+              <span>
+                ✓ Annonces vérifiées
+              </span>
+
+              {logementsAvecChien >
+                0 && (
+                <span>
+                  🐕{' '}
+                  {logementsAvecChien}{' '}
+                  logement
+                  {logementsAvecChien >
+                  1
+                    ? 's'
+                    : ''}{' '}
+                  acceptant les grands
+                  chiens
+                </span>
+              )}
             </div>
+
           </section>
-        )}
 
-        {/* FILTRE VILLE */}
+          {/* TEXTE SEO */}
 
-        <div
-          style={{
-            marginBottom: 24,
-          }}
-        >
-          <input
-            value={searchVille}
-            onChange={e =>
-              setSearchVille(e.target.value)
-            }
-            placeholder="🔍 Filtrer par ville..."
-            aria-label="Filtrer les locations par ville"
+          <section
             style={{
-              width: '100%',
-              maxWidth: 400,
-              padding: '12px 16px',
-              borderRadius: 12,
-              border: `1px solid ${BORDER}`,
-              fontSize: 14,
-              outline: 'none',
-            }}
-          />
-
-          <p
-            style={{
-              fontSize: 13,
-              color: TEXT_DIM,
-              marginTop: 8,
+              marginBottom: 32,
+              maxWidth: 850,
             }}
           >
-            {filtered.length} logement
-            {filtered.length > 1 ? 's' : ''}{' '}
-            trouvé
-            {filtered.length > 1 ? 's' : ''}
-          </p>
-        </div>
-
-        {/* ANNONCES */}
-
-        {filtered.length === 0 ? (
-          <div
-            style={{
-              background: GRAY,
-              borderRadius: 16,
-              padding: 48,
-              textAlign: 'center',
-              border: `1px solid ${BORDER}`,
-            }}
-          >
-            <p
+            <h2
               style={{
-                fontSize: 40,
+                fontSize: 23,
                 marginBottom: 12,
               }}
             >
-              🏠
+              Trouver une location de
+              vacances à {villeName}
+            </h2>
+
+            <p
+              style={{
+                color: '#4B5563',
+                lineHeight: 1.8,
+              }}
+            >
+              LocaDirect met en relation
+              les voyageurs avec des
+              propriétaires proposant
+              leur logement à{' '}
+              {villeName}. Consultez les
+              annonces disponibles,
+              découvrez les équipements
+              et contactez directement
+              le propriétaire pour
+              connaître les
+              disponibilités et les
+              conditions du séjour.
+            </p>
+          </section>
+
+          {/* LOGEMENTS */}
+
+          <section>
+
+            <h2
+              style={{
+                fontSize: 23,
+                marginBottom: 20,
+              }}
+            >
+              {logements.length}{' '}
+              location
+              {logements.length > 1
+                ? 's'
+                : ''}{' '}
+              à {villeName}
+            </h2>
+
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns:
+                  'repeat(auto-fit,minmax(240px,1fr))',
+                gap: 18,
+              }}
+            >
+
+              {logements.map(
+                logement => {
+                  const accepteChien =
+                    Array.isArray(
+                      logement.equipements
+                    ) &&
+                    logement.equipements.includes(
+                      'chien_10kg'
+                    )
+
+                  return (
+                    <Link
+                      key={
+                        logement.id
+                      }
+                      href={
+                        `/vitrine/${logement.id}`
+                      }
+                      style={{
+                        border:
+                          '1px solid #E5E7EB',
+                        borderRadius: 16,
+                        overflow:
+                          'hidden',
+                        textDecoration:
+                          'none',
+                        color:
+                          '#1F2937',
+                        background:
+                          '#FFFFFF',
+                      }}
+                    >
+
+                      {logement
+                        .photos?.[0] ? (
+                        <img
+                          src={
+                            logement
+                              .photos[0]
+                          }
+                          alt={
+                            `${logement.titre} - location vacances ${villeName}`
+                          }
+                          style={{
+                            width:
+                              '100%',
+                            height: 180,
+                            objectFit:
+                              'cover',
+                            display:
+                              'block',
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            height: 180,
+                            background:
+                              '#F9FAFB',
+                            display:
+                              'flex',
+                            alignItems:
+                              'center',
+                            justifyContent:
+                              'center',
+                            fontSize: 40,
+                          }}
+                        >
+                          🏠
+                        </div>
+                      )}
+
+                      <div
+                        style={{
+                          padding: 16,
+                        }}
+                      >
+
+                        <p
+                          style={{
+                            fontSize: 12,
+                            color:
+                              '#6B7280',
+                            marginBottom: 5,
+                          }}
+                        >
+                          {
+                            logement.type_logement
+                          }
+
+                          {logement.surface
+                            ? ` · ${logement.surface} m²`
+                            : ''}
+                        </p>
+
+                        <h3
+                          style={{
+                            fontSize: 15,
+                            marginBottom: 10,
+                          }}
+                        >
+                          {
+                            logement.titre
+                          }
+                        </h3>
+
+                        {accepteChien && (
+                          <p
+                            style={{
+                              fontSize: 12,
+                              marginBottom: 10,
+                            }}
+                          >
+                            🐕 Grand chien
+                            +10 kg bienvenu
+                          </p>
+                        )}
+
+                        <div
+                          style={{
+                            display:
+                              'flex',
+                            justifyContent:
+                              'space-between',
+                            alignItems:
+                              'center',
+                          }}
+                        >
+
+                          <strong
+                            style={{
+                              color:
+                                '#EA580C',
+                              fontSize: 17,
+                            }}
+                          >
+                            {
+                              logement.prix_nuit
+                            }{' '}
+                            €
+
+                            <span
+                              style={{
+                                color:
+                                  '#6B7280',
+                                fontWeight: 400,
+                                fontSize: 11,
+                              }}
+                            >
+                              /nuit
+                            </span>
+                          </strong>
+
+                          {logement.nb_chambres !=
+                            null && (
+                            <span
+                              style={{
+                                color:
+                                  '#6B7280',
+                                fontSize: 12,
+                              }}
+                            >
+                              {
+                                logement.nb_chambres
+                              }{' '}
+                              ch.
+                            </span>
+                          )}
+
+                        </div>
+                      </div>
+
+                    </Link>
+                  )
+                }
+              )}
+
+            </div>
+          </section>
+
+          {/* SEO BAS DE PAGE */}
+
+          <section
+            style={{
+              marginTop: 50,
+              padding: 28,
+              background: '#F9FAFB',
+              borderRadius: 16,
+            }}
+          >
+
+            <h2
+              style={{
+                fontSize: 21,
+                marginBottom: 12,
+              }}
+            >
+              Réserver directement une
+              location à {villeName}
+            </h2>
+
+            <p
+              style={{
+                color: '#4B5563',
+                lineHeight: 1.8,
+                marginBottom: 14,
+              }}
+            >
+              La location directe vous
+              permet d'échanger avec le
+              propriétaire avant votre
+              séjour et de lui poser vos
+              questions sur le logement,
+              ses équipements et ses
+              disponibilités.
             </p>
 
             <p
               style={{
-                fontSize: 15,
-                color: TEXT_DIM,
-                marginBottom: 20,
+                color: '#4B5563',
+                lineHeight: 1.8,
               }}
             >
-              Aucune annonce pour le moment
-              en {regionName}.
+              LocaDirect ne prélève pas
+              de commission de
+              réservation. La mise en
+              relation s'effectue
+              directement entre le
+              voyageur et le
+              propriétaire.
             </p>
 
-            <a
-              href="/inscription"
-              style={{
-                background: ORANGE,
-                color: WHITE,
-                borderRadius: 12,
-                padding: '12px 24px',
-                fontSize: 14,
-                fontWeight: 700,
-                display: 'inline-block',
-              }}
-            >
-              Publier un logement en {regionName} →
-            </a>
-          </div>
-        ) : (
-          <div className="grid-4">
-            {filtered.map(logement => {
-              const badge =
-                statutBadge[logement.statut] || {
-                  label: logement.statut,
-                  bg: TEXT_DIM,
-                }
+          </section>
 
-              const hasChien =
-                Array.isArray(
-                  logement.equipements
-                ) &&
-                logement.equipements.includes(
-                  'chien_10kg'
-                )
-
-              return (
-                <a
-                  key={logement.id}
-                  className="logement-card"
-                  href={`/vitrine/${logement.id}`}
-                  style={{
-                    borderRadius: 16,
-                    overflow: 'hidden',
-                    border: `1px solid ${BORDER}`,
-                    display: 'block',
-                    background: WHITE,
-                  }}
-                >
-                  <div
-                    style={{
-                      position: 'relative',
-                    }}
-                  >
-                    {logement.photos?.[0] ? (
-                      <img
-                        src={logement.photos[0]}
-                        alt={`${logement.titre} - location vacances ${logement.ville}`}
-                        loading="lazy"
-                        style={{
-                          width: '100%',
-                          height: 160,
-                          objectFit: 'cover',
-                          display: 'block',
-                        }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: '100%',
-                          height: 160,
-                          background: GRAY,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: 36,
-                        }}
-                      >
-                        🏠
-                      </div>
-                    )}
-
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: 8,
-                        left: 8,
-                        display: 'flex',
-                        gap: 4,
-                        flexWrap: 'wrap',
-                      }}
-                    >
-                      <span
-                        style={{
-                          background: badge.bg,
-                          color: WHITE,
-                          borderRadius: 20,
-                          padding: '3px 10px',
-                          fontSize: 11,
-                          fontWeight: 700,
-                        }}
-                      >
-                        {badge.label}
-                      </span>
-
-                      {hasChien && (
-                        <span
-                          style={{
-                            background: '#78350F',
-                            color: '#FCD34D',
-                            borderRadius: 20,
-                            padding: '3px 10px',
-                            fontSize: 11,
-                            fontWeight: 700,
-                          }}
-                        >
-                          🐕 +10 kg
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      padding: 14,
-                    }}
-                  >
-                    <p
-                      style={{
-                        fontSize: 12,
-                        color: TEXT_DIM,
-                        marginBottom: 4,
-                      }}
-                    >
-                      {logement.type_logement}
-
-                      {logement.surface
-                        ? ` · ${logement.surface}m²`
-                        : ''}
-
-                      {' · '}
-
-                      {logement.ville}
-                    </p>
-
-                    <p
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 700,
-                        color: TEXT,
-                        marginBottom: 8,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {logement.titre}
-                    </p>
-
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent:
-                          'space-between',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <p
-                        style={{
-                          fontSize: 16,
-                          fontWeight: 800,
-                          color: ORANGE,
-                        }}
-                      >
-                        {logement.prix_nuit}€
-
-                        <span
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 400,
-                            color: TEXT_DIM,
-                          }}
-                        >
-                          /nuit
-                        </span>
-                      </p>
-
-                      {logement.nb_chambres !=
-                        null && (
-                        <p
-                          style={{
-                            fontSize: 12,
-                            color: TEXT_DIM,
-                          }}
-                        >
-                          {logement.nb_chambres}{' '}
-                          ch.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </a>
-              )
-            })}
-          </div>
-        )}
-
-        {/* CONTENU SEO */}
-
-        <section
-          style={{
-            marginTop: 48,
-            padding: '28px 24px',
-            background: ORANGE_LIGHT,
-            borderRadius: 16,
-          }}
-        >
-          <h2
-            style={{
-              fontSize: 21,
-              fontWeight: 800,
-              color: TEXT,
-              marginBottom: 12,
-            }}
-          >
-            Location de vacances en {regionName}
-            sans commission
-          </h2>
-
-          <p
-            style={{
-              fontSize: 14,
-              color: TEXT_DIM,
-              lineHeight: 1.8,
-              marginBottom: 12,
-            }}
-          >
-            LocaDirect permet aux voyageurs de
-            découvrir des locations de vacances en{' '}
-            {regionName} et de contacter directement
-            les propriétaires. Consultez les
-            logements disponibles dans les
-            différentes villes de la région et
-            organisez votre séjour sans commission
-            de réservation ajoutée par la plateforme.
-          </p>
-
-          <p
-            style={{
-              fontSize: 14,
-              color: TEXT_DIM,
-              lineHeight: 1.8,
-            }}
-          >
-            Maison, appartement ou autre hébergement :
-            chaque annonce dispose de sa propre page
-            avec les informations du logement, son
-            tarif et les moyens de contacter le
-            propriétaire.
-          </p>
-        </section>
-
-        {/* LIENS VERS AUTRES RÉGIONS */}
-
-        <div
-          style={{
-            marginTop: 32,
-            padding: '28px 24px',
-            background: GRAY,
-            borderRadius: 16,
-            border: `1px solid ${BORDER}`,
-          }}
-        >
-          <h2
-            style={{
-              fontSize: 16,
-              fontWeight: 700,
-              color: TEXT,
-              marginBottom: 16,
-            }}
-          >
-            Explorer d&apos;autres régions
-          </h2>
+          {/* RETOUR RÉGION */}
 
           <div
             style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 8,
+              marginTop: 30,
             }}
           >
-            {[
-              {
-                slug: 'bretagne',
-                name: 'Bretagne',
-              },
-              {
-                slug: 'nouvelle-aquitaine',
-                name: 'Nouvelle-Aquitaine',
-              },
-              {
-                slug: 'occitanie',
-                name: 'Occitanie',
-              },
-              {
-                slug:
-                  'provence-alpes-cote-dazur',
-                name:
-                  'Provence-Alpes-Côte d’Azur',
-              },
-              {
-                slug:
-                  'auvergne-rhone-alpes',
-                name:
-                  'Auvergne-Rhône-Alpes',
-              },
-              {
-                slug: 'normandie',
-                name: 'Normandie',
-              },
-              {
-                slug: 'grand-est',
-                name: 'Grand Est',
-              },
-              {
-                slug: 'pays-de-la-loire',
-                name: 'Pays de la Loire',
-              },
-            ]
-              .filter(
-                region =>
-                  region.slug !== slug
-              )
-              .map(region => (
-                <a
-                  key={region.slug}
-                  href={`/location-vacances/${region.slug}`}
-                  style={{
-                    background: WHITE,
-                    border: `1px solid ${BORDER}`,
-                    borderRadius: 20,
-                    padding: '6px 14px',
-                    fontSize: 13,
-                    color: TEXT,
-                    fontWeight: 500,
-                  }}
-                >
-                  {region.name}
-                </a>
-              ))}
+            <Link
+              href={
+                `/location-vacances/${region}`
+              }
+              style={{
+                color: '#EA580C',
+                fontWeight: 700,
+                textDecoration: 'none',
+              }}
+            >
+              ← Toutes les locations en{' '}
+              {regionName}
+            </Link>
           </div>
+
         </div>
-      </div>
-    </div>
+      </main>
+    </>
   )
 }
