@@ -24,13 +24,48 @@ type Logement = {
   equipements?: string[]
 }
 
-const statutBadge: Record<string, { label: string; bg: string }> = {
-  active: { label: '✅ Disponible', bg: GREEN },
-  deja_loue: { label: '🔴 Déjà loué', bg: '#EF4444' },
-  bientot_dispo: { label: '🟡 Bientôt dispo', bg: '#F59E0B' },
+const statutBadge: Record<
+  string,
+  { label: string; bg: string }
+> = {
+  active: {
+    label: '✅ Disponible',
+    bg: GREEN,
+  },
+  deja_loue: {
+    label: '🔴 Déjà loué',
+    bg: '#EF4444',
+  },
+  bientot_dispo: {
+    label: '🟡 Bientôt dispo',
+    bg: '#F59E0B',
+  },
 }
 
-export default function RegionClient({ logements, regionName, slug, isLoggedIn = false }: {
+/*
+ * Transforme automatiquement le nom d'une ville
+ * en URL propre pour le référencement.
+ *
+ * Exemples :
+ * Cannes -> cannes
+ * Saint-Rémy-de-Provence -> saint-remy-de-provence
+ */
+function slugify(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/['’]/g, '-')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+export default function RegionClient({
+  logements,
+  regionName,
+  slug,
+  isLoggedIn = false,
+}: {
   logements: Logement[]
   regionName: string
   slug: string
@@ -38,100 +73,677 @@ export default function RegionClient({ logements, regionName, slug, isLoggedIn =
 }) {
   const [searchVille, setSearchVille] = useState('')
 
-  const filtered = logements.filter(v =>
-    !searchVille || v.ville.toLowerCase().includes(searchVille.toLowerCase())
+  /*
+   * FILTRE DE RECHERCHE
+   */
+
+  const filtered = logements.filter(logement => {
+    if (!searchVille) return true
+
+    return logement.ville
+      ?.toLowerCase()
+      .includes(searchVille.toLowerCase())
+  })
+
+  /*
+   * CRÉATION AUTOMATIQUE DES DESTINATIONS
+   *
+   * On récupère toutes les villes présentes dans
+   * les logements de la région.
+   *
+   * Plusieurs logements dans une même ville
+   * = une seule destination avec compteur.
+   */
+
+  const villes = Object.values(
+    logements.reduce((acc, logement) => {
+      if (!logement.ville) return acc
+
+      const nom = logement.ville.trim()
+
+      if (!nom) return acc
+
+      const key = nom.toLowerCase()
+
+      if (!acc[key]) {
+        acc[key] = {
+          nom,
+          slug: slugify(nom),
+          count: 0,
+        }
+      }
+
+      acc[key].count += 1
+
+      return acc
+    }, {} as Record<
+      string,
+      {
+        nom: string
+        slug: string
+        count: number
+      }
+    >)
+  ).sort((a, b) =>
+    a.nom.localeCompare(b.nom, 'fr')
   )
 
   return (
-    <div style={{ background: WHITE, minHeight: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}>
+    <div
+      style={{
+        background: WHITE,
+        minHeight: '100vh',
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, sans-serif',
+      }}
+    >
       <style>{`
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        a { text-decoration: none; color: inherit; }
-        button { font-family: inherit; cursor: pointer; border: none; }
-        input { font-family: inherit; }
-        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-        @media (max-width: 900px) { .grid-4 { grid-template-columns: 1fr 1fr; } }
-        @media (max-width: 480px) { .grid-4 { grid-template-columns: 1fr; } }
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
+
+        a {
+          text-decoration: none;
+          color: inherit;
+        }
+
+        button {
+          font-family: inherit;
+          cursor: pointer;
+          border: none;
+        }
+
+        input {
+          font-family: inherit;
+        }
+
+        .grid-4 {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 16px;
+        }
+
+        .destination-link {
+          transition:
+            transform 0.15s ease,
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+        }
+
+        .destination-link:hover {
+          transform: translateY(-1px);
+          border-color: #EA580C !important;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+
+        .logement-card {
+          transition:
+            transform 0.15s ease,
+            box-shadow 0.15s ease;
+        }
+
+        .logement-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        }
+
+        @media (max-width: 900px) {
+          .grid-4 {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .grid-4 {
+            grid-template-columns: 1fr;
+          }
+        }
       `}</style>
 
-      <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: WHITE, borderBottom: `1px solid ${BORDER}`, padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <div style={{ width: 34, height: 34, background: ORANGE, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🏠</div>
-          <span style={{ fontSize: 18, fontWeight: 800, color: TEXT }}>Loca<span style={{ color: ORANGE }}>Direct</span></span>
+      {/* NAVIGATION */}
+
+      <nav
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 100,
+          background: WHITE,
+          borderBottom: `1px solid ${BORDER}`,
+          padding: '12px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <a
+          href="/"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <div
+            style={{
+              width: 34,
+              height: 34,
+              background: ORANGE,
+              borderRadius: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 18,
+            }}
+          >
+            🏠
+          </div>
+
+          <span
+            style={{
+              fontSize: 18,
+              fontWeight: 800,
+              color: TEXT,
+            }}
+          >
+            Loca
+            <span style={{ color: ORANGE }}>
+              Direct
+            </span>
+          </span>
         </a>
-        <div style={{ display: 'flex', gap: 8 }}>
+
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+          }}
+        >
           {isLoggedIn ? (
-            <a href="/espace" style={{ background: ORANGE, color: WHITE, borderRadius: 10, padding: '10px 18px', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Mon espace →</a>
+            <a
+              href="/espace"
+              style={{
+                background: ORANGE,
+                color: WHITE,
+                borderRadius: 10,
+                padding: '10px 18px',
+                fontSize: 14,
+                fontWeight: 700,
+              }}
+            >
+              Mon espace →
+            </a>
           ) : (
             <>
-              <a href="/connexion" style={{ fontSize: 14, color: TEXT_DIM, padding: '8px 14px', borderRadius: 8, textDecoration: 'none' }}>Connexion</a>
-              <a href="/inscription" style={{ background: ORANGE, color: WHITE, borderRadius: 10, padding: '10px 18px', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>🏠 Publier</a>
+              <a
+                href="/connexion"
+                style={{
+                  fontSize: 14,
+                  color: TEXT_DIM,
+                  padding: '8px 14px',
+                  borderRadius: 8,
+                }}
+              >
+                Connexion
+              </a>
+
+              <a
+                href="/inscription"
+                style={{
+                  background: ORANGE,
+                  color: WHITE,
+                  borderRadius: 10,
+                  padding: '10px 18px',
+                  fontSize: 14,
+                  fontWeight: 700,
+                }}
+              >
+                🏠 Publier
+              </a>
             </>
           )}
         </div>
       </nav>
 
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 20px 80px' }}>
+      <div
+        style={{
+          maxWidth: 1100,
+          margin: '0 auto',
+          padding: '40px 20px 80px',
+        }}
+      >
         {/* HERO RÉGION */}
-        <div style={{ background: `linear-gradient(135deg, ${ORANGE_LIGHT} 0%, ${WHITE} 100%)`, borderRadius: 20, padding: '36px 32px', marginBottom: 36 }}>
-          <p style={{ fontSize: 11, color: ORANGE, letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>Location vacances</p>
-          <h1 style={{ fontSize: 32, fontWeight: 800, color: TEXT, marginBottom: 8 }}>
-            {regionName}
-          </h1>
-          <p style={{ fontSize: 15, color: TEXT_DIM, marginBottom: 20, lineHeight: 1.6 }}>
-            {logements.length} logement{logements.length > 1 ? 's' : ''} en location directe en {regionName} — sans commission, contact WhatsApp direct.
+
+        <div
+          style={{
+            background: `linear-gradient(
+              135deg,
+              ${ORANGE_LIGHT} 0%,
+              ${WHITE} 100%
+            )`,
+            borderRadius: 20,
+            padding: '36px 32px',
+            marginBottom: 36,
+          }}
+        >
+          <p
+            style={{
+              fontSize: 11,
+              color: ORANGE,
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+              fontWeight: 700,
+              marginBottom: 8,
+            }}
+          >
+            Location vacances
           </p>
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 13, color: TEXT_DIM }}>✓ Sans commission</span>
-            <span style={{ fontSize: 13, color: TEXT_DIM }}>✓ Contact direct WhatsApp</span>
-            <span style={{ fontSize: 13, color: TEXT_DIM }}>✓ Annonces vérifiées</span>
+
+          <h1
+            style={{
+              fontSize: 32,
+              fontWeight: 800,
+              color: TEXT,
+              marginBottom: 8,
+            }}
+          >
+            Location vacances {regionName}
+          </h1>
+
+          <p
+            style={{
+              fontSize: 15,
+              color: TEXT_DIM,
+              marginBottom: 20,
+              lineHeight: 1.6,
+            }}
+          >
+            {logements.length} logement
+            {logements.length > 1 ? 's' : ''} en
+            location directe en {regionName} —
+            sans commission, contact direct avec
+            les propriétaires.
+          </p>
+
+          <div
+            style={{
+              display: 'flex',
+              gap: 16,
+              flexWrap: 'wrap',
+            }}
+          >
+            <span
+              style={{
+                fontSize: 13,
+                color: TEXT_DIM,
+              }}
+            >
+              ✓ Sans commission
+            </span>
+
+            <span
+              style={{
+                fontSize: 13,
+                color: TEXT_DIM,
+              }}
+            >
+              ✓ Contact direct
+            </span>
+
+            <span
+              style={{
+                fontSize: 13,
+                color: TEXT_DIM,
+              }}
+            >
+              ✓ Annonces vérifiées
+            </span>
           </div>
         </div>
 
+        {/* DESTINATIONS DE LA RÉGION */}
+
+        {villes.length > 0 && (
+          <section
+            style={{
+              marginBottom: 32,
+              padding: '24px',
+              background: GRAY,
+              borderRadius: 16,
+              border: `1px solid ${BORDER}`,
+            }}
+          >
+            <h2
+              style={{
+                fontSize: 20,
+                fontWeight: 800,
+                color: TEXT,
+                marginBottom: 8,
+              }}
+            >
+              Destinations en {regionName}
+            </h2>
+
+            <p
+              style={{
+                fontSize: 14,
+                color: TEXT_DIM,
+                lineHeight: 1.6,
+                marginBottom: 18,
+              }}
+            >
+              Découvrez les locations de vacances
+              disponibles en contact direct avec les
+              propriétaires dans les différentes
+              destinations de {regionName}.
+            </p>
+
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 10,
+              }}
+            >
+              {villes.map(ville => (
+                <a
+                  key={ville.slug}
+                  className="destination-link"
+                  href={`/location-vacances/${slug}/${ville.slug}`}
+                  style={{
+                    background: WHITE,
+                    border: `1px solid ${BORDER}`,
+                    borderRadius: 30,
+                    padding: '9px 15px',
+                    fontSize: 13,
+                    color: TEXT,
+                    fontWeight: 600,
+                  }}
+                >
+                  📍 {ville.nom}
+
+                  <span
+                    style={{
+                      color: TEXT_DIM,
+                      fontWeight: 400,
+                      marginLeft: 5,
+                    }}
+                  >
+                    ({ville.count})
+                  </span>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* FILTRE VILLE */}
-        <div style={{ marginBottom: 24 }}>
+
+        <div
+          style={{
+            marginBottom: 24,
+          }}
+        >
           <input
             value={searchVille}
-            onChange={e => setSearchVille(e.target.value)}
+            onChange={e =>
+              setSearchVille(e.target.value)
+            }
             placeholder="🔍 Filtrer par ville..."
-            style={{ width: '100%', maxWidth: 400, padding: '12px 16px', borderRadius: 12, border: `1px solid ${BORDER}`, fontSize: 14, outline: 'none' }}
+            aria-label="Filtrer les locations par ville"
+            style={{
+              width: '100%',
+              maxWidth: 400,
+              padding: '12px 16px',
+              borderRadius: 12,
+              border: `1px solid ${BORDER}`,
+              fontSize: 14,
+              outline: 'none',
+            }}
           />
-          <p style={{ fontSize: 13, color: TEXT_DIM, marginTop: 8 }}>{filtered.length} logement{filtered.length > 1 ? 's' : ''} trouvé{filtered.length > 1 ? 's' : ''}</p>
+
+          <p
+            style={{
+              fontSize: 13,
+              color: TEXT_DIM,
+              marginTop: 8,
+            }}
+          >
+            {filtered.length} logement
+            {filtered.length > 1 ? 's' : ''}{' '}
+            trouvé
+            {filtered.length > 1 ? 's' : ''}
+          </p>
         </div>
 
         {/* ANNONCES */}
+
         {filtered.length === 0 ? (
-          <div style={{ background: GRAY, borderRadius: 16, padding: 48, textAlign: 'center', border: `1px solid ${BORDER}` }}>
-            <p style={{ fontSize: 40, marginBottom: 12 }}>🏠</p>
-            <p style={{ fontSize: 15, color: TEXT_DIM, marginBottom: 20 }}>Aucune annonce pour le moment en {regionName}.</p>
-            <a href="/inscription" style={{ background: ORANGE, color: WHITE, borderRadius: 12, padding: '12px 24px', fontSize: 14, fontWeight: 700, display: 'inline-block', textDecoration: 'none' }}>
+          <div
+            style={{
+              background: GRAY,
+              borderRadius: 16,
+              padding: 48,
+              textAlign: 'center',
+              border: `1px solid ${BORDER}`,
+            }}
+          >
+            <p
+              style={{
+                fontSize: 40,
+                marginBottom: 12,
+              }}
+            >
+              🏠
+            </p>
+
+            <p
+              style={{
+                fontSize: 15,
+                color: TEXT_DIM,
+                marginBottom: 20,
+              }}
+            >
+              Aucune annonce pour le moment
+              en {regionName}.
+            </p>
+
+            <a
+              href="/inscription"
+              style={{
+                background: ORANGE,
+                color: WHITE,
+                borderRadius: 12,
+                padding: '12px 24px',
+                fontSize: 14,
+                fontWeight: 700,
+                display: 'inline-block',
+              }}
+            >
               Publier un logement en {regionName} →
             </a>
           </div>
         ) : (
           <div className="grid-4">
-            {filtered.map(v => {
-              const badge = statutBadge[v.statut] || { label: v.statut, bg: TEXT_DIM }
-              const hasChien = Array.isArray(v.equipements) && v.equipements.includes('chien_10kg')
+            {filtered.map(logement => {
+              const badge =
+                statutBadge[logement.statut] || {
+                  label: logement.statut,
+                  bg: TEXT_DIM,
+                }
+
+              const hasChien =
+                Array.isArray(
+                  logement.equipements
+                ) &&
+                logement.equipements.includes(
+                  'chien_10kg'
+                )
+
               return (
-                <a key={v.id} href={`/vitrine/${v.id}`} style={{ borderRadius: 16, overflow: 'hidden', border: `1px solid ${BORDER}`, display: 'block', background: WHITE, textDecoration: 'none' }}>
-                  <div style={{ position: 'relative' }}>
-                    {v.photos?.[0] ? (
-                      <img src={v.photos[0]} alt={v.titre} style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }} />
+                <a
+                  key={logement.id}
+                  className="logement-card"
+                  href={`/vitrine/${logement.id}`}
+                  style={{
+                    borderRadius: 16,
+                    overflow: 'hidden',
+                    border: `1px solid ${BORDER}`,
+                    display: 'block',
+                    background: WHITE,
+                  }}
+                >
+                  <div
+                    style={{
+                      position: 'relative',
+                    }}
+                  >
+                    {logement.photos?.[0] ? (
+                      <img
+                        src={logement.photos[0]}
+                        alt={`${logement.titre} - location vacances ${logement.ville}`}
+                        loading="lazy"
+                        style={{
+                          width: '100%',
+                          height: 160,
+                          objectFit: 'cover',
+                          display: 'block',
+                        }}
+                      />
                     ) : (
-                      <div style={{ width: '100%', height: 160, background: GRAY, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36 }}>🏠</div>
+                      <div
+                        style={{
+                          width: '100%',
+                          height: 160,
+                          background: GRAY,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 36,
+                        }}
+                      >
+                        🏠
+                      </div>
                     )}
-                    <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                      <span style={{ background: badge.bg, color: WHITE, borderRadius: 20, padding: '3px 10px', fontSize: 11, fontWeight: 700 }}>{badge.label}</span>
-                      {hasChien && <span style={{ background: '#78350F', color: '#FCD34D', borderRadius: 20, padding: '3px 10px', fontSize: 11, fontWeight: 700 }}>🐕 +10 kg</span>}
+
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 8,
+                        left: 8,
+                        display: 'flex',
+                        gap: 4,
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <span
+                        style={{
+                          background: badge.bg,
+                          color: WHITE,
+                          borderRadius: 20,
+                          padding: '3px 10px',
+                          fontSize: 11,
+                          fontWeight: 700,
+                        }}
+                      >
+                        {badge.label}
+                      </span>
+
+                      {hasChien && (
+                        <span
+                          style={{
+                            background: '#78350F',
+                            color: '#FCD34D',
+                            borderRadius: 20,
+                            padding: '3px 10px',
+                            fontSize: 11,
+                            fontWeight: 700,
+                          }}
+                        >
+                          🐕 +10 kg
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div style={{ padding: 14 }}>
-                    <p style={{ fontSize: 12, color: TEXT_DIM, marginBottom: 4 }}>{v.type_logement}{v.surface ? ` · ${v.surface}m²` : ''} · {v.ville}</p>
-                    <p style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v.titre}</p>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <p style={{ fontSize: 16, fontWeight: 800, color: ORANGE }}>{v.prix_nuit}€<span style={{ fontSize: 11, fontWeight: 400, color: TEXT_DIM }}>/nuit</span></p>
-                      {v.nb_chambres != null && <p style={{ fontSize: 12, color: TEXT_DIM }}>{v.nb_chambres} ch.</p>}
+
+                  <div
+                    style={{
+                      padding: 14,
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontSize: 12,
+                        color: TEXT_DIM,
+                        marginBottom: 4,
+                      }}
+                    >
+                      {logement.type_logement}
+
+                      {logement.surface
+                        ? ` · ${logement.surface}m²`
+                        : ''}
+
+                      {' · '}
+
+                      {logement.ville}
+                    </p>
+
+                    <p
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: TEXT,
+                        marginBottom: 8,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {logement.titre}
+                    </p>
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent:
+                          'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontSize: 16,
+                          fontWeight: 800,
+                          color: ORANGE,
+                        }}
+                      >
+                        {logement.prix_nuit}€
+
+                        <span
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 400,
+                            color: TEXT_DIM,
+                          }}
+                        >
+                          /nuit
+                        </span>
+                      </p>
+
+                      {logement.nb_chambres !=
+                        null && (
+                        <p
+                          style={{
+                            fontSize: 12,
+                            color: TEXT_DIM,
+                          }}
+                        >
+                          {logement.nb_chambres}{' '}
+                          ch.
+                        </p>
+                      )}
                     </div>
                   </div>
                 </a>
@@ -140,24 +752,149 @@ export default function RegionClient({ logements, regionName, slug, isLoggedIn =
           </div>
         )}
 
+        {/* CONTENU SEO */}
+
+        <section
+          style={{
+            marginTop: 48,
+            padding: '28px 24px',
+            background: ORANGE_LIGHT,
+            borderRadius: 16,
+          }}
+        >
+          <h2
+            style={{
+              fontSize: 21,
+              fontWeight: 800,
+              color: TEXT,
+              marginBottom: 12,
+            }}
+          >
+            Location de vacances en {regionName}
+            sans commission
+          </h2>
+
+          <p
+            style={{
+              fontSize: 14,
+              color: TEXT_DIM,
+              lineHeight: 1.8,
+              marginBottom: 12,
+            }}
+          >
+            LocaDirect permet aux voyageurs de
+            découvrir des locations de vacances en{' '}
+            {regionName} et de contacter directement
+            les propriétaires. Consultez les
+            logements disponibles dans les
+            différentes villes de la région et
+            organisez votre séjour sans commission
+            de réservation ajoutée par la plateforme.
+          </p>
+
+          <p
+            style={{
+              fontSize: 14,
+              color: TEXT_DIM,
+              lineHeight: 1.8,
+            }}
+          >
+            Maison, appartement ou autre hébergement :
+            chaque annonce dispose de sa propre page
+            avec les informations du logement, son
+            tarif et les moyens de contacter le
+            propriétaire.
+          </p>
+        </section>
+
         {/* LIENS VERS AUTRES RÉGIONS */}
-        <div style={{ marginTop: 48, padding: '28px 24px', background: GRAY, borderRadius: 16, border: `1px solid ${BORDER}` }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: TEXT, marginBottom: 16 }}>Explorer d'autres régions</h2>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+
+        <div
+          style={{
+            marginTop: 32,
+            padding: '28px 24px',
+            background: GRAY,
+            borderRadius: 16,
+            border: `1px solid ${BORDER}`,
+          }}
+        >
+          <h2
+            style={{
+              fontSize: 16,
+              fontWeight: 700,
+              color: TEXT,
+              marginBottom: 16,
+            }}
+          >
+            Explorer d&apos;autres régions
+          </h2>
+
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 8,
+            }}
+          >
             {[
-              { slug: 'bretagne', name: 'Bretagne' },
-              { slug: 'nouvelle-aquitaine', name: 'Nouvelle-Aquitaine' },
-              { slug: 'occitanie', name: 'Occitanie' },
-              { slug: 'provence-alpes-cote-dazur', name: "PACA" },
-              { slug: 'auvergne-rhone-alpes', name: 'Auvergne-Rhône-Alpes' },
-              { slug: 'normandie', name: 'Normandie' },
-              { slug: 'grand-est', name: 'Grand Est' },
-              { slug: 'pays-de-la-loire', name: 'Pays de la Loire' },
-            ].filter(r => r.slug !== slug).map(r => (
-              <a key={r.slug} href={`/location-vacances/${r.slug}`} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '6px 14px', fontSize: 13, color: TEXT, textDecoration: 'none', fontWeight: 500 }}>
-                {r.name}
-              </a>
-            ))}
+              {
+                slug: 'bretagne',
+                name: 'Bretagne',
+              },
+              {
+                slug: 'nouvelle-aquitaine',
+                name: 'Nouvelle-Aquitaine',
+              },
+              {
+                slug: 'occitanie',
+                name: 'Occitanie',
+              },
+              {
+                slug:
+                  'provence-alpes-cote-dazur',
+                name:
+                  'Provence-Alpes-Côte d’Azur',
+              },
+              {
+                slug:
+                  'auvergne-rhone-alpes',
+                name:
+                  'Auvergne-Rhône-Alpes',
+              },
+              {
+                slug: 'normandie',
+                name: 'Normandie',
+              },
+              {
+                slug: 'grand-est',
+                name: 'Grand Est',
+              },
+              {
+                slug: 'pays-de-la-loire',
+                name: 'Pays de la Loire',
+              },
+            ]
+              .filter(
+                region =>
+                  region.slug !== slug
+              )
+              .map(region => (
+                <a
+                  key={region.slug}
+                  href={`/location-vacances/${region.slug}`}
+                  style={{
+                    background: WHITE,
+                    border: `1px solid ${BORDER}`,
+                    borderRadius: 20,
+                    padding: '6px 14px',
+                    fontSize: 13,
+                    color: TEXT,
+                    fontWeight: 500,
+                  }}
+                >
+                  {region.name}
+                </a>
+              ))}
           </div>
         </div>
       </div>
