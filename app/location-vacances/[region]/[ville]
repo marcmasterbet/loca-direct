@@ -70,68 +70,77 @@ async function getVilleData(regionSlug: string, villeSlug: string) {
     return {
       regionName: null,
       villeName: null,
-      logements: [],
+      logements: [] as Logement[],
     }
   }
 
-  /*
-   * On récupère les logements de la région puis on compare
-   * le slug de leur ville.
-   *
-   * Cela évite les problèmes liés aux accents :
-   * Les Deux Alpes, Saint-Rémy-de-Provence, etc.
-   */
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('vitrines')
-    .select('*')
-    .in('statut', ['active', 'deja_loue', 'bientot_dispo'])
+    .select(`
+      id,
+      titre,
+      ville,
+      region,
+      type_logement,
+      prix_nuit,
+      surface,
+      nb_chambres,
+      statut,
+      photos,
+      equipements,
+      created_at
+    `)
     .eq('region', regionName)
+    .in('statut', ['active', 'deja_loue', 'bientot_dispo'])
     .order('created_at', { ascending: false })
 
-  const logements = ((data || []) as Logement[]).filter(
-    logement => logement.ville && slugify(logement.ville) === villeSlug
-  )
+  if (error) {
+    console.error('Erreur page ville LocaDirect:', error)
 
-  const villeName = logements[0]?.ville || null
+    return {
+      regionName,
+      villeName: null,
+      logements: [] as Logement[],
+    }
+  }
+
+  const logements = ((data || []) as Logement[]).filter(
+    logement =>
+      logement.ville &&
+      slugify(logement.ville) === villeSlug
+  )
 
   return {
     regionName,
-    villeName,
+    villeName: logements[0]?.ville || null,
     logements,
   }
 }
 
-export async function generateMetadata({
-  params,
-}: Props): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { region, ville } = await params
-
-  const {
-    regionName,
-    villeName,
-    logements,
-  } = await getVilleData(region, ville)
+  const { regionName, villeName, logements } = await getVilleData(region, ville)
 
   if (!regionName || !villeName || logements.length === 0) {
     return {
       title: 'Location de vacances | LocaDirect',
       robots: {
         index: false,
-        follow: false,
+        follow: true,
       },
     }
   }
+
+  const canonical =
+    `https://www.loca-direct.fr/location-vacances/${region}/${ville}`
 
   const title =
     `Location vacances ${villeName} — sans commission | LocaDirect`
 
   const description =
-    `Découvrez ${logements.length} logement${logements.length > 1 ? 's' : ''} ` +
-    `de vacances à ${villeName}, en ${regionName}. ` +
-    `Location directe avec le propriétaire, sans commission ni intermédiaire.`
-
-  const canonical =
-    `https://www.loca-direct.fr/location-vacances/${region}/${ville}`
+    `Découvrez ${logements.length} location${logements.length > 1 ? 's' : ''} ` +
+    `de vacances à ${villeName}, en ${regionName}. Contact direct avec les ` +
+    `propriétaires et location sans commission LocaDirect.`
 
   return {
     title,
@@ -142,29 +151,18 @@ export async function generateMetadata({
     },
 
     openGraph: {
-      title: `Location vacances ${villeName} | LocaDirect`,
+      title,
       description,
       url: canonical,
       siteName: 'LocaDirect',
       type: 'website',
-    },
-
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
     },
   }
 }
 
 export default async function VillePage({ params }: Props) {
   const { region, ville } = await params
-
-  const {
-    regionName,
-    villeName,
-    logements,
-  } = await getVilleData(region, ville)
+  const { regionName, villeName, logements } = await getVilleData(region, ville)
 
   if (!regionName || !villeName || logements.length === 0) {
     notFound()
@@ -185,40 +183,20 @@ export default async function VillePage({ params }: Props) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-
     name: `Locations de vacances à ${villeName}`,
-
-    description:
-      `Locations de vacances à ${villeName}, en ${regionName}, ` +
-      `disponibles en contact direct avec les propriétaires.`,
-
     url: canonical,
-
     numberOfItems: logements.length,
-
-    itemListElement: logements.slice(0, 20).map((logement, index) => ({
+    itemListElement: logements.map((logement, index) => ({
       '@type': 'ListItem',
       position: index + 1,
-
-      item: {
-        '@type': 'LodgingBusiness',
-        name: logement.titre,
-        url: `https://www.loca-direct.fr/vitrine/${logement.id}`,
-
-        address: {
-          '@type': 'PostalAddress',
-          addressLocality: villeName,
-          addressRegion: regionName,
-          addressCountry: 'FR',
-        },
-      },
+      name: logement.titre,
+      url: `https://www.loca-direct.fr/vitrine/${logement.id}`,
     })),
   }
 
   const breadcrumbLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
-
     itemListElement: [
       {
         '@type': 'ListItem',
@@ -230,8 +208,7 @@ export default async function VillePage({ params }: Props) {
         '@type': 'ListItem',
         position: 2,
         name: regionName,
-        item:
-          `https://www.loca-direct.fr/location-vacances/${region}`,
+        item: `https://www.loca-direct.fr/location-vacances/${region}`,
       },
       {
         '@type': 'ListItem',
@@ -246,16 +223,12 @@ export default async function VillePage({ params }: Props) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd),
-        }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(breadcrumbLd),
-        }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
       />
 
       <main
@@ -263,13 +236,9 @@ export default async function VillePage({ params }: Props) {
           minHeight: '100vh',
           background: '#FFFFFF',
           color: '#1F2937',
-          fontFamily:
-            '-apple-system, BlinkMacSystemFont, sans-serif',
+          fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
         }}
       >
-
-        {/* NAVIGATION */}
-
         <nav
           style={{
             borderBottom: '1px solid #E5E7EB',
@@ -286,7 +255,6 @@ export default async function VillePage({ params }: Props) {
               alignItems: 'center',
             }}
           >
-
             <Link
               href="/"
               style={{
@@ -312,10 +280,7 @@ export default async function VillePage({ params }: Props) {
               </span>
 
               <strong style={{ fontSize: 18 }}>
-                Loca
-                <span style={{ color: '#EA580C' }}>
-                  Direct
-                </span>
+                Loca<span style={{ color: '#EA580C' }}>Direct</span>
               </strong>
             </Link>
 
@@ -335,22 +300,35 @@ export default async function VillePage({ params }: Props) {
                 Mon espace →
               </Link>
             ) : (
-              <Link
-                href="/inscription"
-                style={{
-                  background: '#EA580C',
-                  color: '#FFFFFF',
-                  padding: '10px 18px',
-                  borderRadius: 10,
-                  textDecoration: 'none',
-                  fontWeight: 700,
-                  fontSize: 14,
-                }}
-              >
-                🏠 Publier
-              </Link>
-            )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Link
+                  href="/connexion"
+                  style={{
+                    color: '#6B7280',
+                    padding: '8px 14px',
+                    textDecoration: 'none',
+                    fontSize: 14,
+                  }}
+                >
+                  Connexion
+                </Link>
 
+                <Link
+                  href="/inscription"
+                  style={{
+                    background: '#EA580C',
+                    color: '#FFFFFF',
+                    padding: '10px 18px',
+                    borderRadius: 10,
+                    textDecoration: 'none',
+                    fontWeight: 700,
+                    fontSize: 14,
+                  }}
+                >
+                  🏠 Publier
+                </Link>
+              </div>
+            )}
           </div>
         </nav>
 
@@ -361,7 +339,6 @@ export default async function VillePage({ params }: Props) {
             padding: '32px 20px 80px',
           }}
         >
-
           {/* FIL D'ARIANE */}
 
           <div
@@ -371,20 +348,12 @@ export default async function VillePage({ params }: Props) {
               marginBottom: 24,
             }}
           >
-            <Link href="/">
-              Accueil
-            </Link>
-
+            <Link href="/">Accueil</Link>
             {' › '}
-
-            <Link
-              href={`/location-vacances/${region}`}
-            >
+            <Link href={`/location-vacances/${region}`}>
               {regionName}
             </Link>
-
             {' › '}
-
             <span>{villeName}</span>
           </div>
 
@@ -392,14 +361,12 @@ export default async function VillePage({ params }: Props) {
 
           <section
             style={{
-              background:
-                'linear-gradient(135deg,#FFF7ED 0%,#FFFFFF 100%)',
+              background: 'linear-gradient(135deg,#FFF7ED 0%,#FFFFFF 100%)',
               borderRadius: 20,
               padding: '36px 32px',
               marginBottom: 36,
             }}
           >
-
             <p
               style={{
                 color: '#EA580C',
@@ -410,7 +377,7 @@ export default async function VillePage({ params }: Props) {
                 marginBottom: 8,
               }}
             >
-              LOCATION DIRECTE
+              LOCATION VACANCES
             </p>
 
             <h1
@@ -430,10 +397,9 @@ export default async function VillePage({ params }: Props) {
                 maxWidth: 750,
               }}
             >
-              Découvrez les locations de vacances disponibles
-              à {villeName}, en {regionName}. Contactez directement
-              les propriétaires et organisez votre séjour sans
-              commission de réservation.
+              Découvrez les locations de vacances disponibles à {villeName},
+              en {regionName}. Contactez directement les propriétaires et
+              organisez votre séjour sans commission de réservation LocaDirect.
             </p>
 
             <div
@@ -453,72 +419,43 @@ export default async function VillePage({ params }: Props) {
               {logementsAvecChien > 0 && (
                 <span>
                   🐕 {logementsAvecChien} logement
-                  {logementsAvecChien > 1 ? 's' : ''} acceptant
-                  les grands chiens
+                  {logementsAvecChien > 1 ? 's' : ''} acceptant les grands chiens
                 </span>
               )}
             </div>
-
           </section>
 
-          {/* INTRO SEO */}
+          {/* INTRO */}
 
-          <section
-            style={{
-              marginBottom: 32,
-              maxWidth: 850,
-            }}
-          >
-            <h2
-              style={{
-                fontSize: 23,
-                marginBottom: 12,
-              }}
-            >
-              Trouver une location à {villeName} en direct
+          <section style={{ marginBottom: 32, maxWidth: 850 }}>
+            <h2 style={{ fontSize: 23, marginBottom: 12 }}>
+              Trouver une location de vacances à {villeName}
             </h2>
 
-            <p
-              style={{
-                color: '#4B5563',
-                lineHeight: 1.8,
-              }}
-            >
-              LocaDirect met en relation les voyageurs avec
-              des propriétaires proposant leur logement à
-              {villeName}. Vous consultez les annonces et
-              contactez directement le propriétaire pour
-              connaître les disponibilités, les conditions
-              du séjour et organiser votre réservation.
+            <p style={{ color: '#4B5563', lineHeight: 1.8 }}>
+              LocaDirect met en relation les voyageurs avec des propriétaires
+              proposant leur logement à {villeName}. Consultez les annonces,
+              découvrez les équipements et contactez directement le propriétaire
+              pour connaître les disponibilités et les conditions du séjour.
             </p>
           </section>
 
-          {/* LOGEMENTS */}
+          {/* ANNONCES */}
 
           <section>
-
-            <h2
-              style={{
-                fontSize: 23,
-                marginBottom: 20,
-              }}
-            >
+            <h2 style={{ fontSize: 23, marginBottom: 20 }}>
               {logements.length} location
-              {logements.length > 1 ? 's' : ''} disponible
               {logements.length > 1 ? 's' : ''} à {villeName}
             </h2>
 
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns:
-                  'repeat(auto-fit,minmax(240px,1fr))',
+                gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))',
                 gap: 18,
               }}
             >
-
               {logements.map(logement => {
-
                 const accepteChien =
                   Array.isArray(logement.equipements) &&
                   logement.equipements.includes('chien_10kg')
@@ -536,7 +473,6 @@ export default async function VillePage({ params }: Props) {
                       background: '#FFFFFF',
                     }}
                   >
-
                     {logement.photos?.[0] ? (
                       <img
                         src={logement.photos[0]}
@@ -564,7 +500,6 @@ export default async function VillePage({ params }: Props) {
                     )}
 
                     <div style={{ padding: 16 }}>
-
                       <p
                         style={{
                           fontSize: 12,
@@ -573,28 +508,15 @@ export default async function VillePage({ params }: Props) {
                         }}
                       >
                         {logement.type_logement}
-
-                        {logement.surface
-                          ? ` · ${logement.surface} m²`
-                          : ''}
+                        {logement.surface ? ` · ${logement.surface} m²` : ''}
                       </p>
 
-                      <h3
-                        style={{
-                          fontSize: 15,
-                          marginBottom: 10,
-                        }}
-                      >
+                      <h3 style={{ fontSize: 15, marginBottom: 10 }}>
                         {logement.titre}
                       </h3>
 
                       {accepteChien && (
-                        <p
-                          style={{
-                            fontSize: 12,
-                            marginBottom: 10,
-                          }}
-                        >
+                        <p style={{ fontSize: 12, marginBottom: 10 }}>
                           🐕 Grand chien +10 kg bienvenu
                         </p>
                       )}
@@ -606,7 +528,6 @@ export default async function VillePage({ params }: Props) {
                           alignItems: 'center',
                         }}
                       >
-
                         <strong
                           style={{
                             color: '#EA580C',
@@ -635,37 +556,26 @@ export default async function VillePage({ params }: Props) {
                             {logement.nb_chambres} ch.
                           </span>
                         )}
-
                       </div>
-
                     </div>
-
                   </Link>
                 )
               })}
-
             </div>
-
           </section>
 
-          {/* TEXTE SEO BAS DE PAGE */}
+          {/* SEO */}
 
           <section
             style={{
               marginTop: 50,
-              padding: '28px',
+              padding: 28,
               background: '#F9FAFB',
               borderRadius: 16,
             }}
           >
-
-            <h2
-              style={{
-                fontSize: 21,
-                marginBottom: 12,
-              }}
-            >
-              Pourquoi réserver directement à {villeName} ?
+            <h2 style={{ fontSize: 21, marginBottom: 12 }}>
+              Réserver directement une location à {villeName}
             </h2>
 
             <p
@@ -675,34 +585,18 @@ export default async function VillePage({ params }: Props) {
                 marginBottom: 14,
               }}
             >
-              La réservation directe permet d'échanger avec
-              le propriétaire du logement avant votre séjour.
-              Vous pouvez lui poser vos questions concernant
-              le logement, les équipements, les disponibilités
-              ou encore les conditions d'accueil.
+              La location directe permet d'échanger avec le propriétaire avant
+              votre séjour et de lui poser vos questions sur le logement, ses
+              équipements et ses disponibilités.
             </p>
 
-            <p
-              style={{
-                color: '#4B5563',
-                lineHeight: 1.8,
-              }}
-            >
-              Sur LocaDirect, aucune commission de réservation
-              n'est ajoutée par la plateforme. Le contact se
-              fait directement entre le voyageur et le
-              propriétaire.
+            <p style={{ color: '#4B5563', lineHeight: 1.8 }}>
+              LocaDirect ne prélève pas de commission de réservation. La mise
+              en relation s'effectue directement entre le voyageur et le propriétaire.
             </p>
-
           </section>
 
-          {/* RETOUR RÉGION */}
-
-          <div
-            style={{
-              marginTop: 30,
-            }}
-          >
+          <div style={{ marginTop: 30 }}>
             <Link
               href={`/location-vacances/${region}`}
               style={{
@@ -711,12 +605,10 @@ export default async function VillePage({ params }: Props) {
                 textDecoration: 'none',
               }}
             >
-              ← Voir toutes les locations en {regionName}
+              ← Toutes les locations en {regionName}
             </Link>
           </div>
-
         </div>
-
       </main>
     </>
   )
