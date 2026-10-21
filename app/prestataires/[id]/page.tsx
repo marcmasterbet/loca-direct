@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
-import { cookies } from 'next/headers'
 import type { Metadata } from 'next'
 import PrestataireDetailClient from './PrestataireDetailClient'
+import { getSessionUserId } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,8 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PrestataireDetailPage({ params }: Props) {
   const { id } = await params
 
-  const cookieStore = await cookies()
-  const isLoggedIn = !!cookieStore.get('loca_session')?.value
+  const isLoggedIn = !!(await getSessionUserId())
 
   const { data: p } = await supabase
     .from('prestataires')

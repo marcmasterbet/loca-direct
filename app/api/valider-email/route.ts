@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { setUserSession } from '@/lib/session'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,6 +10,9 @@ const supabase = createClient(
 export async function POST(req: Request) {
   try {
     const { token } = await req.json()
+    if (typeof token !== 'string' || !/^[a-f0-9]{64}$/.test(token)) {
+      return NextResponse.json({ status: 'invalid' })
+    }
 
     const { data: user, error } = await supabase
       .from('directloca_users')
@@ -27,17 +30,10 @@ export async function POST(req: Request) {
 
     await supabase
       .from('directloca_users')
-      .update({ email_valide: true })
+      .update({ email_valide: true, token_validation: null })
       .eq('id', user.id)
 
-    const cookieStore = await cookies()
-    cookieStore.set('loca_session', user.id, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30,
-      path: '/',
-    })
+    await setUserSession(user.id)
 
     return NextResponse.json({ status: 'success' })
   } catch (e) {

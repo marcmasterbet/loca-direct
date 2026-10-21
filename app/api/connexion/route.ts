@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import bcrypt from 'bcryptjs'
-import { cookies } from 'next/headers'
+import { setUserSession } from '@/lib/session'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   try {
     const { email, motDePasse } = await req.json()
 
-    if (!email || !motDePasse) {
+    if (typeof email !== 'string' || typeof motDePasse !== 'string' || !email || !motDePasse || motDePasse.length > 200) {
       return NextResponse.json({ error: 'Tous les champs sont requis' }, { status: 400 })
     }
 
@@ -39,14 +39,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Ce compte a été suspendu' }, { status: 403 })
     }
 
-    const cookieStore = await cookies()
-    cookieStore.set('loca_session', user.id, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30,
-      path: '/',
-    })
+    await setUserSession(user.id)
 
     await supabase
       .from('directloca_users')

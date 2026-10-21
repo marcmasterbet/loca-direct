@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import RegionClient from './RegionClient'
+import { getSessionUserId } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 
@@ -58,8 +58,7 @@ export default async function RegionPage({ params }: Props) {
   const regionName = REGIONS_SLUGS[slug]
   if (!regionName) notFound()
 
-  const cookieStore = await cookies()
-  const isLoggedIn = !!cookieStore.get('loca_session')?.value
+  const isLoggedIn = !!(await getSessionUserId())
 
   const { data: logements } = await supabase
     .from('vitrines')

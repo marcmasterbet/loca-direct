@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import { Resend } from 'resend'
+import { escapeHtml } from '@/lib/session'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,8 +17,11 @@ export async function POST(req: Request) {
   try {
     const { email, motDePasse, estVoyageur, estHebergeur, estPrestataire, redirect } = await req.json()
 
-    if (!email || !motDePasse) {
+    if (typeof email !== 'string' || typeof motDePasse !== 'string' || !email || !motDePasse) {
       return NextResponse.json({ error: 'Tous les champs sont requis' }, { status: 400 })
+    }
+    if (email.length > 254 || !/^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(email.trim()) || motDePasse.length > 200) {
+      return NextResponse.json({ error: 'Email ou mot de passe invalide' }, { status: 400 })
     }
     if (motDePasse.length < 8 || !/[A-Z]/.test(motDePasse) || !/[0-9]/.test(motDePasse) || !/[!@#$%^&*(),.?":{}|<>_\-]/.test(motDePasse)) {
       return NextResponse.json({ error: 'Mot de passe trop faible (8 car. min, majuscule, chiffre, caractère spécial)' }, { status: 400 })
@@ -63,7 +67,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Une erreur est survenue' }, { status: 500 })
     }
 
-    const validationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/valider-email/${tokenValidation}${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`
+    const validationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/valider-email/${tokenValidation}${typeof redirect === 'string' && /^\/(?![\/\\])/.test(redirect) ? `?redirect=${encodeURIComponent(redirect)}` : ''}`
 
     try {
       await resend.emails.send({
@@ -98,12 +102,12 @@ export async function POST(req: Request) {
       await resend.emails.send({
         from: 'LocaDirect <bienvenue@loca-direct.fr>',
         to: ADMIN_EMAIL,
-        subject: `🎉 Nouvel inscrit : ${newUser.email}`,
+        subject: `🎉 Nouvel inscrit : ${String(newUser.email).replace(/[\r\n]/g, ' ')}`,
         html: `
           <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 20px;">
             <h1 style="color: #EA580C; font-size: 22px;">🎉 Nouvelle inscription LocaDirect</h1>
             <p style="font-size: 15px; color: #1F2937; line-height: 1.6;">
-              <strong>${newUser.email}</strong><br />
+              <strong>${escapeHtml(newUser.email)}</strong><br />
               Profil : ${profils}
             </p>
             <p style="font-size: 13px; color: #6B7280;">

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
 import { Resend } from 'resend'
+import { isAdmin, escapeHtml } from '@/lib/session'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,9 +11,8 @@ const supabase = createClient(
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: Request) {
-  const cookieStore = await cookies()
-  const isAdmin = cookieStore.get('admin_session')?.value
-  if (!isAdmin) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  const adminOk = await isAdmin()
+  if (!adminOk) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
   const data = await req.json()
   if (!data.id) return NextResponse.json({ error: 'ID manquant' }, { status: 400 })
@@ -68,14 +67,14 @@ export async function POST(req: Request) {
         await resend.emails.send({
           from: 'LocaDirect <bienvenue@loca-direct.fr>',
           to: userEmail,
-          subject: `✅ Votre annonce "${vitrineAvant.titre}" est en ligne !`,
+          subject: `✅ Votre annonce "${String(vitrineAvant.titre).replace(/[\r\n]/g, ' ').slice(0, 150)}" est en ligne !`,
           html: `
             <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 20px;">
               <h1 style="color: #EA580C; font-size: 22px;">🏠 LocaDirect</h1>
               <p style="font-size: 15px; color: #1F2937; line-height: 1.6;">
-                Bonne nouvelle ! Votre annonce <strong>"${vitrineAvant.titre}"</strong> à ${vitrineAvant.ville} a été vérifiée et est maintenant visible par tous les voyageurs.
+                Bonne nouvelle ! Votre annonce <strong>"${escapeHtml(vitrineAvant.titre)}"</strong> à ${escapeHtml(vitrineAvant.ville)} a été vérifiée et est maintenant visible par tous les voyageurs.
               </p>
-              <a href="https://loca-direct.fr/vitrine/${data.id}" style="display: inline-block; background: #EA580C; color: white; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; margin: 20px 0;">
+              <a href="https://loca-direct.fr/vitrine/${encodeURIComponent(data.id)}" style="display: inline-block; background: #EA580C; color: white; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; margin: 20px 0;">
                 Voir mon annonce en ligne
               </a>
               <p style="font-size: 13px; color: #6B7280;">N'hésitez pas à la partager sur vos réseaux pour augmenter sa visibilité !</p>

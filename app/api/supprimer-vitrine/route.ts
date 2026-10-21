@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { getSessionUserId } from '@/lib/session'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,8 +8,7 @@ const supabase = createClient(
 )
 
 export async function POST(req: Request) {
-  const cookieStore = await cookies()
-  const userId = cookieStore.get('loca_session')?.value
+  const userId = await getSessionUserId()
   if (!userId) return NextResponse.json({ error: 'Non connecté' }, { status: 401 })
 
   const { id } = await req.json()

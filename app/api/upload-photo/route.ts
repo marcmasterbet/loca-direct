@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { getSessionUserId } from '@/lib/session'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,14 +9,13 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('loca_session')?.value
+    const userId = await getSessionUserId()
     if (!userId) return NextResponse.json({ error: 'Non connecté' }, { status: 401 })
 
     const formData = await req.formData()
-    const file = formData.get('file') as File
+    const file = formData.get('file')
 
-    if (!file) return NextResponse.json({ error: 'Aucun fichier' }, { status: 400 })
+    if (!(file instanceof File)) return NextResponse.json({ error: 'Aucun fichier' }, { status: 400 })
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
     if (!allowedTypes.includes(file.type)) {
@@ -26,7 +25,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Fichier trop volumineux (5MB max)' }, { status: 400 })
     }
 
-    const ext = file.name.split('.').pop()
+    const ext = ({ 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' } as Record<string, string>)[file.type]
     const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
     const buffer = await file.arrayBuffer()

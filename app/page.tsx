@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
 import HomeClient from './HomeClient'
+import { getSessionUserId } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,8 +11,7 @@ const supabase = createClient(
 
 export default async function Home() {
   // ✅ Détection session sans redirection
-  const cookieStore = await cookies()
-  const isLoggedIn = !!cookieStore.get('loca_session')?.value
+  const isLoggedIn = !!(await getSessionUserId())
 
   const { data: vitrines } = await supabase
     .from('vitrines')

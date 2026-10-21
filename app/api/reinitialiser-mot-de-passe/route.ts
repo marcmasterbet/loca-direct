@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   try {
     const { token, motDePasse } = await req.json()
 
-    if (!token || !motDePasse) {
+    if (typeof token !== 'string' || !/^[a-f0-9]{64}$/.test(token) || typeof motDePasse !== 'string' || motDePasse.length > 200) {
       return NextResponse.json({ error: 'Champs requis manquants' }, { status: 400 })
     }
 

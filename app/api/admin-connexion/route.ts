@@ -1,21 +1,25 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { setAdminSession, passwordMatches } from '@/lib/session'
 
 export async function POST(req: Request) {
-  const { password } = await req.json()
+  try {
+    const { password } = await req.json()
+    const expected = process.env.ADMIN_PASSWORD
 
-  if (password !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: 'Mot de passe incorrect' }, { status: 401 })
+    if (!expected || expected.length < 12) {
+      console.error('ADMIN_PASSWORD absent ou trop court (12 caractères minimum)')
+      return NextResponse.json({ error: 'Administration indisponible' }, { status: 503 })
+    }
+
+    if (!passwordMatches(password, expected)) {
+      // Ralentit les tentatives de devinette du mot de passe
+      await new Promise((r) => setTimeout(r, 1500))
+      return NextResponse.json({ error: 'Mot de passe incorrect' }, { status: 401 })
+    }
+
+    await setAdminSession()
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ error: 'Requête invalide' }, { status: 400 })
   }
-
-  const cookieStore = await cookies()
-  cookieStore.set('admin_session', 'true', {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7,
-    path: '/',
-  })
-
-  return NextResponse.json({ success: true })
 }

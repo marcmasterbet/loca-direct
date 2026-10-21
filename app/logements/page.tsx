@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
 import type { Metadata } from 'next'
 import LogementsClient from './LogementsClient'
+import { getSessionUserId } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,8 +16,7 @@ const supabase = createClient(
 )
 
 export default async function LogementsPage() {
-  const cookieStore = await cookies()
-  const isLoggedIn = !!cookieStore.get('loca_session')?.value
+  const isLoggedIn = !!(await getSessionUserId())
 
   const { data: logements } = await supabase
     .from('vitrines')

@@ -1,14 +1,8 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { clearUserSession, clearAdminSession } from '@/lib/session'
 
 export async function POST() {
-  const cookieStore = await cookies()
-  cookieStore.set('loca_session', '', {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    maxAge: 0,
-    path: '/',
-  })
+  await clearUserSession()
+  await clearAdminSession()
   return NextResponse.json({ success: true })
 }

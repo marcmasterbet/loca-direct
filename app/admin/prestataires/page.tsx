@@ -1,7 +1,7 @@
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import AdminPrestatairesClient from './AdminPrestatairesClient'
+import { isAdmin } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,10 +11,9 @@ const supabase = createClient(
 )
 
 export default async function AdminPrestatairesPage() {
-  const cookieStore = await cookies()
-  const isAdmin = cookieStore.get('admin_session')?.value
+  const adminOk = await isAdmin()
 
-  if (!isAdmin) redirect('/admin')
+  if (!adminOk) redirect('/admin')
 
   const { data: prestataires } = await supabase
     .from('prestataires')

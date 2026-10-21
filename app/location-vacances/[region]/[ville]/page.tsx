@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { getSessionUserId } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 
@@ -211,10 +211,9 @@ export default async function VillePage({
     notFound()
   }
 
-  const cookieStore = await cookies()
 
   const isLoggedIn =
-    !!cookieStore.get('loca_session')?.value
+    !!(await getSessionUserId())
 
   const canonical =
     `https://www.loca-direct.fr/location-vacances/${region}/${ville}`

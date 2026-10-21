@@ -22,7 +22,8 @@ export default function InscriptionPage() {
 function InscriptionForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect')
+  const redirectParam = searchParams.get('redirect')
+  const redirect = redirectParam && /^\/(?![\/\\])/.test(redirectParam) ? redirectParam : null
 
   const [form, setForm] = useState({
     email: '',

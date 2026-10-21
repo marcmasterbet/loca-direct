@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
 import { Resend } from 'resend'
+import { getSessionUserId, escapeHtml } from '@/lib/session'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,8 +13,7 @@ const ADMIN_EMAIL = 'marc.masterbet@gmail.com'
 
 export async function POST(req: Request) {
   try {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('loca_session')?.value
+    const userId = await getSessionUserId()
     if (!userId) return NextResponse.json({ error: 'Non connecté' }, { status: 401 })
 
     const data = await req.json()
@@ -82,13 +81,13 @@ export async function POST(req: Request) {
       await resend.emails.send({
         from: 'LocaDirect <bienvenue@loca-direct.fr>',
         to: ADMIN_EMAIL,
-        subject: `🏠 Nouvelle annonce à valider : ${vitrine.titre}`,
+        subject: `🏠 Nouvelle annonce à valider : ${String(vitrine.titre).replace(/[\r\n]/g, ' ').slice(0, 150)}`,
         html: `
           <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 20px;">
             <h1 style="color: #EA580C; font-size: 22px;">🏠 Nouvelle annonce LocaDirect</h1>
             <p style="font-size: 15px; color: #1F2937; line-height: 1.6;">
-              <strong>${vitrine.titre}</strong><br />
-              ${vitrine.ville}${vitrine.region ? `, ${vitrine.region}` : ''} · ${vitrine.pays || 'France'} · ${vitrine.prix_nuit}€/nuit · ${vitrine.type_logement}
+              <strong>${escapeHtml(vitrine.titre)}</strong><br />
+              ${escapeHtml(vitrine.ville)}${vitrine.region ? `, ${escapeHtml(vitrine.region)}` : ''} · ${escapeHtml(vitrine.pays || 'France')} · ${escapeHtml(vitrine.prix_nuit)}€/nuit · ${escapeHtml(vitrine.type_logement)}
             </p>
             <a href="https://loca-direct.fr/admin/dashboard" style="display: inline-block; background: #EA580C; color: white; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; margin: 20px 0;">
               Voir et valider l'annonce

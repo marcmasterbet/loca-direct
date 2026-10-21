@@ -13,7 +13,8 @@ const TEXT_DIM = '#6B7280'
 export default function ValiderEmailPage() {
   const params = useParams()
   const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect')
+  const redirectParam = searchParams.get('redirect')
+  const redirect = redirectParam && /^\/(?![\/\\])/.test(redirectParam) ? redirectParam : null
   const token = params.token as string
 
   const [status, setStatus] = useState<'loading' | 'success' | 'already_active' | 'invalid' | 'error'>('loading')

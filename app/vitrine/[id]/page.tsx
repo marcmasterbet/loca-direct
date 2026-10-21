@@ -1,8 +1,8 @@
-import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import VitrineClient from './VitrineClient'
+import { getSessionUserId } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,8 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function VitrinePage({ params }: Props) {
   const { id } = await params
-  const cookieStore = await cookies()
-  const isLoggedIn = !!cookieStore.get('loca_session')?.value
+  const isLoggedIn = !!(await getSessionUserId())
 
   const { data: vitrine, error } = await supabase
     .from('vitrines')

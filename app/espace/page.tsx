@@ -1,7 +1,7 @@
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import EspaceClient from './EspaceClient'
+import { getSessionUserId, publicUser } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,8 +11,7 @@ const supabase = createClient(
 )
 
 export default async function EspacePage() {
-  const cookieStore = await cookies()
-  const userId = cookieStore.get('loca_session')?.value
+  const userId = await getSessionUserId()
 
   if (!userId) redirect('/connexion')
 
@@ -64,7 +63,7 @@ export default async function EspacePage() {
 
   return (
     <EspaceClient
-      user={user}
+      user={publicUser(user)}
       vitrines={vitrines || []}
       prestataires={prestataires || []}
       favoris={favorisData || []}
