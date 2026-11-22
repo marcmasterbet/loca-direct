@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Vignobles alsaciens — la Route des Vins d\'Alsace | LocaDirect',
+  title: 'Vignobles alsaciens — la Route des Vins d\'Alsace',
   description: 'Riesling, Gewurztraminer, Pinot Gris... La Route des Vins d\'Alsace traverse 170 km de villages de conte de fées et de vignobles exceptionnels. Notre guide complet.',
 }
 

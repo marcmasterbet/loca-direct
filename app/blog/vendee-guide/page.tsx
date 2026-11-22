@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Tour en Vendée — que voir et que faire ? Guide complet | LocaDirect',
+  title: 'Tour en Vendée — que voir et que faire ? Guide complet',
   description: 'Puy du Fou, Marais Poitevin, plages du littoral atlantique... La Vendée réserve bien des surprises. Notre guide pour un séjour réussi.',
 }
 

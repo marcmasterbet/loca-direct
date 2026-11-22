@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'L\'Alsace, une si belle région — portrait d\'une terre unique | LocaDirect',
+  title: 'L\'Alsace, une si belle région — portrait d\'une terre unique',
   description: 'Entre France et Allemagne, l\'Alsace est une région à part. Ses traditions, sa gastronomie, ses paysages, son histoire — portrait d\'une terre qui ne ressemble à aucune autre.',
 }
 

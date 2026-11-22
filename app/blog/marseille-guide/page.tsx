@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Visiter Marseille — que voir, que faire ? Guide complet | LocaDirect',
+  title: 'Visiter Marseille — que voir, que faire ? Guide complet',
   description: 'Vieux-Port, Calanques, MuCEM, Panier, bouillabaisse... Marseille est une ville qui ne laisse pas indifférent. Notre guide pour la découvrir comme un local.',
 }
 

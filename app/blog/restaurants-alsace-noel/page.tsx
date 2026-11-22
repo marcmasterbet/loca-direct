@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Les meilleurs restaurants d\'Alsace à Noël — gastronomie et adresses | LocaDirect',
+  title: 'Les meilleurs restaurants d\'Alsace à Noël — gastronomie et adresses',
   description: 'Winstub, étoilés Michelin, brasseries traditionnelles... L\'Alsace est l\'une des régions gastronomiques les plus riches de France. Nos meilleures adresses pour Noël.',
 }
 

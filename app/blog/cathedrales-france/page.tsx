@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Les plus belles cathédrales de France — guide complet | LocaDirect',
+  title: 'Les plus belles cathédrales de France — guide complet',
   description: 'Notre-Dame de Paris, Chartres, Reims, Strasbourg, Bourges... La France possède certaines des plus belles cathédrales gothiques au monde. Notre sélection des 10 incontournables.',
 }
 

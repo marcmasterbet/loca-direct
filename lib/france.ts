@@ -1,0 +1,31 @@
+// Régions de France métropolitaine : nom tel qu'enregistré dans la base,
+// adresse de la page région, et place sur la carte en tuiles de l'accueil.
+
+export type RegionTile = {
+  slug: string
+  nom: string
+  court: string
+  col: number
+  row: number
+}
+
+export const REGIONS_METRO: RegionTile[] = [
+  { slug: 'hauts-de-france', nom: 'Hauts-de-France', court: 'Hauts-de-France', col: 4, row: 1 },
+  { slug: 'bretagne', nom: 'Bretagne', court: 'Bretagne', col: 1, row: 2 },
+  { slug: 'normandie', nom: 'Normandie', court: 'Normandie', col: 3, row: 2 },
+  { slug: 'ile-de-france', nom: 'Île-de-France', court: 'Île-de-France', col: 4, row: 2 },
+  { slug: 'grand-est', nom: 'Grand Est', court: 'Grand Est', col: 5, row: 2 },
+  { slug: 'pays-de-la-loire', nom: 'Pays de la Loire', court: 'Pays de la Loire', col: 2, row: 3 },
+  { slug: 'centre-val-de-loire', nom: 'Centre-Val de Loire', court: 'Centre', col: 3, row: 3 },
+  { slug: 'bourgogne-franche-comte', nom: 'Bourgogne-Franche-Comté', court: 'Bourgogne', col: 4, row: 3 },
+  { slug: 'nouvelle-aquitaine', nom: 'Nouvelle-Aquitaine', court: 'Nouvelle-Aquitaine', col: 2, row: 4 },
+  { slug: 'auvergne-rhone-alpes', nom: 'Auvergne-Rhône-Alpes', court: 'Auvergne-Rhône-Alpes', col: 4, row: 4 },
+  { slug: 'occitanie', nom: 'Occitanie', court: 'Occitanie', col: 3, row: 5 },
+  { slug: 'provence-alpes-cote-dazur', nom: "Provence-Alpes-Côte d'Azur", court: 'Provence', col: 5, row: 5 },
+  { slug: 'corse', nom: 'Corse', court: 'Corse', col: 6, row: 6 },
+]
+
+/** Le logement accepte-t-il les chiens de plus de 10 kg ? */
+export function accepteGrandChien(equipements: unknown): boolean {
+  return Array.isArray(equipements) && equipements.includes('chien_10kg')
+}

@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Vacances en Bretagne — guide complet pour bien choisir son logement | LocaDirect',
+  title: 'Vacances en Bretagne — guide complet pour bien choisir son logement',
   description: 'Côte sauvage, crêperies, menhirs... La Bretagne est la région la plus demandée en location saisonnière. Voici comment trouver le bon logement au bon prix.',
 }
 

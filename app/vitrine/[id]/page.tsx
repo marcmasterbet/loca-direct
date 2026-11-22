@@ -33,7 +33,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title,
-    description,
+    description: description.length > 160 ? `${description.slice(0, 157).trimEnd()}…` : description,
+    alternates: { canonical: `https://www.loca-direct.fr/vitrine/${id}` },
     openGraph: {
       title: `${title} | LocaDirect`,
       description,

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "LocaDirect est une alternative gratuite à Airbnb : 0% de commission, contact direct WhatsApp, annonces vérifiées. Découvrez pourquoi de plus en plus de propriétaires changent de plateforme.",
   openGraph: {
-    title: 'Alternative à Airbnb sans commission | LocaDirect',
+    title: 'Alternative à Airbnb sans commission',
     description:
       "0% de commission, contact direct WhatsApp, annonces vérifiées. Découvrez l'alternative gratuite à Airbnb.",
   },

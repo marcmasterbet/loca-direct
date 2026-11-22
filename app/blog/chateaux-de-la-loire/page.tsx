@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Les châteaux de la Loire — guide de visite complet | LocaDirect',
+  title: 'Les châteaux de la Loire — guide de visite complet',
   description: 'Chambord, Chenonceau, Amboise, Villandry... La vallée de la Loire est classée au patrimoine mondial de l\'UNESCO. Notre guide pour planifier votre visite.',
 }
 

@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Les plus belles plages de Corse — guide complet | LocaDirect',
+  title: 'Les plus belles plages de Corse — guide complet',
   description: 'Eau turquoise, sable blanc, maquis parfumé... La Corse possède les plus belles plages de France. Notre sélection des incontournables par région.',
 }
 

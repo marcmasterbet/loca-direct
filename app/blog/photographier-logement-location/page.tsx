@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Comment bien photographier son logement pour le louer ? | LocaDirect',
+  title: 'Comment bien photographier son logement pour le louer ?',
   description: 'Des photos de qualité peuvent doubler vos réservations. Voici les techniques simples utilisées par les professionnels, applicables avec un simple smartphone.',
 }
 

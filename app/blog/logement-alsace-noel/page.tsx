@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Comment trouver un logement en Alsace pendant les marchés de Noël | LocaDirect',
+  title: 'Comment trouver un logement en Alsace pendant les marchés de Noël',
   description: 'Les logements en Alsace à Noël partent en quelques heures. Nos conseils pour trouver la perle rare, les bons prix et les pièges à éviter pour votre séjour de Noël.',
 }
 

@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Pourquoi réserver en direct plutôt qu\'Airbnb ? | LocaDirect',
+  title: 'Pourquoi réserver en direct plutôt qu\'Airbnb ?',
   description: 'Commission de 15 à 20%, contact limité, prix gonflés... Voici pourquoi de plus en plus de voyageurs et propriétaires fuient les grandes plateformes.',
 }
 

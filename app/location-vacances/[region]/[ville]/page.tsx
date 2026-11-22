@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getSessionUserId } from '@/lib/session'
+import { MIN_ANNONCES_INDEX, NOINDEX } from '@/lib/seo'
 
 export const dynamic = 'force-dynamic'
 
@@ -155,7 +156,7 @@ export async function generateMetadata({
     logements.length === 0
   ) {
     return {
-      title: 'Location de vacances | LocaDirect',
+      title: 'Location de vacances',
       robots: {
         index: false,
         follow: true,
@@ -167,7 +168,7 @@ export async function generateMetadata({
     `https://www.loca-direct.fr/location-vacances/${region}/${ville}`
 
   const title =
-    `Location vacances ${villeName} — sans commission | LocaDirect`
+    `Location vacances ${villeName} — sans commission`
 
   const description =
     `Découvrez ${logements.length} location` +
@@ -177,6 +178,8 @@ export async function generateMetadata({
   return {
     title,
     description,
+
+    ...(logements.length < MIN_ANNONCES_INDEX ? { robots: NOINDEX } : {}),
 
     alternates: {
       canonical,

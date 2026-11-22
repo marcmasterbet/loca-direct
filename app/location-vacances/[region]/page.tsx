@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import RegionClient from './RegionClient'
 import { getSessionUserId } from '@/lib/session'
+import { countVitrinesRegion, MIN_ANNONCES_INDEX, NOINDEX, SITE_URL } from '@/lib/seo'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,8 +44,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const regionName = REGIONS_SLUGS[slug]
   if (!regionName) return { title: 'Région introuvable' }
 
+  const nb = await countVitrinesRegion(regionName)
+
   return {
-    title: `Location vacances ${regionName} — sans commission | LocaDirect`,
+    alternates: { canonical: `${SITE_URL}/location-vacances/${slug}` },
+    ...(nb < MIN_ANNONCES_INDEX ? { robots: NOINDEX } : {}),
+    title: `Location vacances ${regionName} — sans commission`,
     description: `Trouvez votre logement de vacances en ${regionName}. Location directe entre particuliers, sans commission. Contact WhatsApp direct avec le propriétaire.`,
     openGraph: {
       title: `Location vacances ${regionName} | LocaDirect`,

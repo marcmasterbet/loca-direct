@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Les plus beaux marchés de Noël d\'Alsace — guide complet 2026 | LocaDirect',
+  title: 'Les plus beaux marchés de Noël d\'Alsace — guide complet 2026',
   description: 'Strasbourg, Colmar, Kaysersberg, Ribeauvillé... L\'Alsace possède les plus beaux marchés de Noël de France et d\'Europe. Notre sélection et tous nos conseils pratiques.',
 }
 

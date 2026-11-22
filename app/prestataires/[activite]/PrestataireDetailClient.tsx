@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { trackEvent } from '@/lib/analytics'
 import Link from 'next/link'
 import PhotoLightbox from '@/components/PhotoLightbox'
 
@@ -91,7 +92,7 @@ export default function PrestataireDetailClient({ prestataire, isLoggedIn }: { p
           {isLoggedIn ? (
             <>
               <p style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 12 }}>Contacter ce prestataire</p>
-              <a href={whatsappLink} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#25D366', color: WHITE, borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, marginBottom: 10 }}>
+              <a href={whatsappLink} target="_blank" rel="noreferrer" onClick={() => trackEvent('clic_whatsapp_prestataire', { prestataire_id: prestataire.id, activite: prestataire.activite, ville: prestataire.ville })} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#25D366', color: WHITE, borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, marginBottom: 10 }}>
                 💬 Contacter sur WhatsApp
               </a>
               {prestataire.telephone && (

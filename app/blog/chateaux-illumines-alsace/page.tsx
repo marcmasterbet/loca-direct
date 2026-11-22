@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Les plus beaux châteaux illuminés d\'Alsace à Noël | LocaDirect',
+  title: 'Les plus beaux châteaux illuminés d\'Alsace à Noël',
   description: 'Haut-Koenigsbourg, Andlau, Fleckenstein... Les châteaux alsaciens illuminés à Noël sont un spectacle inoubliable. Notre sélection et comment les visiter.',
 }
 

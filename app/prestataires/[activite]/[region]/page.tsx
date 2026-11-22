@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import PrestatairesRegionClient from './PrestatairesRegionClient'
 import { getSessionUserId } from '@/lib/session'
+import { countPrestatairesRegion, MIN_PRESTATAIRES_INDEX, NOINDEX, SITE_URL } from '@/lib/seo'
 
 export const dynamic = 'force-dynamic'
 
@@ -62,8 +63,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const regionName = REGIONS_SLUGS[regionSlug]
   if (!activiteName || !regionName) return { title: 'Introuvable' }
 
+  const nb = await countPrestatairesRegion(activiteName, regionName)
+
   return {
-    title: `${activiteName} en ${regionName} — Annuaire prestataires | LocaDirect`,
+    alternates: { canonical: `${SITE_URL}/prestataires/${activiteSlug}/${regionSlug}` },
+    ...(nb < MIN_PRESTATAIRES_INDEX ? { robots: NOINDEX } : {}),
+    title: `${activiteName} en ${regionName} — Annuaire prestataires`,
     description: `Trouvez un prestataire ${activiteName.toLowerCase()} en ${regionName} pour votre location saisonnière. Contact direct WhatsApp, sans intermédiaire.`,
     openGraph: {
       title: `${activiteName} ${regionName} | LocaDirect`,

@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Que faire dans les Gorges du Verdon ? Guide complet | LocaDirect',
+  title: 'Que faire dans les Gorges du Verdon ? Guide complet',
   description: 'Le Grand Canyon européen vous attend. Randonnée, kayak, escalade, baignades... Tout ce qu\'il faut savoir pour visiter les Gorges du Verdon et trouver un logement.',
 }
 

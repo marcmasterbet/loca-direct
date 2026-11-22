@@ -6,7 +6,7 @@ import { getSessionUserId } from '@/lib/session'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Tous les logements | LocaDirect',
+  title: 'Tous les logements',
   description: "Trouvez votre logement de vacances en location directe, sans commission. Contact WhatsApp direct avec le propriétaire.",
 }
 

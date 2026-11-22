@@ -11,10 +11,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-type Props = { params: Promise<{ id: string }> }
+// Ce segment s'appelle [activite] car il partage le niveau d'URL avec
+// /prestataires/[activite]/[region] (Next.js impose un nom unique par niveau).
+// Ici, la valeur reçue est l'identifiant du prestataire : /prestataires/<id>.
+type Props = { params: Promise<{ activite: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params
+  const { activite: id } = await params
 
   const { data: p } = await supabase
     .from('prestataires')
@@ -33,7 +36,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title,
-    description,
+    description: description.length > 160 ? `${description.slice(0, 157).trimEnd()}…` : description,
+    alternates: { canonical: `https://www.loca-direct.fr/prestataires/${id}` },
     openGraph: {
       title: `${title} | LocaDirect`,
       description,
@@ -43,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function PrestataireDetailPage({ params }: Props) {
-  const { id } = await params
+  const { activite: id } = await params
 
   const isLoggedIn = !!(await getSessionUserId())
 

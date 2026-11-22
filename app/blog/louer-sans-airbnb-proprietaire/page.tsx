@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Propriétaire — comment louer sans passer par Airbnb ? | LocaDirect',
+  title: 'Propriétaire — comment louer sans passer par Airbnb ?',
   description: 'Gardez 100% de vos revenus. Voici comment mettre en location votre logement en direct, attirer des locataires sérieux et sécuriser vos réservations.',
 }
 

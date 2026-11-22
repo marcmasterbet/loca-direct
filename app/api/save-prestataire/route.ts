@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { getRegionFromCodePostal } from '@/lib/regions'
 import { createClient } from '@supabase/supabase-js'
 import { getSessionUserId } from '@/lib/session'
 
@@ -30,6 +31,7 @@ export async function POST(req: Request) {
         adresse_siege: data.adresse_siege,
         ville: data.ville,
         code_postal: data.code_postal,
+        region: getRegionFromCodePostal(data.code_postal),
         activite: data.activite,
         description: data.description,
         telephone: data.telephone,

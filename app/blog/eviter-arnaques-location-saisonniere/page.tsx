@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Comment éviter les arnaques en location saisonnière ? | LocaDirect',
+  title: 'Comment éviter les arnaques en location saisonnière ?',
   description: '5 règles simples pour ne jamais se faire avoir en réservant un logement de vacances, que ce soit sur une plateforme ou en direct.',
 }
 

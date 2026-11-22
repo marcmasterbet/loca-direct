@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LocaDirect — loca-direct.fr
 
-## Getting Started
+Location de vacances entre particuliers, sans commission, avec contact direct par WhatsApp, et annuaire de prestataires pour les propriétaires (conciergerie, ménage, photographe…).
 
-First, run the development server:
+## Pile technique
+
+- Next.js 16 (App Router), React 19, TypeScript, Tailwind 4
+- Supabase (base de données et stockage des photos)
+- Resend (e-mails)
+- Hébergement Vercel, Google Analytics 4
+
+## Lancer le projet en local
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Le site s'ouvre sur http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Variables d'environnement
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+À définir dans `.env.local` en local, et dans les réglages du projet Vercel en production :
 
-## Learn More
+| Variable | Rôle |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Adresse du projet Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | Clé serveur Supabase (ne jamais l'exposer côté navigateur) |
+| `SESSION_SECRET` | Clé de signature des sessions, 64 caractères aléatoires ou plus. Ne pas la changer : tous les utilisateurs seraient déconnectés. |
+| `ADMIN_PASSWORD` | Mot de passe du panneau d'administration |
+| `RESEND_API_KEY` | Envoi des e-mails |
+| `NEXT_PUBLIC_APP_URL` | Adresse publique du site |
 
-To learn more about Next.js, take a look at the following resources:
+## Organisation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Dossier | Contenu |
+| --- | --- |
+| `app/` | Pages et routes d'API |
+| `app/blog/` | Articles du guide (un dossier par article) |
+| `app/admin/` | Panneau d'administration |
+| `app/espace/` | Espace des propriétaires et des prestataires |
+| `lib/articles.ts` | Liste des articles (page /blog et sitemap) |
+| `lib/seo.ts` | Règles d'indexation (seuils des pages régions et villes) |
+| `lib/session.ts` | Sessions signées |
+| `supabase/` | Scripts SQL ponctuels, toujours avec une étape d'aperçu |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Règles
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Ne jamais supprimer ni renommer une table ou une colonne Supabase : on ajoute seulement.
+- Toute page qui change d'adresse garde une redirection permanente dans `next.config.ts`.
+- Pour publier un article : créer `app/blog/<slug>/page.tsx` et l'ajouter dans `lib/articles.ts`.

@@ -1,10 +1,15 @@
 import { MetadataRoute } from 'next'
 import { createClient } from '@supabase/supabase-js'
+import { ARTICLES, articleDate } from '@/lib/articles'
+import { MIN_ANNONCES_INDEX, MIN_PRESTATAIRES_INDEX } from '@/lib/seo'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+
+// Régénéré toutes les heures : les nouvelles annonces y apparaissent sans redéploiement.
+export const revalidate = 3600
 
 const BASE_URL = 'https://www.loca-direct.fr'
 
@@ -29,17 +34,17 @@ const REGIONS_SLUGS: Record<string, string> = {
   'mayotte': 'Mayotte',
 }
 
-const ACTIVITES_SLUGS = [
-  'conciergerie',
-  'menage',
-  'photographe',
-  'digital',
-  'maintenance',
-  'jardinage',
-  'decoration',
-  'kits-accueil',
-  'autre',
-]
+const ACTIVITES_SLUGS: Record<string, string> = {
+  'conciergerie': 'Conciergerie',
+  'menage': 'Ménage / Entretien',
+  'photographe': 'Photographe',
+  'digital': 'Aide au digital / Communication',
+  'maintenance': 'Maintenance / Bricolage',
+  'jardinage': 'Jardinage / Extérieur',
+  'decoration': 'Décoration / Aménagement',
+  'kits-accueil': "Kits d'accueil",
+  'autre': 'Autre',
+}
 
 function slugify(value: string) {
   return decodeURIComponent(value)
@@ -94,16 +99,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
+      url: `${BASE_URL}/blog`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
       url: `${BASE_URL}/inscription`,
       lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.7,
-    },
-    {
-      url: `${BASE_URL}/connexion`,
-      lastModified: now,
-      changeFrequency: 'monthly',
-      priority: 0.5,
     },
     {
       url: `${BASE_URL}/cgu`,
@@ -131,25 +136,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]
 
-  // Pages régions logements
-  const regionsPages: MetadataRoute.Sitemap =
-    Object.keys(REGIONS_SLUGS).map(regionSlug => ({
-      url: `${BASE_URL}/location-vacances/${regionSlug}`,
-      lastModified: now,
-      changeFrequency: 'weekly' as const,
-      priority: 0.8,
-    }))
-
-  // Pages prestataires activité + région
-  const prestatairesRegionsPages: MetadataRoute.Sitemap =
-    ACTIVITES_SLUGS.flatMap(activite =>
-      Object.keys(REGIONS_SLUGS).map(regionSlug => ({
-        url: `${BASE_URL}/prestataires/${activite}/${regionSlug}`,
-        lastModified: now,
-        changeFrequency: 'weekly' as const,
-        priority: 0.7,
-      }))
-    )
+  // Articles du guide
+  const articlesPages: MetadataRoute.Sitemap = ARTICLES.map(article => ({
+    url: `${BASE_URL}/blog/${article.slug}`,
+    lastModified: articleDate(article) ?? now,
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
+  }))
 
   // Logements
   const { data: vitrines, error: vitrinesError } = await supabase
@@ -176,6 +169,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }))
 
+  // Pages régions : seulement celles qui ont assez d'annonces
+  const parRegion = new Map<string, number>()
+  for (const vitrine of vitrines || []) {
+    const regionSlug = vitrine.region ? getRegionSlug(vitrine.region) : undefined
+    if (regionSlug) parRegion.set(regionSlug, (parRegion.get(regionSlug) || 0) + 1)
+  }
+  const regionsPages: MetadataRoute.Sitemap = Array.from(parRegion.entries())
+    .filter(([, nb]) => nb >= MIN_ANNONCES_INDEX)
+    .map(([regionSlug]) => ({
+      url: `${BASE_URL}/location-vacances/${regionSlug}`,
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    }))
+
   // Pages villes
   const villesMap = new Map<
     string,
@@ -183,6 +191,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       regionSlug: string
       villeSlug: string
       lastModified: Date
+      nb: number
     }
   >()
 
@@ -203,20 +212,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const existing = villesMap.get(key)
 
-    if (
-      !existing ||
-      lastModified.getTime() > existing.lastModified.getTime()
-    ) {
-      villesMap.set(key, {
-        regionSlug,
-        villeSlug,
-        lastModified,
-      })
-    }
+    villesMap.set(key, {
+      regionSlug,
+      villeSlug,
+      lastModified:
+        existing && existing.lastModified > lastModified
+          ? existing.lastModified
+          : lastModified,
+      nb: (existing?.nb || 0) + 1,
+    })
   }
 
   const villesPages: MetadataRoute.Sitemap =
-    Array.from(villesMap.values()).map(ville => ({
+    Array.from(villesMap.values())
+      .filter(ville => ville.nb >= MIN_ANNONCES_INDEX)
+      .map(ville => ({
       url:
         `${BASE_URL}/location-vacances/` +
         `${ville.regionSlug}/${ville.villeSlug}`,
@@ -229,7 +239,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { data: prestataires, error: prestatairesError } =
     await supabase
       .from('prestataires')
-      .select('id, created_at')
+      .select('id, created_at, activite, region')
       .eq('statut', 'active')
 
   if (prestatairesError) {
@@ -249,8 +259,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }))
 
+  // Pages métier + région : seulement celles qui ont des prestataires
+  const metierRegion = new Map<string, number>()
+  for (const p of prestataires || []) {
+    const activiteSlug = Object.entries(ACTIVITES_SLUGS).find(([, nom]) => nom === p.activite)?.[0]
+    const regionSlug = p.region ? getRegionSlug(p.region) : undefined
+    if (!activiteSlug || !regionSlug) continue
+    const key = `${activiteSlug}/${regionSlug}`
+    metierRegion.set(key, (metierRegion.get(key) || 0) + 1)
+  }
+  const prestatairesRegionsPages: MetadataRoute.Sitemap = Array.from(metierRegion.entries())
+    .filter(([, nb]) => nb >= MIN_PRESTATAIRES_INDEX)
+    .map(([key]) => ({
+      url: `${BASE_URL}/prestataires/${key}`,
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }))
+
   return [
     ...staticPages,
+    ...articlesPages,
     ...regionsPages,
     ...villesPages,
     ...prestatairesRegionsPages,

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Annuaire des prestataires',
   description: "Trouvez gratuitement des prestataires pour votre logement : conciergerie, ménage, photographe, aide au digital. Annuaire vérifié, contact direct par WhatsApp ou téléphone.",
   openGraph: {
-    title: 'Annuaire des prestataires | LocaDirect',
+    title: 'Annuaire des prestataires',
     description: "Conciergerie, ménage, photographe, digital... trouvez les bons partenaires pour votre logement, gratuitement.",
   },
 }

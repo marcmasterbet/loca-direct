@@ -48,7 +48,7 @@ function LogementsInner({ logements, isLoggedIn }: { logements: Logement[], isLo
   const searchParamsUrl = useSearchParams()
   const [pays, setPays] = useState('Tous les pays')
   const [region, setRegion] = useState('Toutes les régions')
-  const [searchVille, setSearchVille] = useState('')
+  const [searchVille, setSearchVille] = useState(searchParamsUrl.get('ville') ?? '')
   const [type, setType] = useState('Tous')
   const [chienFilter, setChienFilter] = useState(searchParamsUrl.get('chien') === '1')
 

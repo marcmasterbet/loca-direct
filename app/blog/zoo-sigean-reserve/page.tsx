@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Réserve Africaine de Sigean — visite, animaux, conseils pratiques | LocaDirect',
+  title: 'Réserve Africaine de Sigean — visite, animaux, conseils pratiques',
   description: 'La plus grande réserve animalière d\'Europe vous accueille en Occitanie. Girafes, rhinocéros, lions en liberté... Notre guide complet pour une visite inoubliable.',
 }
 

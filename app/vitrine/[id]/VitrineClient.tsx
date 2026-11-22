@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { trackEvent } from '@/lib/analytics'
 import Link from 'next/link'
 import PhotoLightbox from '@/components/PhotoLightbox'
 
@@ -213,7 +214,7 @@ export default function VitrineClient({ vitrine, isLoggedIn }: { vitrine: any, i
           ) : isLoggedIn ? (
             <>
               <p style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 12 }}>Intéressé par ce logement ?</p>
-              <a href={whatsappLink} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#25D366', color: WHITE, borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, marginBottom: siteWebUrl ? 10 : 0 }}>
+              <a href={whatsappLink} target="_blank" rel="noreferrer" onClick={() => trackEvent('clic_whatsapp_logement', { logement_id: vitrine.id, ville: vitrine.ville })} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#25D366', color: WHITE, borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, marginBottom: siteWebUrl ? 10 : 0 }}>
                 💬 Contacter sur WhatsApp
               </a>
               {siteWebUrl && (

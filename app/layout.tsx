@@ -1,36 +1,27 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
+import { Plus_Jakarta_Sans } from "next/font/google";
+import type { Viewport } from "next";
+import SiteFooter from "@/components/site/SiteFooter";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+export const viewport: Viewport = {
+  themeColor: "#5534e8",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.loca-direct.fr"),
   title: {
-    default: "LocaDirect — Location directe sans commission",
+    default: "Location vacances entre particuliers | LocaDirect",
     template: "%s | LocaDirect",
   },
   description:
     "Louez ou trouvez un logement directement entre particuliers, sans commission. Contact direct par WhatsApp. Annuaire gratuit de prestataires (conciergerie, ménage, photographe).",
-  keywords: [
-    "location directe",
-    "location sans commission",
-    "alternative Airbnb",
-    "location particulier à particulier",
-    "location vacances chiens acceptés",
-    "location saisonnière grands chiens",
-    "conciergerie",
-    "location saisonnière",
-  ],
   openGraph: {
     type: "website",
     locale: "fr_FR",
@@ -57,7 +48,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="fr" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="fr" className={`${jakarta.variable} h-full antialiased`}>
       <head>
         {/* Google Analytics — dans le head pour validation Search Console */}
         <script
@@ -78,17 +69,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className="min-h-screen flex flex-col bg-white">
         <main className="flex-1">{children}</main>
 
-        <footer className="border-t border-gray-200 bg-white">
-          <div className="max-w-6xl mx-auto px-4 py-6">
-            <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600 mb-3">
-              <a href="/mentions-legales" className="hover:text-orange-600 transition">Mentions légales</a>
-              <a href="/cgu" className="hover:text-orange-600 transition">CGU</a>
-              <a href="/politique-confidentialite" className="hover:text-orange-600 transition">Confidentialité</a>
-              <a href="/cookies" className="hover:text-orange-600 transition">Cookies</a>
-            </div>
-            <p className="text-center text-xs text-gray-500">© 2026 LocaDirect - Tous droits réservés</p>
-          </div>
-        </footer>
+        <SiteFooter />
       </body>
     </html>
   );

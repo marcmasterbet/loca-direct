@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Quel est le plus beau marché de Noël d\'Alsace ? | LocaDirect',
+  title: 'Quel est le plus beau marché de Noël d\'Alsace ?',
   description: 'Strasbourg ou Colmar ? Kaysersberg ou Ribeauvillé ? On tranche. Notre comparatif complet pour choisir le marché de Noël alsacien qui correspond à votre voyage.',
 }
 
