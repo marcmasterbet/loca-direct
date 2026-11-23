@@ -47,3 +47,49 @@ export function slugRegion(nom: string | null | undefined): string | null {
   if (!nom) return null
   return REGIONS_METRO.find(r => r.nom === nom)?.slug ?? null
 }
+
+/** Toutes les pages région existantes (métropole et outre-mer), slug → nom en base */
+export const REGIONS_SLUGS: Record<string, string> = {
+  ...Object.fromEntries(REGIONS_METRO.map(r => [r.slug, r.nom])),
+  guadeloupe: 'Guadeloupe',
+  martinique: 'Martinique',
+  guyane: 'Guyane',
+  'la-reunion': 'La Réunion',
+  mayotte: 'Mayotte',
+}
+
+export type Statistiques = {
+  total: number
+  disponibles: number
+  chiens: number
+  prixMin: number | null
+  prixMedian: number | null
+  villes: { nom: string; slug: string; nombre: number }[]
+}
+
+/** Chiffres réels d'une liste d'annonces, pour les textes des pages */
+export function statistiques(
+  liste: { ville?: string | null; prix_nuit?: number | null; statut?: string | null; equipements?: unknown }[]
+): Statistiques {
+  const prix = liste
+    .map(v => Number(v.prix_nuit))
+    .filter(n => Number.isFinite(n) && n > 0)
+    .sort((a, b) => a - b)
+  const villes = new Map<string, { nom: string; slug: string; nombre: number }>()
+  for (const v of liste) {
+    const nom = v.ville?.trim()
+    if (!nom) continue
+    const slug = slugifier(nom)
+    const ex = villes.get(slug)
+    if (ex) ex.nombre += 1
+    else villes.set(slug, { nom, slug, nombre: 1 })
+  }
+  return {
+    total: liste.length,
+    disponibles: liste.filter(v => v.statut === 'active').length,
+    chiens: liste.filter(v => accepteGrandChien(v.equipements)).length,
+    prixMin: prix.length ? Math.round(prix[0]) : null,
+    prixMedian: prix.length ? Math.round(prix[Math.floor(prix.length / 2)]) : null,
+    villes: [...villes.values()].sort((a, b) => b.nombre - a.nombre || a.nom.localeCompare(b.nom, 'fr')),
+  }
+}

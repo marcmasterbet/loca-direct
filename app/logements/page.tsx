@@ -4,7 +4,11 @@ import { Suspense } from 'react'
 import LogementsClient, { type Logement } from './LogementsClient'
 import { getSessionUserId } from '@/lib/session'
 import { SITE_URL, STATUTS_VISIBLES } from '@/lib/seo'
+import Link from 'next/link'
 import SiteHeader from '@/components/site/SiteHeader'
+import FilAriane from '@/components/pages/FilAriane'
+import BandeauProprietaires from '@/components/pages/BandeauProprietaires'
+import { REGIONS_METRO } from '@/lib/france'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,9 +40,47 @@ export default async function LogementsPage() {
   return (
     <div className="bg-white text-ink">
       <SiteHeader isLoggedIn={isLoggedIn} current="logements" />
-      <Suspense>
-        <LogementsClient logements={logements} />
-      </Suspense>
+      <main id="contenu" className="mx-auto flex max-w-[1280px] flex-col gap-10 px-5 pb-20 sm:px-8">
+        <FilAriane etapes={[{ nom: 'Logements' }]} />
+        <header className="-mt-4 flex flex-col gap-3">
+          <h1 className="text-balance text-[34px] font-bold leading-[1.08] tracking-[-0.04em] sm:text-5xl">
+            Locations de vacances en France
+          </h1>
+          <p className="max-w-[640px] text-lg leading-relaxed text-ink-soft">
+            {logements.length} maisons et appartements loués par leurs propriétaires. Vous leur écrivez directement,
+            sans commission.
+          </p>
+        </header>
+
+        <Suspense>
+          <LogementsClient logements={logements} />
+        </Suspense>
+
+        {/* Liens vers les pages région, utiles aux visiteurs et à Google */}
+        <nav aria-labelledby="regions-titre" className="flex flex-col gap-4 border-t border-line pt-10">
+          <h2 id="regions-titre" className="text-balance text-2xl font-bold tracking-[-0.02em]">
+            Locations de vacances par région
+          </h2>
+          <ul className="flex flex-wrap gap-2">
+            {REGIONS_METRO.map(r => (
+              <li key={r.slug}>
+                <Link
+                  href={`/location-vacances/${r.slug}`}
+                  className="flex min-h-[44px] items-center rounded-full bg-surface px-4 text-sm font-semibold text-ink no-underline hover:bg-brand-soft hover:text-brand-strong"
+                >
+                  Location de vacances en {r.nom}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <BandeauProprietaires
+          href={isLoggedIn ? '/espace/ma-vitrine' : '/inscription'}
+          titre="Vous louez un logement de vacances ?"
+          texte="Publiez votre annonce gratuitement. Les voyageurs vous écrivent directement sur WhatsApp et vous gardez 100 % de vos loyers."
+        />
+      </main>
     </div>
   )
 }

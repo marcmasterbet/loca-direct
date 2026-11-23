@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import ListingCard from '@/components/listing/ListingCard'
 import { REGIONS_METRO } from '@/lib/france'
@@ -39,7 +38,17 @@ function normaliser(s: string) {
 
 const chienOk = (v: Logement) => Array.isArray(v.equipements) && v.equipements.includes('chien_10kg')
 
-export default function LogementsClient({ logements }: { logements: Logement[] }) {
+type Props = {
+  logements: Logement[]
+  /** Adresse de la page, pour garder les filtres dans l'adresse */
+  chemin?: string
+  /** Page d'une région : le filtre région est masqué */
+  regionFixe?: boolean
+  /** Page « Chien accepté » : tous les logements acceptent les chiens, le bouton est masqué */
+  chienFixe?: boolean
+}
+
+export default function LogementsClient({ logements, chemin = '/logements', regionFixe = false, chienFixe = false }: Props) {
   const params = useSearchParams()
   const [ville, setVille] = useState(params.get('ville') ?? '')
   const [region, setRegion] = useState(params.get('region') ?? '')
@@ -60,8 +69,8 @@ export default function LogementsClient({ logements }: { logements: Logement[] }
     if (chien) q.set('chien', '1')
     if (tri !== 'recents') q.set('tri', tri)
     const s = q.toString()
-    window.history.replaceState(null, '', s ? `/logements?${s}` : '/logements')
-  }, [ville, region, type, chien, tri])
+    window.history.replaceState(null, '', s ? `${chemin}?${s}` : chemin)
+  }, [ville, region, type, chien, tri, chemin])
 
   const resultats = useMemo(() => {
     const cible = normaliser(ville)
@@ -82,23 +91,12 @@ export default function LogementsClient({ logements }: { logements: Logement[] }
   }, [logements, ville, region, type, chien, tri])
 
   const filtresActifs = !!(ville || region || type || chien)
-  const regionChoisie = REGIONS_METRO.find(r => r.nom === region)
 
   const champ =
     'min-h-[48px] rounded-[14px] border-0 bg-white px-4 text-base text-ink shadow-[inset_0_0_0_1.5px_#e4e3ee] outline-none focus:shadow-[inset_0_0_0_2px_#5534e8]'
 
   return (
-    <main id="contenu" className="mx-auto flex max-w-[1280px] flex-col gap-8 px-5 pb-20 pt-4 sm:px-8">
-      <div className="flex flex-col gap-3">
-        <h1 className="text-balance text-[34px] font-bold leading-[1.08] tracking-[-0.04em] sm:text-[48px]">
-          {chien ? 'Locations de vacances avec chien' : 'Locations de vacances en France'}
-        </h1>
-        <p className="max-w-[640px] text-lg leading-relaxed text-ink-soft">
-          {logements.length} maisons et appartements loués par leurs propriétaires. Vous écrivez directement au
-          propriétaire, sans commission.
-        </p>
-      </div>
-
+    <div className="flex flex-col gap-8">
       {/* Filtres */}
       <div className="sticky top-0 z-30 -mx-5 flex flex-col gap-3 border-b border-line bg-white px-5 py-3 sm:-mx-8 sm:px-8">
         <div className="flex flex-wrap gap-2.5">
@@ -114,6 +112,7 @@ export default function LogementsClient({ logements }: { logements: Logement[] }
               className={`${champ} w-full`}
             />
           </label>
+          {!regionFixe && (
           <label className="flex flex-col gap-1">
             <span className="text-sm font-semibold text-ink-soft">Région</span>
             <select value={region} onChange={e => setRegion(e.target.value)} className={`${champ} pr-9`}>
@@ -125,6 +124,7 @@ export default function LogementsClient({ logements }: { logements: Logement[] }
               ))}
             </select>
           </label>
+          )}
           <label className="flex flex-col gap-1">
             <span className="text-sm font-semibold text-ink-soft">Type</span>
             <select value={type} onChange={e => setType(e.target.value)} className={`${champ} pr-9`}>
@@ -136,6 +136,7 @@ export default function LogementsClient({ logements }: { logements: Logement[] }
               ))}
             </select>
           </label>
+          {!chienFixe && (
           <button
             type="button"
             aria-pressed={chien}
@@ -146,6 +147,7 @@ export default function LogementsClient({ logements }: { logements: Logement[] }
           >
             Chien accepté
           </button>
+          )}
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
           <p className="text-ink-soft" aria-live="polite">
@@ -207,7 +209,7 @@ export default function LogementsClient({ logements }: { logements: Logement[] }
         <>
           <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {resultats.slice(0, nombre).map((v, i) => (
-              <ListingCard key={v.id} v={v} priorite={i < 4} badge={chienOk(v) ? 'Chien accepté' : undefined} />
+              <ListingCard key={v.id} v={v} priorite={i < 4} badge={!chienFixe && chienOk(v) ? 'Chien accepté' : undefined} />
             ))}
           </div>
           {resultats.length > nombre && (
@@ -222,24 +224,6 @@ export default function LogementsClient({ logements }: { logements: Logement[] }
         </>
       )}
 
-      {/* Liens vers les pages région, utiles aux visiteurs et à Google */}
-      <nav aria-label="Locations par région" className="flex flex-col gap-4 border-t border-line pt-10">
-        <h2 className="text-balance text-[22px] font-bold tracking-[-0.02em]">
-          {regionChoisie ? `Plus de locations en ${regionChoisie.nom}` : 'Locations de vacances par région'}
-        </h2>
-        <ul className="flex flex-wrap gap-2">
-          {(regionChoisie ? [regionChoisie] : REGIONS_METRO).map(r => (
-            <li key={r.slug}>
-              <Link
-                href={`/location-vacances/${r.slug}`}
-                className="flex min-h-[44px] items-center rounded-full bg-surface px-4 text-sm font-semibold text-ink no-underline hover:bg-brand-soft hover:text-brand-strong"
-              >
-                Location de vacances en {r.nom}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-    </main>
+    </div>
   )
 }

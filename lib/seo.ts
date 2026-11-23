@@ -74,3 +74,8 @@ export function titreAnnonce(titre: string, ville: string | null, max = 60): str
   if (place < 15) return titreGoogle(complet, max)
   return `${titreGoogle(propre, place).replace(/ \| LocaDirect$/, '')}${fin}`
 }
+
+/** Le premier titre qui tient dans les 60 caractères de Google */
+export function premierTitre(...candidats: string[]): string {
+  return candidats.find(t => t.length <= 60) ?? titreGoogle(candidats[candidats.length - 1])
+}

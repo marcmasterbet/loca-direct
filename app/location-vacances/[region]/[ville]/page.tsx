@@ -2,831 +2,172 @@ import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { getSessionUserId } from '@/lib/session'
-import { MIN_ANNONCES_INDEX, NOINDEX } from '@/lib/seo'
+import { MIN_ANNONCES_INDEX, NOINDEX, SITE_URL, STATUTS_VISIBLES, premierTitre } from '@/lib/seo'
+import { REGIONS_SLUGS, slugifier, statistiques } from '@/lib/france'
+import SiteHeader from '@/components/site/SiteHeader'
+import FilAriane from '@/components/pages/FilAriane'
+import Faq from '@/components/pages/Faq'
+import Chiffres from '@/components/pages/Chiffres'
+import BandeauProprietaires from '@/components/pages/BandeauProprietaires'
+import LogementsClient, { type Logement } from '@/app/logements/LogementsClient'
 
 export const dynamic = 'force-dynamic'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
-const REGIONS_SLUGS: Record<string, string> = {
-  'auvergne-rhone-alpes': 'Auvergne-Rhône-Alpes',
-  'bourgogne-franche-comte': 'Bourgogne-Franche-Comté',
-  'bretagne': 'Bretagne',
-  'centre-val-de-loire': 'Centre-Val de Loire',
-  'corse': 'Corse',
-  'grand-est': 'Grand Est',
-  'hauts-de-france': 'Hauts-de-France',
-  'ile-de-france': 'Île-de-France',
-  'normandie': 'Normandie',
-  'nouvelle-aquitaine': 'Nouvelle-Aquitaine',
-  'occitanie': 'Occitanie',
-  'pays-de-la-loire': 'Pays de la Loire',
-  'provence-alpes-cote-dazur': "Provence-Alpes-Côte d'Azur",
-  'guadeloupe': 'Guadeloupe',
-  'martinique': 'Martinique',
-  'guyane': 'Guyane',
-  'la-reunion': 'La Réunion',
-  'mayotte': 'Mayotte',
-}
+type Props = { params: Promise<{ region: string; ville: string }> }
 
-type Props = {
-  params: Promise<{
-    region: string
-    ville: string
-  }>
-}
-
-type Logement = {
-  id: string
-  titre: string
-  ville: string
-  region: string
-  type_logement: string
-  prix_nuit: number
-  surface?: number
-  nb_chambres?: number
-  statut: string
-  photos?: string[]
-  equipements?: string[]
-}
-
-function slugify(value: string) {
-  return decodeURIComponent(value)
-    .trim()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/['’]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
-
-async function getVilleData(
-  regionSlug: string,
-  villeSlug: string
-) {
-  const regionName = REGIONS_SLUGS[regionSlug]
-
-  if (!regionName) {
-    return {
-      regionName: null,
-      villeName: null,
-      logements: [] as Logement[],
-    }
-  }
-
-  const { data, error } = await supabase
+/** Logements de la région, puis ceux de la ville demandée */
+async function donnees(regionSlug: string, villeSlug: string) {
+  const region = REGIONS_SLUGS[regionSlug]
+  if (!region) return null
+  const { data } = await supabase
     .from('vitrines')
-    .select(`
-      id,
-      titre,
-      ville,
-      region,
-      type_logement,
-      prix_nuit,
-      surface,
-      nb_chambres,
-      statut,
-      photos,
-      equipements,
-      created_at
-    `)
-    .eq('region', regionName)
-    .in('statut', [
-      'active',
-      'deja_loue',
-      'bientot_dispo',
-    ])
-    .order('created_at', {
-      ascending: false,
-    })
-
-  if (error) {
-    console.error(
-      'Erreur récupération ville :',
-      error
-    )
-
-    return {
-      regionName,
-      villeName: null,
-      logements: [] as Logement[],
-    }
+    .select('id, titre, ville, pays, region, code_postal, type_logement, prix_nuit, capacite, nb_chambres, statut, photos, equipements, created_at')
+    .in('statut', STATUTS_VISIBLES)
+    .eq('region', region)
+    .order('created_at', { ascending: false })
+  const tous = (data || []) as (Logement & { code_postal?: string | null })[]
+  const cible = slugifier(decodeURIComponent(villeSlug))
+  const logements = tous.filter(v => v.ville && slugifier(v.ville) === cible)
+  if (!logements.length) return { region, ville: null, logements, autresVilles: statistiques(tous).villes }
+  return {
+    region,
+    ville: logements[0].ville!.trim(),
+    departement: logements.find(v => v.code_postal)?.code_postal?.slice(0, 2) ?? null,
+    logements,
+    autresVilles: statistiques(tous).villes.filter(v => v.slug !== cible),
   }
+}
 
-  const normalizedVilleSlug = slugify(villeSlug)
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { region, ville } = await params
+  const d = await donnees(region, ville)
+  if (!d?.ville) return { title: 'Location de vacances', robots: NOINDEX }
 
-  const logements = ((data || []) as Logement[]).filter(
-    logement => {
-      if (!logement.ville) return false
-
-      return (
-        slugify(logement.ville) === normalizedVilleSlug
-      )
-    }
+  const s = statistiques(d.logements)
+  const titre = premierTitre(
+    `Location vacances ${d.ville} entre particuliers`,
+    `Location vacances ${d.ville} sans commission`,
+    `Location vacances ${d.ville}`
   )
-
-  const villeName = logements[0]?.ville || null
-
+  const description = `${s.total} location${s.total > 1 ? 's' : ''} de vacances à ${d.ville}, en ${d.region}${s.prixMin ? `, dès ${s.prixMin} € la nuit` : ''}. Louées par les propriétaires : vous leur écrivez sur WhatsApp, sans commission.`
+  const url = `${SITE_URL}/location-vacances/${region}/${slugifier(d.ville)}`
   return {
-    regionName,
-    villeName,
-    logements,
-  }
-}
-
-export async function generateMetadata({
-  params,
-}: Props): Promise<Metadata> {
-  const { region, ville } = await params
-
-  const {
-    regionName,
-    villeName,
-    logements,
-  } = await getVilleData(region, ville)
-
-  if (
-    !regionName ||
-    !villeName ||
-    logements.length === 0
-  ) {
-    return {
-      title: 'Location de vacances',
-      robots: {
-        index: false,
-        follow: true,
-      },
-    }
-  }
-
-  const canonical =
-    `https://www.loca-direct.fr/location-vacances/${region}/${ville}`
-
-  const title =
-    `Location vacances ${villeName} — sans commission`
-
-  const description =
-    `Découvrez ${logements.length} location` +
-    `${logements.length > 1 ? 's' : ''} de vacances à ${villeName}, ` +
-    `en ${regionName}. Contact direct avec les propriétaires, sans commission.`
-
-  return {
-    title,
+    title: { absolute: titre },
     description,
-
-    ...(logements.length < MIN_ANNONCES_INDEX ? { robots: NOINDEX } : {}),
-
-    alternates: {
-      canonical,
-    },
-
-    openGraph: {
-      title,
-      description,
-      url: canonical,
-      siteName: 'LocaDirect',
-      type: 'website',
-    },
+    alternates: { canonical: url },
+    ...(s.total < MIN_ANNONCES_INDEX ? { robots: NOINDEX } : {}),
+    openGraph: { title: titre, description, url },
   }
 }
 
-export default async function VillePage({
-  params,
-}: Props) {
-  const { region, ville } = await params
+export default async function VillePage({ params }: Props) {
+  const { region: regionSlug, ville: villeSlug } = await params
+  const [d, isLoggedIn] = await Promise.all([donnees(regionSlug, villeSlug), getSessionUserId().then(Boolean)])
+  if (!d?.ville) notFound()
 
-  const {
-    regionName,
-    villeName,
-    logements,
-  } = await getVilleData(region, ville)
+  const { region, ville, logements, autresVilles } = d
+  const s = statistiques(logements)
+  const lienPublier = isLoggedIn ? '/espace/ma-vitrine' : '/inscription'
 
-  if (
-    !regionName ||
-    !villeName ||
-    logements.length === 0
-  ) {
-    notFound()
-  }
+  const chiffres = [
+    { valeur: String(s.total), label: s.total > 1 ? 'logements' : 'logement' },
+    ...(s.prixMin ? [{ valeur: `${s.prixMin} €`, label: 'la nuit, au plus bas' }] : []),
+    ...(s.chiens ? [{ valeur: String(s.chiens), label: 'avec chien accepté' }] : []),
+  ]
 
-
-  const isLoggedIn =
-    !!(await getSessionUserId())
-
-  const canonical =
-    `https://www.loca-direct.fr/location-vacances/${region}/${ville}`
-
-  const logementsAvecChien = logements.filter(
-    logement =>
-      Array.isArray(logement.equipements) &&
-      logement.equipements.includes('chien_10kg')
-  ).length
-
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-
-    name:
-      `Locations de vacances à ${villeName}`,
-
-    url: canonical,
-
-    numberOfItems: logements.length,
-
-    itemListElement: logements.map(
-      (logement, index) => ({
-        '@type': 'ListItem',
-        position: index + 1,
-        name: logement.titre,
-        url:
-          `https://www.loca-direct.fr/vitrine/${logement.id}`,
-      })
-    ),
-  }
-
-  const breadcrumbLd = {
-    '@context': 'https://schema.org',
-
-    '@type': 'BreadcrumbList',
-
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Accueil',
-        item:
-          'https://www.loca-direct.fr/',
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: regionName,
-        item:
-          `https://www.loca-direct.fr/location-vacances/${region}`,
-      },
-      {
-        '@type': 'ListItem',
-        position: 3,
-        name: villeName,
-        item: canonical,
-      },
-    ],
-  }
+  const questions = [
+    {
+      q: `Comment réserver une location de vacances à ${ville} ?`,
+      r: `Choisissez un logement ci-dessus et appuyez sur « Écrire au propriétaire » : WhatsApp s’ouvre avec un message prêt à envoyer. Vous convenez des dates, du prix et du paiement directement avec lui. Aucun compte à créer, aucune commission.`,
+    },
+    ...(s.prixMin
+      ? [
+          {
+            q: `Quel est le prix d’une location à ${ville} ?`,
+            r: `Les logements à ${ville} sur LocaDirect démarrent à ${s.prixMin} € la nuit. Le propriétaire fixe ses prix, et vous ne payez aucun frais de service en plus.`,
+          },
+        ]
+      : []),
+    {
+      q: `Y a-t-il des locations avec chien accepté à ${ville} ?`,
+      r: s.chiens
+        ? `Oui, ${s.chiens} logement${s.chiens > 1 ? 's' : ''} à ${ville} accepte${s.chiens > 1 ? 'nt' : ''} les chiens, même de plus de 10 kg. Précisez la taille de votre chien dans votre premier message.`
+        : `Pas encore à ${ville}. Consultez la page « Chien accepté » pour voir tous les logements qui accueillent les chiens en ${region}.`,
+    },
+  ]
 
   return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd),
-        }}
-      />
+    <div className="bg-white text-ink">
+      <SiteHeader isLoggedIn={isLoggedIn} current="logements" />
+      <main id="contenu" className="mx-auto flex max-w-[1280px] flex-col gap-10 px-5 pb-20 sm:px-8">
+        <FilAriane
+          etapes={[
+            { nom: 'Logements', href: '/logements' },
+            { nom: region, href: `/location-vacances/${regionSlug}` },
+            { nom: ville },
+          ]}
+        />
 
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(breadcrumbLd),
-        }}
-      />
+        <header className="-mt-4 flex flex-col gap-5">
+          <h1 className="text-balance text-[34px] font-bold leading-[1.08] tracking-[-0.04em] sm:text-5xl">
+            Location de vacances à {ville}
+          </h1>
+          <p className="max-w-[68ch] text-lg leading-relaxed text-ink-soft">
+            {s.total > 1 ? `${s.total} logements` : 'Un logement'} à {ville}
+            {d.departement ? ` (${d.departement})` : ''}, en {region}, loué{s.total > 1 ? 's' : ''} directement par
+            {s.total > 1 ? ' leurs propriétaires' : ' son propriétaire'}. Vous écrivez sur WhatsApp, sans commission ni
+            frais de service.
+          </p>
+          <Chiffres elements={chiffres} />
+        </header>
 
-      <main
-        style={{
-          minHeight: '100vh',
-          background: '#FFFFFF',
-          color: '#1F2937',
-          fontFamily:
-            '-apple-system, BlinkMacSystemFont, sans-serif',
-        }}
-      >
+        <Suspense>
+          <LogementsClient
+            logements={logements}
+            chemin={`/location-vacances/${regionSlug}/${slugifier(ville)}`}
+            regionFixe
+          />
+        </Suspense>
 
-        {/* NAVIGATION */}
+        <Faq titre={`Louer à ${ville} : vos questions`} questions={questions} />
 
-        <nav
-          style={{
-            borderBottom:
-              '1px solid #E5E7EB',
-            padding: '12px 20px',
-            background: '#FFFFFF',
-          }}
-        >
-          <div
-            style={{
-              maxWidth: 1100,
-              margin: '0 auto',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Link
-              href="/"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                textDecoration: 'none',
-                color: '#1F2937',
-              }}
-            >
-              <span
-                style={{
-                  width: 34,
-                  height: 34,
-                  background: '#EA580C',
-                  borderRadius: 10,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                🏠
-              </span>
-
-              <strong
-                style={{
-                  fontSize: 18,
-                }}
-              >
-                Loca
-                <span
-                  style={{
-                    color: '#EA580C',
-                  }}
-                >
-                  Direct
-                </span>
-              </strong>
-            </Link>
-
-            {isLoggedIn ? (
+        <nav aria-labelledby="autour-titre" className="flex flex-col gap-3">
+          <h2 id="autour-titre" className="text-lg font-bold">
+            Ailleurs en {region}
+          </h2>
+          <ul className="flex flex-wrap gap-2">
+            <li>
               <Link
-                href="/espace"
-                style={{
-                  background: '#EA580C',
-                  color: '#FFFFFF',
-                  padding: '10px 18px',
-                  borderRadius: 10,
-                  textDecoration: 'none',
-                  fontWeight: 700,
-                }}
+                href={`/location-vacances/${regionSlug}`}
+                className="flex min-h-[44px] items-center rounded-full bg-brand-soft px-4 text-sm font-bold text-brand-strong no-underline hover:bg-brand-tint"
               >
-                Mon espace →
+                Toute la région {region}
               </Link>
-            ) : (
-              <div
-                style={{
-                  display: 'flex',
-                  gap: 8,
-                  alignItems: 'center',
-                }}
-              >
+            </li>
+            {autresVilles.slice(0, 12).map(v => (
+              <li key={v.slug}>
                 <Link
-                  href="/connexion"
-                  style={{
-                    color: '#6B7280',
-                    padding: '8px 14px',
-                    textDecoration: 'none',
-                  }}
+                  href={`/location-vacances/${regionSlug}/${v.slug}`}
+                  className="flex min-h-[44px] items-center gap-1.5 rounded-full bg-surface px-4 text-sm font-semibold text-ink no-underline hover:bg-brand-soft hover:text-brand-strong"
                 >
-                  Connexion
+                  {v.nom}
+                  <span className="font-normal text-muted">{v.nombre}</span>
                 </Link>
-
-                <Link
-                  href="/inscription"
-                  style={{
-                    background: '#EA580C',
-                    color: '#FFFFFF',
-                    padding: '10px 18px',
-                    borderRadius: 10,
-                    fontWeight: 700,
-                    textDecoration: 'none',
-                  }}
-                >
-                  🏠 Publier
-                </Link>
-              </div>
-            )}
-          </div>
+              </li>
+            ))}
+          </ul>
         </nav>
 
-        <div
-          style={{
-            maxWidth: 1100,
-            margin: '0 auto',
-            padding: '32px 20px 80px',
-          }}
-        >
-
-          {/* FIL D'ARIANE */}
-
-          <div
-            style={{
-              fontSize: 13,
-              color: '#6B7280',
-              marginBottom: 24,
-            }}
-          >
-            <Link
-              href="/"
-              style={{
-                color: 'inherit',
-                textDecoration: 'none',
-              }}
-            >
-              Accueil
-            </Link>
-
-            {' › '}
-
-            <Link
-              href={
-                `/location-vacances/${region}`
-              }
-              style={{
-                color: 'inherit',
-                textDecoration: 'none',
-              }}
-            >
-              {regionName}
-            </Link>
-
-            {' › '}
-
-            <span>
-              {villeName}
-            </span>
-          </div>
-
-          {/* HERO */}
-
-          <section
-            style={{
-              background:
-                'linear-gradient(135deg,#FFF7ED 0%,#FFFFFF 100%)',
-              borderRadius: 20,
-              padding: '36px 32px',
-              marginBottom: 36,
-            }}
-          >
-            <p
-              style={{
-                color: '#EA580C',
-                fontSize: 11,
-                textTransform: 'uppercase',
-                letterSpacing: '0.2em',
-                fontWeight: 700,
-                marginBottom: 8,
-              }}
-            >
-              LOCATION VACANCES
-            </p>
-
-            <h1
-              style={{
-                fontSize: 34,
-                lineHeight: 1.2,
-                marginBottom: 12,
-              }}
-            >
-              Location vacances à {villeName}
-            </h1>
-
-            <p
-              style={{
-                color: '#6B7280',
-                lineHeight: 1.7,
-                maxWidth: 750,
-              }}
-            >
-              Découvrez les locations de vacances disponibles à{' '}
-              {villeName}, en {regionName}. Contactez directement
-              les propriétaires et organisez votre séjour sans
-              commission de réservation.
-            </p>
-
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 16,
-                marginTop: 20,
-                fontSize: 13,
-                color: '#6B7280',
-              }}
-            >
-              <span>
-                ✓ Sans commission
-              </span>
-
-              <span>
-                ✓ Contact direct
-              </span>
-
-              <span>
-                ✓ Annonces vérifiées
-              </span>
-
-              {logementsAvecChien > 0 && (
-                <span>
-                  🐕 {logementsAvecChien} logement
-                  {logementsAvecChien > 1
-                    ? 's'
-                    : ''}{' '}
-                  acceptant les grands chiens
-                </span>
-              )}
-            </div>
-          </section>
-
-          {/* TEXTE SEO */}
-
-          <section
-            style={{
-              marginBottom: 32,
-              maxWidth: 850,
-            }}
-          >
-            <h2
-              style={{
-                fontSize: 23,
-                marginBottom: 12,
-              }}
-            >
-              Trouver une location de vacances à {villeName}
-            </h2>
-
-            <p
-              style={{
-                color: '#4B5563',
-                lineHeight: 1.8,
-              }}
-            >
-              LocaDirect met en relation les voyageurs avec les
-              propriétaires proposant leur logement à {villeName}.
-              Consultez les annonces et contactez directement le
-              propriétaire pour connaître les disponibilités et
-              les conditions du séjour.
-            </p>
-          </section>
-
-          {/* LOGEMENTS */}
-
-          <section>
-            <h2
-              style={{
-                fontSize: 23,
-                marginBottom: 20,
-              }}
-            >
-              {logements.length} location
-              {logements.length > 1
-                ? 's'
-                : ''}{' '}
-              à {villeName}
-            </h2>
-
-            <div
-              style={{
-                display: 'grid',
-
-                /*
-                 * IMPORTANT :
-                 * les cartes ne s'étirent plus
-                 * sur toute la largeur.
-                 */
-
-                gridTemplateColumns:
-                  'repeat(auto-fill, minmax(240px, 260px))',
-
-                gap: 18,
-                justifyContent: 'start',
-              }}
-            >
-              {logements.map(
-                logement => {
-
-                  const accepteChien =
-                    Array.isArray(
-                      logement.equipements
-                    ) &&
-                    logement.equipements.includes(
-                      'chien_10kg'
-                    )
-
-                  return (
-                    <Link
-                      key={logement.id}
-                      href={
-                        `/vitrine/${logement.id}`
-                      }
-                      style={{
-                        width: '100%',
-                        maxWidth: 260,
-                        border:
-                          '1px solid #E5E7EB',
-                        borderRadius: 16,
-                        overflow: 'hidden',
-                        textDecoration: 'none',
-                        color: '#1F2937',
-                        background: '#FFFFFF',
-                        display: 'block',
-                      }}
-                    >
-
-                      {/* PHOTO */}
-
-                      {logement.photos?.[0] ? (
-                        <img
-                          src={
-                            logement.photos[0]
-                          }
-                          alt={
-                            `${logement.titre} - location vacances ${villeName}`
-                          }
-                          loading="lazy"
-                          style={{
-                            width: '100%',
-                            height: 170,
-                            objectFit: 'cover',
-                            display: 'block',
-                          }}
-                        />
-                      ) : (
-                        <div
-                          style={{
-                            width: '100%',
-                            height: 170,
-                            background: '#F9FAFB',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: 40,
-                          }}
-                        >
-                          🏠
-                        </div>
-                      )}
-
-                      {/* CONTENU CARTE */}
-
-                      <div
-                        style={{
-                          padding: 14,
-                        }}
-                      >
-                        <p
-                          style={{
-                            fontSize: 12,
-                            color: '#6B7280',
-                            marginBottom: 5,
-                          }}
-                        >
-                          {logement.type_logement}
-
-                          {logement.surface
-                            ? ` · ${logement.surface} m²`
-                            : ''}
-                        </p>
-
-                        <h3
-                          style={{
-                            fontSize: 14,
-                            lineHeight: 1.4,
-                            marginBottom: 10,
-                          }}
-                        >
-                          {logement.titre}
-                        </h3>
-
-                        {accepteChien && (
-                          <p
-                            style={{
-                              fontSize: 12,
-                              marginBottom: 10,
-                            }}
-                          >
-                            🐕 Grand chien +10 kg bienvenu
-                          </p>
-                        )}
-
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent:
-                              'space-between',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <strong
-                            style={{
-                              color: '#EA580C',
-                              fontSize: 17,
-                            }}
-                          >
-                            {logement.prix_nuit} €
-
-                            <span
-                              style={{
-                                color: '#6B7280',
-                                fontWeight: 400,
-                                fontSize: 11,
-                              }}
-                            >
-                              /nuit
-                            </span>
-                          </strong>
-
-                          {logement.nb_chambres != null && (
-                            <span
-                              style={{
-                                color: '#6B7280',
-                                fontSize: 12,
-                              }}
-                            >
-                              {logement.nb_chambres} ch.
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
-                  )
-                }
-              )}
-            </div>
-          </section>
-
-          {/* TEXTE SEO BAS */}
-
-          <section
-            style={{
-              marginTop: 50,
-              padding: 28,
-              background: '#F9FAFB',
-              borderRadius: 16,
-            }}
-          >
-            <h2
-              style={{
-                fontSize: 21,
-                marginBottom: 12,
-              }}
-            >
-              Réserver directement une location à {villeName}
-            </h2>
-
-            <p
-              style={{
-                color: '#4B5563',
-                lineHeight: 1.8,
-                marginBottom: 14,
-              }}
-            >
-              La location directe permet d'échanger avec le
-              propriétaire avant votre séjour et de lui poser vos
-              questions sur le logement, ses équipements et ses
-              disponibilités.
-            </p>
-
-            <p
-              style={{
-                color: '#4B5563',
-                lineHeight: 1.8,
-              }}
-            >
-              LocaDirect ne prélève pas de commission de réservation.
-              La mise en relation s'effectue directement entre le
-              voyageur et le propriétaire.
-            </p>
-          </section>
-
-          {/* RETOUR RÉGION */}
-
-          <div
-            style={{
-              marginTop: 30,
-            }}
-          >
-            <Link
-              href={
-                `/location-vacances/${region}`
-              }
-              style={{
-                color: '#EA580C',
-                fontWeight: 700,
-                textDecoration: 'none',
-              }}
-            >
-              ← Toutes les locations en {regionName}
-            </Link>
-          </div>
-
-        </div>
+        <BandeauProprietaires
+          href={lienPublier}
+          titre={`Vous louez un logement à ${ville} ?`}
+          texte="Publiez votre annonce gratuitement et recevez les messages des voyageurs directement sur WhatsApp."
+        />
       </main>
-    </>
+    </div>
   )
 }
