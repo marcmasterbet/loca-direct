@@ -31,9 +31,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const chien = Array.isArray(vitrine.equipements) && vitrine.equipements.includes('chien_10kg')
   const title = `${vitrine.titre} à ${vitrine.ville}`
-  const description =
-    vitrine.description_courte ||
-    `${vitrine.type_logement || 'Location de vacances'} à ${vitrine.ville}${vitrine.capacite ? ` pour ${vitrine.capacite} personnes` : ''}${chien ? ', chien accepté' : ''}, à partir de ${vitrine.prix_nuit} € la nuit. Location entre particuliers, sans commission.`
+  const genere = `${vitrine.type_logement || 'Location de vacances'} à ${vitrine.ville}${vitrine.capacite ? ` pour ${vitrine.capacite} personnes` : ''}${chien ? ', chien accepté' : ''}, à partir de ${vitrine.prix_nuit} € la nuit. Location entre particuliers, sans commission.`
+  // Un résumé trop court est complété par la phrase générée
+  const resume = vitrine.description_courte?.trim() || ''
+  const description = resume.length >= 70 ? resume : [resume.replace(/[.!]?$/, resume ? '.' : ''), genere].filter(Boolean).join(' ')
 
   return {
     title: { absolute: titreAnnonce(vitrine.titre || vitrine.type_logement || 'Location de vacances', vitrine.ville) },

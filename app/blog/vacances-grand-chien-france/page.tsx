@@ -8,7 +8,7 @@ const CHAPEAU =
   "Logement qui l'accepte vraiment, papiers, train ou voiture, plages, parcs nationaux, chaleur : tout ce qu'il faut savoir avant de partir en vacances en France avec un chien de plus de 10 kg."
 
 export const metadata: Metadata = {
-  title: 'Vacances avec un grand chien en France : le guide complet',
+  title: { absolute: 'Vacances avec un grand chien en France : le guide' },
   description:
     "Trouver un logement qui accepte les grands chiens, papiers, train, plages, parcs nationaux et santé : le guide pratique pour partir en vacances avec un chien de plus de 10 kg.",
   alternates: { canonical: `https://www.loca-direct.fr/blog/${SLUG}` },
