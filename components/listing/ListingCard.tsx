@@ -6,7 +6,7 @@ export type ListingCardData = {
   titre: string | null
   ville: string | null
   prix_nuit: number | null
-  photos: string[] | null
+  photos?: string[] | null
   type_logement?: string | null
   statut?: string | null
 }
@@ -44,9 +44,9 @@ export default function ListingCard({ v, badge, surFond = false, priorite = fals
             {badge}
           </span>
         )}
-        {v.statut === 'deja_loue' && (
+        {(v.statut === 'deja_loue' || v.statut === 'bientot_dispo') && (
           <span className="absolute bottom-3 left-3 rounded-[10px] bg-white px-2.5 py-1.5 text-[13px] font-semibold text-muted">
-            Déjà loué
+            {v.statut === 'deja_loue' ? 'Déjà loué' : 'Bientôt disponible'}
           </span>
         )}
       </div>

@@ -29,3 +29,21 @@ export const REGIONS_METRO: RegionTile[] = [
 export function accepteGrandChien(equipements: unknown): boolean {
   return Array.isArray(equipements) && equipements.includes('chien_10kg')
 }
+
+/** Adresse lisible d'un nom : « Saint-Jean-de-Monts » → « saint-jean-de-monts ». */
+export function slugifier(value: string) {
+  return value
+    .trim()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/['’]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+/** Page région d'un nom de région tel qu'enregistré dans la base. */
+export function slugRegion(nom: string | null | undefined): string | null {
+  if (!nom) return null
+  return REGIONS_METRO.find(r => r.nom === nom)?.slug ?? null
+}

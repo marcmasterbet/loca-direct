@@ -1,8 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import VitrineClient from './VitrineClient'
+import VitrineClient, { type Voisin } from './VitrineClient'
 import { getSessionUserId } from '@/lib/session'
+import { centreCommune } from '@/lib/geo'
+import { SITE_URL, STATUTS_VISIBLES } from '@/lib/seo'
+import { slugifier, slugRegion } from '@/lib/france'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { data: vitrine } = await supabase
     .from('vitrines')
-    .select('titre, ville, prix_nuit, description_courte, photos')
+    .select('titre, ville, prix_nuit, description_courte, photos, type_logement, capacite, equipements')
     .eq('id', id)
     .single()
 
@@ -26,15 +29,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: 'Annonce introuvable' }
   }
 
-  const title = `${vitrine.titre} — ${vitrine.ville}`
+  const chien = Array.isArray(vitrine.equipements) && vitrine.equipements.includes('chien_10kg')
+  const title = `${vitrine.titre} à ${vitrine.ville}`
   const description =
     vitrine.description_courte ||
-    `${vitrine.titre} à ${vitrine.ville}, à partir de ${vitrine.prix_nuit}€/nuit. Location directe sans commission sur LocaDirect.`
+    `${vitrine.type_logement || 'Location de vacances'} à ${vitrine.ville}${vitrine.capacite ? ` pour ${vitrine.capacite} personnes` : ''}${chien ? ', chien accepté' : ''}, à partir de ${vitrine.prix_nuit} € la nuit. Location entre particuliers, sans commission.`
 
   return {
     title,
     description: description.length > 160 ? `${description.slice(0, 157).trimEnd()}…` : description,
-    alternates: { canonical: `https://www.loca-direct.fr/vitrine/${id}` },
+    alternates: { canonical: `${SITE_URL}/vitrine/${id}` },
     openGraph: {
       title: `${title} | LocaDirect`,
       description,
@@ -51,14 +55,14 @@ export default async function VitrinePage({ params }: Props) {
     .from('vitrines')
     .select('*')
     .eq('id', id)
-    .in('statut', ['active', 'deja_loue', 'bientot_dispo'])
+    .in('statut', STATUTS_VISIBLES)
     .single()
 
   if (error || !vitrine) {
     notFound()
   }
 
-  // Incrémente le compteur de vues
+  // Compteurs de vues (inchangés)
   supabase
     .from('vitrines')
     .update({ nb_vues: (vitrine.nb_vues || 0) + 1 })
@@ -70,45 +74,80 @@ export default async function VitrinePage({ params }: Props) {
     .insert({ vitrine_id: id })
     .then(() => {})
 
-  // JSON-LD données structurées pour Google
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'LodgingBusiness',
-    name: vitrine.titre,
-    description: vitrine.description_courte || vitrine.description_longue || `${vitrine.titre} à ${vitrine.ville}`,
-    address: {
-      '@type': 'PostalAddress',
-      addressLocality: vitrine.ville,
-      postalCode: vitrine.code_postal || '',
-      addressCountry: vitrine.pays === 'Belgique' ? 'BE' : vitrine.pays === 'Suisse' ? 'CH' : vitrine.pays === 'Espagne' ? 'ES' : 'FR',
+  // Position approximative (centre de la commune) et logements de la même région
+  const [centre, { data: autres }] = await Promise.all([
+    centreCommune(vitrine.code_postal, vitrine.ville),
+    vitrine.region
+      ? supabase
+          .from('vitrines')
+          .select('id, titre, ville, prix_nuit, photos, type_logement, statut, equipements')
+          .eq('region', vitrine.region)
+          .eq('statut', 'active')
+          .neq('id', vitrine.id)
+          .order('created_at', { ascending: false })
+          .limit(4)
+      : Promise.resolve({ data: [] as Voisin[] }),
+  ])
+
+  const regionSlug = slugRegion(vitrine.region)
+  const fil = [
+    { nom: 'Logements', href: '/logements' },
+    ...(regionSlug ? [{ nom: vitrine.region as string, href: `/location-vacances/${regionSlug}` }] : []),
+    ...(regionSlug && vitrine.ville
+      ? [{ nom: vitrine.ville as string, href: `/location-vacances/${regionSlug}/${slugifier(vitrine.ville)}` }]
+      : []),
+  ]
+
+  // Données structurées pour Google
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'VacationRental',
+      name: vitrine.titre,
+      description: vitrine.description_courte || vitrine.description_longue || `${vitrine.titre} à ${vitrine.ville}`,
+      identifier: vitrine.id,
+      url: `${SITE_URL}/vitrine/${vitrine.id}`,
+      image: (vitrine.photos || []).slice(0, 8),
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: vitrine.ville,
+        postalCode: vitrine.code_postal || undefined,
+        addressRegion: vitrine.region || undefined,
+        addressCountry: 'FR',
+      },
+      geo: centre ? { '@type': 'GeoCoordinates', latitude: centre[1], longitude: centre[0] } : undefined,
+      containsPlace: {
+        '@type': 'Accommodation',
+        additionalType: vitrine.type_logement || undefined,
+        occupancy: vitrine.capacite ? { '@type': 'QuantitativeValue', value: Number(vitrine.capacite) } : undefined,
+        numberOfBedrooms: vitrine.nb_chambres ? Number(vitrine.nb_chambres) : undefined,
+        numberOfRooms: vitrine.nb_pieces ? Number(vitrine.nb_pieces) : undefined,
+        floorSize: vitrine.surface ? { '@type': 'QuantitativeValue', value: Number(vitrine.surface), unitCode: 'MTK' } : undefined,
+        petsAllowed: (vitrine.equipements || []).includes('chien_10kg') || (vitrine.equipements || []).includes('animaux'),
+      },
+      priceRange: vitrine.prix_nuit ? `${vitrine.prix_nuit} € la nuit` : undefined,
     },
-    priceRange: `${vitrine.prix_nuit}€/nuit`,
-    image: vitrine.photos?.[0] || undefined,
-    url: `https://www.loca-direct.fr/vitrine/${vitrine.id}`,
-    petsAllowed: vitrine.equipements?.includes('chien_10kg') ?? false,
-    numberOfRooms: vitrine.nb_chambres || undefined,
-    amenityFeature: (vitrine.equipements || []).map((eq: string) => ({
-      '@type': 'LocationFeatureSpecification',
-      name: eq,
-      value: true,
-    })),
-    offers: {
-      '@type': 'Offer',
-      price: vitrine.prix_nuit,
-      priceCurrency: 'EUR',
-      availability: vitrine.statut === 'active'
-        ? 'https://schema.org/InStock'
-        : 'https://schema.org/OutOfStock',
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Accueil', item: SITE_URL },
+        ...fil.map((f, i) => ({ '@type': 'ListItem', position: i + 2, name: f.nom, item: `${SITE_URL}${f.href}` })),
+        { '@type': 'ListItem', position: fil.length + 2, name: vitrine.titre },
+      ],
     },
-  }
+  ]
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <VitrineClient
+        vitrine={vitrine}
+        isLoggedIn={isLoggedIn}
+        centre={centre}
+        fil={fil}
+        voisins={(autres || []) as Voisin[]}
       />
-      <VitrineClient vitrine={vitrine} isLoggedIn={isLoggedIn} />
     </>
   )
 }
