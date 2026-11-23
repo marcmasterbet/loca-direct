@@ -26,7 +26,7 @@ export async function POST(req: Request) {
       .single()
 
     // Construit l'objet update dynamiquement
-    const update: any = {}
+    const update: Record<string, unknown> = {}
     if (data.statut !== undefined) update.statut = data.statut
     if (data.motif_refus !== undefined) update.motif_refus = data.motif_refus
     if (data.nom !== undefined) update.nom = data.nom
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
 
     // Email de confirmation uniquement lors du passage en_attente → active
     if (data.statut === 'active' && prestataireAvant?.statut === 'en_attente') {
-      const userEmail = (prestataireAvant as any)?.directloca_users?.email
+      const userEmail = (prestataireAvant as { directloca_users?: { email?: string } } | null)?.directloca_users?.email
       if (userEmail) {
         try {
           await resend.emails.send({

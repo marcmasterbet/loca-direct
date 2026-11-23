@@ -15,7 +15,7 @@ export default function MiniCarte({ centre, ville }: { centre: [number, number];
   useEffect(() => {
     let map: import('maplibre-gl').Map | null = null
     let annule = false
-    import('maplibre-gl').then(({ default: maplibregl }) => {
+    import('maplibre-gl').then(maplibregl => {
       if (annule || !conteneur.current) return
       map = new maplibregl.Map({
         container: conteneur.current,

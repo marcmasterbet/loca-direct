@@ -153,7 +153,7 @@ export default function CarteLogements({ points }: { points: PointLogement[] }) 
   // Création de la carte, une seule fois.
   useEffect(() => {
     let annule = false
-    import('maplibre-gl').then(({ default: maplibregl }) => {
+    import('maplibre-gl').then(maplibregl => {
       if (annule || !conteneur.current) return
       const map = new maplibregl.Map({
         container: conteneur.current,
@@ -299,7 +299,7 @@ export default function CarteLogements({ points }: { points: PointLogement[] }) 
       })
     }
 
-    import('maplibre-gl').then(({ default: lib }) => {
+    import('maplibre-gl').then(lib => {
       maplib = lib
       dessiner()
     })

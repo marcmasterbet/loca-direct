@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     .single()
 
   // Construit l'objet update dynamiquement — ne touche jamais au champ regles
-  const update: any = {}
+  const update: Record<string, unknown> = {}
   if (data.statut !== undefined) update.statut = data.statut
   if (data.motif_refus !== undefined) update.motif_refus = data.motif_refus
   if (data.titre !== undefined) update.titre = data.titre
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
 
   // Email de confirmation uniquement lors du passage en_attente → active
   if (data.statut === 'active' && vitrineAvant?.statut === 'en_attente') {
-    const userEmail = (vitrineAvant as any)?.directloca_users?.email
+    const userEmail = (vitrineAvant as { directloca_users?: { email?: string } } | null)?.directloca_users?.email
     if (userEmail) {
       try {
         await resend.emails.send({
