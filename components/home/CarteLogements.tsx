@@ -44,6 +44,7 @@ function marges(pleinEcran: boolean) {
   }
   // Même calcul que la position du bloc de recherche sur la page d'accueil.
   const bordDroitDuBloc = Math.max(32, (window.innerWidth - 1280) / 2 + 32) + 500
+  if (window.innerWidth - bordDroitDuBloc < 420) return { top: 90, bottom: 30, left: 20, right: 20 }
   return { top: 90, bottom: 40, left: bordDroitDuBloc + 40, right: 60 }
 }
 
@@ -78,13 +79,18 @@ function miniFiche(p: PointLogement) {
   return box
 }
 
+// Groupe de logements : une pastille ronde avec le nombre, plus grosse quand il y en a beaucoup.
 function bulleGroupe(nombre: number) {
   const el = document.createElement('button')
   el.type = 'button'
-  el.textContent = `${nombre} logements`
+  el.textContent = String(nombre)
+  el.title = `${nombre} logements`
   el.setAttribute('aria-label', `${nombre} logements à cet endroit, zoomer pour les voir`)
+  const taille = nombre < 5 ? 34 : nombre < 15 ? 40 : 48
+  el.style.width = `${taille}px`
+  el.style.height = `${taille}px`
   el.className =
-    'rounded-full bg-ink px-3 py-1.5 text-[13px] font-extrabold text-white shadow-[0_4px_12px_rgba(23,22,42,0.3)] ring-2 ring-white'
+    'flex items-center justify-center rounded-full bg-ink text-[14px] font-extrabold text-white shadow-[0_0_0_5px_rgba(85,52,232,0.25),0_4px_12px_rgba(23,22,42,0.3)] ring-2 ring-white hover:bg-brand'
   return el
 }
 
@@ -155,6 +161,14 @@ export default function CarteLogements({ points }: { points: PointLogement[] }) 
       })
       map.touchZoomRotate.disableRotation()
       map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right')
+      // Tant que le visiteur n'a pas touché la carte, on la recadre sur la France
+      // quand sa taille change (fenêtre redimensionnée, téléphone tourné…).
+      let touchee = false
+      map.on('dragstart', () => { touchee = true })
+      map.on('zoomstart', e => { if (e.originalEvent) touchee = true })
+      map.on('resize', () => {
+        if (!touchee) map.fitBounds(FRANCE, { padding: marges(false), duration: 0 })
+      })
       map.on('load', () => {
         // Pas de dézoom au-delà de la France entière.
         map.setMinZoom(Math.max(3.5, map.getZoom() - 0.4))
@@ -214,7 +228,7 @@ export default function CarteLogements({ points }: { points: PointLogement[] }) 
 
   // Regroupement des logements proches : « 5 logements », qui se sépare quand on zoome.
   const index = useMemo(() => {
-    const sc = new Supercluster<PointLogement>({ radius: 48, maxZoom: ZOOM_MAX_GROUPES })
+    const sc = new Supercluster<PointLogement>({ radius: 60, maxZoom: ZOOM_MAX_GROUPES })
     sc.load(visibles.map(p => ({ type: 'Feature', properties: p, geometry: { type: 'Point', coordinates: p.lngLat } })))
     return sc
   }, [visibles])
