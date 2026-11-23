@@ -19,9 +19,6 @@ export default function PrestataireDetailClient({ prestataire, isLoggedIn }: { p
   const photos = prestataire.photos || []
   const allPhotos = [...(prestataire.flyer_url ? [prestataire.flyer_url] : []), ...photos]
 
-  const rawPhone = (prestataire.whatsapp || '').replace(/[^0-9+]/g, '')
-  const formattedPhone = rawPhone.startsWith('00') ? rawPhone.slice(2) : rawPhone.startsWith('0') ? '33' + rawPhone.slice(1) : rawPhone.startsWith('+') ? rawPhone.slice(1) : rawPhone
-  const whatsappLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(`Bonjour ${prestataire.prenom}, j'ai trouvé votre profil sur LocaDirect et je souhaite vous contacter.`)}`
 
   const siteWebUrl = prestataire.site_web
     ? prestataire.site_web.startsWith('http') ? prestataire.site_web : `https://${prestataire.site_web}`
@@ -89,10 +86,9 @@ export default function PrestataireDetailClient({ prestataire, isLoggedIn }: { p
 
         {/* CONTACT */}
         <div style={{ background: ORANGE_LIGHT, border: `1px solid ${ORANGE}`, borderRadius: 16, padding: 20, marginBottom: 24 }}>
-          {isLoggedIn ? (
-            <>
+          <>
               <p style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 12 }}>Contacter ce prestataire</p>
-              <a href={whatsappLink} target="_blank" rel="noreferrer" onClick={() => trackEvent('clic_whatsapp_prestataire', { prestataire_id: prestataire.id, activite: prestataire.activite, ville: prestataire.ville })} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#25D366', color: WHITE, borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, marginBottom: 10 }}>
+              <a href={`/api/whatsapp?prestataire=${prestataire.id}`} target="_blank" rel="noreferrer" onClick={() => trackEvent('clic_whatsapp_prestataire', { prestataire_id: prestataire.id, activite: prestataire.activite, ville: prestataire.ville })} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#25D366', color: WHITE, borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, marginBottom: 10 }}>
                 💬 Contacter sur WhatsApp
               </a>
               {prestataire.telephone && (
@@ -106,15 +102,6 @@ export default function PrestataireDetailClient({ prestataire, isLoggedIn }: { p
                 </a>
               )}
             </>
-          ) : (
-            <>
-              <p style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 8 }}>Intéressé par ce prestataire ?</p>
-              <p style={{ fontSize: 13, color: TEXT_DIM, marginBottom: 14 }}>Inscrivez-vous gratuitement pour contacter ce prestataire directement.</p>
-              <Link href="/inscription" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: ORANGE, color: WHITE, borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700 }}>
-                🔓 S'inscrire pour contacter
-              </Link>
-            </>
-          )}
         </div>
       </div>
 

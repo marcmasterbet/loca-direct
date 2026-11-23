@@ -90,19 +90,7 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
   const reglesTexte = typeof vitrine.regles === 'string' ? texte(vitrine.regles) : texte(regles.texte)
 
   const statut = STATUTS[vitrine.statut] || STATUTS.active
-  const peutContacter = vitrine.statut === 'active'
-
-  const rawPhone = (vitrine.whatsapp || '').replace(/[^0-9+]/g, '')
-  const formattedPhone = rawPhone.startsWith('00')
-    ? rawPhone.slice(2)
-    : rawPhone.startsWith('0')
-      ? '33' + rawPhone.slice(1)
-      : rawPhone.startsWith('+')
-        ? rawPhone.slice(1)
-        : rawPhone
-  const whatsappLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(
-    `Bonjour, je suis intéressé(e) par votre annonce « ${titre} » sur LocaDirect.`
-  )}`
+  const peutContacter = vitrine.statut === 'active' && vitrine.a_whatsapp
 
   const siteWebUrl = vitrine.site_web
     ? vitrine.site_web.startsWith('http')
@@ -132,7 +120,6 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
   ].filter(([, v]) => v) as [string, string][]
 
   const prix = euros(vitrine.prix_nuit)
-  const lien = `/vitrine/${vitrine.id}`
 
   const contact = (
     <div className="flex flex-col gap-4">
@@ -157,14 +144,16 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
         <p className="rounded-2xl bg-surface p-4 text-sm leading-relaxed text-ink-soft">
           {vitrine.statut === 'deja_loue'
             ? 'Ce logement est déjà loué pour le moment. Regardez les autres logements de la région, plus bas.'
-            : 'Ce logement sera bientôt disponible. Revenez dans quelques jours pour contacter le propriétaire.'}
+            : vitrine.statut === 'bientot_dispo'
+              ? 'Ce logement sera bientôt disponible. Revenez dans quelques jours pour contacter le propriétaire.'
+              : 'Le propriétaire n\'a pas encore indiqué de numéro WhatsApp.'}
         </p>
-      ) : isLoggedIn ? (
+      ) : (
         <div className="flex flex-col gap-2.5">
           <a
-            href={whatsappLink}
+            href={`/api/whatsapp?logement=${vitrine.id}`}
             target="_blank"
-            rel="noreferrer"
+            rel="nofollow noreferrer"
             onClick={() => trackEvent('clic_whatsapp_logement', { logement_id: vitrine.id, ville: vitrine.ville })}
             className="flex min-h-[56px] items-center justify-center gap-2.5 rounded-2xl bg-[#25D366] px-5 text-[17px] font-bold text-white no-underline hover:bg-[#1ebe5b]"
           >
@@ -181,24 +170,6 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
               Voir le site du propriétaire
             </a>
           )}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2.5">
-          <p className="text-sm leading-relaxed text-ink-soft">
-            Créez un compte gratuit pour obtenir le WhatsApp du propriétaire.
-          </p>
-          <a
-            href={`/inscription?redirect=${lien}`}
-            className="flex min-h-[56px] items-center justify-center rounded-2xl bg-brand px-5 text-[17px] font-bold text-white no-underline hover:bg-brand-strong"
-          >
-            Contacter le propriétaire
-          </a>
-          <a
-            href={`/connexion?redirect=${lien}`}
-            className="text-center text-sm font-semibold text-brand no-underline hover:underline"
-          >
-            J&apos;ai déjà un compte
-          </a>
         </div>
       )}
 
@@ -474,14 +445,22 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
             vitrine.ville
           )}
         </p>
-        <a
-          href="#contact"
-          className={`flex min-h-[48px] items-center rounded-2xl px-5 text-[15px] font-bold text-white no-underline ${
-            peutContacter && isLoggedIn ? 'bg-[#25D366]' : 'bg-brand'
-          }`}
-        >
-          {peutContacter ? 'Contacter' : 'Voir les détails'}
-        </a>
+        {peutContacter ? (
+          <a
+            href={`/api/whatsapp?logement=${vitrine.id}`}
+            target="_blank"
+            rel="nofollow noreferrer"
+            onClick={() => trackEvent('clic_whatsapp_logement', { logement_id: vitrine.id, ville: vitrine.ville, endroit: 'barre_mobile' })}
+            className="flex min-h-[48px] items-center gap-2 rounded-2xl bg-[#25D366] px-5 text-[15px] font-bold text-white no-underline"
+          >
+            <IconeWhatsapp />
+            Écrire au propriétaire
+          </a>
+        ) : (
+          <a href="#contact" className="flex min-h-[48px] items-center rounded-2xl bg-brand px-5 text-[15px] font-bold text-white no-underline">
+            Voir les détails
+          </a>
+        )}
       </div>
 
       {lightboxIndex !== null && (

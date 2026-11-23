@@ -94,7 +94,7 @@ export default async function PrestataireDetailPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <PrestataireDetailClient prestataire={p} isLoggedIn={isLoggedIn} />
+      <PrestataireDetailClient prestataire={{ ...p, whatsapp: null, email: null }} isLoggedIn={isLoggedIn} />
     </>
   )
 }

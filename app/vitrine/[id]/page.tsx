@@ -142,7 +142,8 @@ export default async function VitrinePage({ params }: Props) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <VitrineClient
-        vitrine={vitrine}
+        // Le numéro WhatsApp ne part jamais dans la page (voir /api/whatsapp).
+        vitrine={{ ...vitrine, whatsapp: null, email: null, a_whatsapp: !!vitrine.whatsapp }}
         isLoggedIn={isLoggedIn}
         centre={centre}
         fil={fil}
