@@ -1,103 +1,101 @@
+import type { Metadata } from 'next'
+import PageLegale from '@/components/legal/PageLegale'
+
+export const metadata: Metadata = {
+  title: 'Conditions d’utilisation',
+  description: 'Les règles d’utilisation de LocaDirect : annonces, annuaire des prestataires, contact direct sans commission.',
+  alternates: { canonical: '/cgu' },
+}
+
 export default function CGUPage() {
   return (
-    <main style={{ maxWidth: 850, margin: '0 auto', padding: '40px 20px', lineHeight: 1.7 }}>
-      <h1>Conditions générales d’utilisation</h1>
-
-      <h2>1. Objet</h2>
+    <PageLegale titre="Conditions générales d’utilisation" maj="23 novembre 2026">
       <p>
-        Les présentes conditions générales d’utilisation encadrent l’accès et
-        l’utilisation du site LocaDirect.
+        Ces conditions s’appliquent à toute personne qui utilise loca-direct.fr (LocaDirect), édité par Marc Bretzner,
+        entrepreneur individuel (voir les <a href="/mentions-legales">mentions légales</a>). En utilisant le site, vous
+        les acceptez.
       </p>
 
-      <h2>2. Description du service</h2>
+      <h2>1. Le service</h2>
+      <p>LocaDirect permet&nbsp;:</p>
+      <ul>
+        <li>aux propriétaires de publier des annonces de location de vacances&nbsp;;</li>
+        <li>aux prestataires (conciergerie, ménage, photo, travaux…) de figurer dans un annuaire&nbsp;;</li>
+        <li>à tout visiteur de consulter les annonces et l’annuaire, et de contacter directement le propriétaire ou le prestataire, sans créer de compte.</li>
+      </ul>
       <p>
-        LocaDirect permet aux hébergeurs de créer une vitrine de logement, aux
-        voyageurs de consulter les annonces publiées, et aux prestataires de
-        services liés à la location (conciergerie, ménage, photographie, etc.)
-        de figurer dans un annuaire dédié. Le site facilite la mise en relation
-        directe entre les parties.
+        Le site est aujourd’hui entièrement gratuit. LocaDirect ne prélève aucune commission sur les locations ni sur les
+        prestations. Si des options payantes sont proposées plus tard, leurs prix et conditions seront présentés avant
+        tout achat, dans des conditions générales de vente distinctes.
       </p>
 
-      <h2>3. Absence de commission</h2>
+      <h2>2. Compte</h2>
       <p>
-        LocaDirect ne prélève pas de commission sur les locations conclues entre
-        hébergeurs et voyageurs, ni sur les prestations conclues entre
-        utilisateurs et prestataires référencés dans l’annuaire. Les échanges,
-        réservations, paiements et contrats éventuels se font directement entre
-        les parties concernées.
+        Un compte n’est nécessaire que pour publier une annonce ou une fiche prestataire, et pour garder des favoris ou
+        des alertes. Vous vous engagez à donner des informations exactes et à garder votre mot de passe secret. Vous
+        pouvez demander la suppression de votre compte à tout moment à{' '}
+        <a href="mailto:contact@seokraft.fr">contact@seokraft.fr</a>.
       </p>
 
-      <h2>4. Compte utilisateur</h2>
+      <h2>3. Annonces de logement</h2>
+      <p>Le propriétaire qui publie une annonce garantit&nbsp;:</p>
+      <ul>
+        <li>qu’il a le droit de louer le logement (propriétaire, ou autorisé par le propriétaire)&nbsp;;</li>
+        <li>que la description, les photos, le prix et les équipements sont exacts et à jour&nbsp;;</li>
+        <li>qu’il respecte les règles de la location saisonnière&nbsp;: déclaration en mairie, numéro d’enregistrement là où il est exigé, taxe de séjour, limite de jours pour une résidence principale.</li>
+      </ul>
       <p>
-        L’utilisateur s’engage à fournir des informations exactes lors de son
-        inscription. Il est responsable de la confidentialité de ses accès.
+        Chaque annonce est vérifiée avant sa mise en ligne. LocaDirect peut refuser, suspendre ou retirer une annonce
+        trompeuse, incomplète, en double ou contraire à la loi, en indiquant la raison au propriétaire.
       </p>
 
-      <h2>5. Publication d’annonces</h2>
+      <h2>4. Annuaire des prestataires</h2>
       <p>
-        L’hébergeur garantit que les informations publiées sont exactes, sincères
-        et conformes à la réglementation applicable. LocaDirect se réserve le droit
-        de refuser, suspendre ou supprimer une annonce manifestement abusive,
-        trompeuse ou incomplète.
+        Le prestataire fournit un numéro SIRET valide et des informations exactes sur son activité. LocaDirect vérifie
+        chaque fiche avant sa publication. Cette vérification n’est ni une certification, ni une garantie de la qualité
+        des prestations&nbsp;: demandez toujours un devis écrit et une attestation d’assurance.
       </p>
 
-      <h2>6. Annuaire des prestataires</h2>
+      <h2>5. Contact direct et responsabilités</h2>
       <p>
-        Tout utilisateur souhaitant figurer dans l’annuaire des prestataires doit
-        disposer d’un numéro SIRET valide et fournir des informations exactes sur
-        son identité, son activité et son adresse de siège. LocaDirect vérifie
-        manuellement chaque demande avant publication, mais cette vérification ne
-        constitue ni une certification, ni une garantie de la qualité, de la
-        disponibilité ou du sérieux du prestataire.
+        Le contact se fait directement par WhatsApp ou par téléphone. LocaDirect n’est pas partie au contrat de location
+        ou de prestation&nbsp;: la réservation, le paiement, l’annulation et les éventuels litiges se règlent entre le
+        voyageur et le propriétaire, ou entre le client et le prestataire.
       </p>
       <p>
-        Le prestataire est seul responsable de l’exactitude des informations
-        fournies (identité, SIRET, tarifs, zone d’intervention, visuels) et de la
-        bonne exécution des prestations proposées. LocaDirect se réserve le droit
-        de refuser, suspendre ou supprimer un profil prestataire manifestement
-        abusif, trompeur, incomplet ou ne respectant pas la réglementation
-        applicable à son activité.
-      </p>
-      <p>
-        La mise en relation entre un utilisateur et un prestataire s’effectue par
-        contact direct (téléphone, WhatsApp). LocaDirect n’intervient à aucun
-        moment dans la négociation, l’exécution, le paiement ou le suivi des
-        prestations.
+        Pour éviter les arnaques, ne payez jamais par mandat cash, coupon prépayé ou virement vers un compte étranger, et
+        méfiez-vous d’un prix anormalement bas. Nos conseils sont réunis dans{' '}
+        <a href="/blog/louer-en-securite">Louer en sécurité</a>. Signalez toute annonce suspecte à{' '}
+        <a href="mailto:contact@seokraft.fr">contact@seokraft.fr</a>.
       </p>
 
-      <h2>7. Responsabilité des utilisateurs</h2>
+      <h2>6. Ce qui est interdit</h2>
+      <ul>
+        <li>publier une annonce fictive, ou un logement que l’on n’a pas le droit de louer&nbsp;;</li>
+        <li>utiliser les coordonnées des annonceurs pour du démarchage ou des messages en masse&nbsp;;</li>
+        <li>copier les annonces ou le contenu du site de façon automatisée&nbsp;;</li>
+        <li>publier un contenu illicite, injurieux ou discriminatoire.</li>
+      </ul>
+      <p>En cas de manquement, LocaDirect peut supprimer le contenu concerné et fermer le compte.</p>
+
+      <h2>7. Disponibilité du site</h2>
       <p>
-        Les utilisateurs sont seuls responsables des échanges, réservations,
-        prestations, paiements, annulations, litiges ou dommages pouvant survenir
-        à la suite d’une mise en relation via le site, que ce soit entre voyageur
-        et hébergeur, ou entre un utilisateur et un prestataire référencé dans
-        l’annuaire.
+        LocaDirect fait son possible pour que le site fonctionne sans interruption, sans pouvoir le garantir. Une
+        maintenance ou une panne peut le rendre momentanément indisponible.
       </p>
 
-      <h2>8. Responsabilité de LocaDirect</h2>
+      <h2>8. Données personnelles</h2>
       <p>
-        LocaDirect agit uniquement comme outil de présentation et de mise en
-        relation. LocaDirect n’est pas partie aux contrats conclus entre
-        voyageurs et hébergeurs, ni aux contrats ou prestations conclus entre
-        utilisateurs et prestataires référencés dans l’annuaire.
+        Leur traitement est décrit dans la <a href="/politique-confidentialite">politique de confidentialité</a> et la{' '}
+        <a href="/cookies">page cookies</a>.
       </p>
 
-      <h2>9. Données personnelles</h2>
+      <h2>9. Modification et droit applicable</h2>
       <p>
-        Les données personnelles sont traitées conformément à la politique de
-        confidentialité disponible sur le site.
+        Ces conditions peuvent évoluer&nbsp;; la date de mise à jour figure en haut de la page. Elles sont soumises au
+        droit français. En cas de désaccord, une solution amiable est recherchée en priorité en écrivant à{' '}
+        <a href="mailto:contact@seokraft.fr">contact@seokraft.fr</a>.
       </p>
-
-      <h2>10. Modification des CGU</h2>
-      <p>
-        LocaDirect peut modifier les présentes CGU à tout moment. Les utilisateurs
-        sont invités à les consulter régulièrement.
-      </p>
-
-      <h2>11. Contact</h2>
-      <p>
-        Pour toute question : bretzner.marc@bbox.fr
-      </p>
-    </main>
+    </PageLegale>
   )
 }

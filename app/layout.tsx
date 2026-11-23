@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import type { Viewport } from "next";
+import BandeauCookies from "@/components/site/BandeauCookies";
 import SiteFooter from "@/components/site/SiteFooter";
 import "./globals.css";
 
@@ -49,30 +50,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="fr" className={`${jakarta.variable} h-full antialiased`}>
-      <head>
-        {/* Google Analytics — dans le head pour validation Search Console */}
-        <script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=G-Q5WD3F2NJD"
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-Q5WD3F2NJD');
-            `,
-          }}
-        />
-      </head>
       <body className="min-h-screen flex flex-col bg-white">
         <a href="#contenu" className="lien-evitement">
           Aller au contenu
         </a>
-        <main className="flex-1">{children}</main>
+        <div className="flex-1">{children}</div>
 
         <SiteFooter />
+        <BandeauCookies />
       </body>
     </html>
   );

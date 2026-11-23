@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Logo from './Logo'
+import LienCookies from './LienCookies'
 
 const COLONNES = [
   {
@@ -51,6 +52,9 @@ export default function SiteFooter() {
                     {l.label}
                   </Link>
                 ))}
+                {col.titre === 'LocaDirect' && (
+                  <LienCookies className="flex min-h-[44px] items-center text-left text-muted hover:text-ink" />
+                )}
               </div>
             ))}
           </nav>

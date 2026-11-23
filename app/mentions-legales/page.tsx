@@ -1,55 +1,61 @@
+import type { Metadata } from 'next'
+import PageLegale from '@/components/legal/PageLegale'
+
+export const metadata: Metadata = {
+  title: 'Mentions légales',
+  description: 'Éditeur, hébergeur et contact du site LocaDirect, la location de vacances entre particuliers sans commission.',
+  alternates: { canonical: '/mentions-legales' },
+}
+
 export default function MentionsLegalesPage() {
   return (
-    <main style={{ maxWidth: 850, margin: '0 auto', padding: '40px 20px', lineHeight: 1.7 }}>
-      <h1>Mentions légales</h1>
-
+    <PageLegale titre="Mentions légales" maj="23 novembre 2026">
       <h2>Éditeur du site</h2>
       <p>
-        Le site LocaDirect est édité par :<br />
-        <strong>EI BRETZNER MARC</strong><br />
-        Responsable de publication : BRETZNER MARC<br />
-        SIRET : en cours d’attribution<br />
-        Adresse : 11 rue de la Vieille Ill<br />
-        Email : bretzner.marc@bbox.fr<br />
-        Téléphone : 06 59 14 96 14
+        Le site loca-direct.fr (LocaDirect) est édité par <strong>Marc Bretzner</strong>, entrepreneur individuel (EI).
       </p>
+      <ul>
+        <li>SIRET&nbsp;: 840&nbsp;384&nbsp;804&nbsp;00026, immatriculé au Registre national des entreprises (RNE)</li>
+        <li>Adresse&nbsp;: 11 rue de la Vieille Ill, 67640 Fegersheim, France</li>
+        <li>TVA non applicable, article 293&nbsp;B du Code général des impôts</li>
+        <li>
+          E-mail&nbsp;: <a href="mailto:contact@seokraft.fr">contact@seokraft.fr</a>
+        </li>
+        <li>Téléphone&nbsp;: 06&nbsp;59&nbsp;14&nbsp;96&nbsp;14</li>
+      </ul>
+      <p>Directeur de la publication&nbsp;: Marc Bretzner.</p>
 
       <h2>Hébergement</h2>
       <p>
-        Le site est hébergé par :<br /><br />
-
-        <strong>Vercel Inc.</strong><br />
-        440 N Barranca Avenue #4133<br />
-        Covina, CA 91723<br />
-        United States<br /><br />
-
-        Nom de domaine / hébergement complémentaire :<br />
-        <strong>Hostinger International Ltd</strong><br />
-        61 Lordou Vironos Street<br />
-        6023 Larnaca<br />
-        Cyprus
+        Le site est hébergé par <strong>Vercel Inc.</strong>, 340 S Lemon Ave #4133, Walnut, CA&nbsp;91789, États-Unis
+        (vercel.com).
+      </p>
+      <p>
+        Les données des comptes et des annonces sont stockées par <strong>Supabase Inc.</strong>, dans un centre de
+        données situé dans l’Union européenne.
       </p>
 
-      <h2>Activité du site</h2>
+      <h2>Ce que fait LocaDirect</h2>
       <p>
-        LocaDirect est une plateforme permettant à des propriétaires ou hébergeurs
-        de publier une vitrine de logement afin de faciliter la mise en relation
-        directe avec des voyageurs.
+        LocaDirect présente des logements de vacances proposés par des particuliers et un annuaire de prestataires
+        (conciergerie, ménage, photo…). Les voyageurs contactent directement le propriétaire ou le prestataire.
+        LocaDirect ne prend aucune commission et n’intervient ni dans la réservation, ni dans le paiement.
       </p>
 
       <h2>Propriété intellectuelle</h2>
       <p>
-        L’ensemble des contenus présents sur le site, notamment les textes, images,
-        logos, éléments graphiques et structure du site, sont protégés par le droit
-        de la propriété intellectuelle. Toute reproduction non autorisée est interdite.
+        Les textes, le logo, la charte graphique et la structure du site appartiennent à l’éditeur. Les photos et
+        descriptions des annonces appartiennent à leurs auteurs, qui autorisent leur affichage sur LocaDirect. Toute
+        reproduction sans autorisation est interdite.
       </p>
 
-      <h2>Responsabilité</h2>
+      <h2>Signaler un contenu</h2>
       <p>
-        L’éditeur met tout en œuvre pour assurer l’exactitude des informations
-        diffusées sur le site. Toutefois, il ne peut garantir l’absence d’erreurs.
-        Les utilisateurs restent responsables des informations qu’ils publient.
+        Une annonce ou une fiche vous paraît fausse, illicite ou trompeuse&nbsp;? Écrivez à{' '}
+        <a href="mailto:contact@seokraft.fr">contact@seokraft.fr</a> en indiquant l’adresse de la page et la raison du
+        signalement. Nous l’examinons et retirons le contenu s’il ne respecte pas la loi ou nos{' '}
+        <a href="/cgu">conditions d’utilisation</a>.
       </p>
-    </main>
+    </PageLegale>
   )
 }
