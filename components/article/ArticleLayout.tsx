@@ -1,4 +1,7 @@
 import Link from 'next/link'
+import SiteHeader from '@/components/site/SiteHeader'
+import { getSessionUserId } from '@/lib/session'
+import { ARTICLES } from '@/lib/articles'
 import type { ReactNode } from 'react'
 import styles from './article.module.css'
 
@@ -36,7 +39,7 @@ function dateFr(iso: string) {
  * Gabarit commun des articles du guide : fil d'Ariane, sommaire, FAQ,
  * sources et données structurées (Article, BreadcrumbList, FAQPage).
  */
-export default function ArticleLayout({
+export default async function ArticleLayout({
   slug,
   categorie,
   titre,
@@ -50,6 +53,11 @@ export default function ArticleLayout({
   children,
 }: Props) {
   const url = `${SITE_URL}/blog/${slug}`
+  const isLoggedIn = !!(await getSessionUserId())
+  // Trois autres articles : d'abord ceux de la même rubrique
+  const lies = ARTICLES.filter(a => a.slug !== slug)
+    .sort((a, b) => Number(b.categorie === categorie) - Number(a.categorie === categorie))
+    .slice(0, 3)
 
   const jsonLd = [
     {
@@ -110,20 +118,11 @@ export default function ArticleLayout({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
 
-      <header className={styles.top}>
-        <div className={styles.topInner}>
-          <Link href="/" className={styles.brand}>
-            LocaDirect
-          </Link>
-          <Link href="/logements" className={styles.topCta}>
-            Voir les logements
-          </Link>
-        </div>
-      </header>
+      <SiteHeader isLoggedIn={isLoggedIn} current="guide" />
 
-      <div className={styles.layout}>
+      <main id="contenu" className={styles.layout}>
         <article>
-          <nav aria-label="Fil d'Ariane">
+          <nav aria-label="Fil d’Ariane">
             <ol className={styles.crumbs}>
               <li>
                 <Link href="/">Accueil</Link>
@@ -139,7 +138,7 @@ export default function ArticleLayout({
           <h1 className={styles.title}>{titre}</h1>
           <p className={styles.lead}>{chapeau}</p>
           <p className={styles.meta}>
-            Par l&apos;équipe LocaDirect · Mis à jour le <time dateTime={misAJour}>{dateFr(misAJour)}</time> ·{' '}
+            Par l’équipe LocaDirect · Mis à jour le <time dateTime={misAJour}>{dateFr(misAJour)}</time> ·{' '}
             {lecture} de lecture
           </p>
 
@@ -181,6 +180,22 @@ export default function ArticleLayout({
               </section>
             )}
           </div>
+
+          {lies.length > 0 && (
+            <nav className={styles.lies} aria-labelledby="a-lire-aussi">
+              <h2 id="a-lire-aussi">À lire aussi</h2>
+              <ul>
+                {lies.map(a => (
+                  <li key={a.slug}>
+                    <Link href={`/blog/${a.slug}`}>
+                      <strong>{a.titre}</strong>
+                      <span>{a.lecture} de lecture</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
         </article>
 
         <aside className={styles.aside}>
@@ -189,7 +204,7 @@ export default function ArticleLayout({
             {sommaire}
           </nav>
         </aside>
-      </div>
+      </main>
     </div>
   )
 }

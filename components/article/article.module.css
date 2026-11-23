@@ -1,16 +1,16 @@
-/* Mise en page des articles du guide — charte « piste A » (claire, vert profond). */
+/* Mise en page des articles du guide — charte LocaDirect (violet). */
 
 .page {
-  --ink: #14231e;
-  --ink-soft: #4a5550;
-  --accent: #1f5c4a;
-  --accent-soft: #e8f1ec;
-  --line: #e2e8e5;
+  --ink: #17162a;
+  --ink-soft: #4b4a60;
+  --accent: #5534e8;
+  --accent-soft: #efebff;
+  --line: #e4e3ee;
   --paper: #ffffff;
-  --paper-soft: #f4f6f5;
+  --paper-soft: #f6f5fa;
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .top {
@@ -29,7 +29,7 @@
 }
 
 .brand {
-  font-weight: 800;
+  font-weight: 700;
   font-size: 19px;
   letter-spacing: -0.02em;
   color: var(--ink);
@@ -85,19 +85,17 @@
 
 .category {
   display: inline-block;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--accent);
-  background: var(--accent-soft);
-  padding: 6px 12px;
-  border-radius: 999px;
 }
 
 .title {
+  text-wrap: balance;
   font-size: clamp(32px, 5vw, 48px);
   line-height: 1.08;
   letter-spacing: -0.03em;
-  font-weight: 800;
+  font-weight: 700;
   margin: 18px 0 18px;
 }
 
@@ -125,7 +123,7 @@
   font-size: 30px;
   line-height: 1.2;
   letter-spacing: -0.02em;
-  font-weight: 800;
+  font-weight: 700;
   margin: 56px 0 16px;
   scroll-margin-top: 24px;
 }
@@ -226,15 +224,17 @@
 }
 
 .cta p {
-  color: #c9d3ce;
+  color: #c9c7dc;
 }
 
 .ctaButton {
-  display: inline-block;
-  background: #fff;
-  color: var(--ink) !important;
-  padding: 14px 22px;
-  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  background: var(--accent);
+  color: #fff !important;
+  padding: 0 22px;
+  border-radius: 14px;
   font-weight: 700;
   text-decoration: none;
   margin-top: 8px;
@@ -248,6 +248,7 @@
 .faq summary {
   font-weight: 700;
   cursor: pointer;
+  min-height: 44px;
   font-size: 18px;
 }
 
@@ -256,7 +257,7 @@
 }
 
 .sources {
-  font-size: 15px;
+  font-size: 16px;
   color: var(--ink-soft);
 }
 
@@ -279,18 +280,16 @@
 }
 
 .toc p {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--ink-soft);
   margin: 0 0 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 .toc ol {
   margin: 0;
   padding-left: 18px;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.5;
 }
 
@@ -318,4 +317,59 @@
   .tocInline {
     display: none;
   }
+}
+
+/* Articles liés, en bas de page */
+.lies {
+  border-top: 1px solid var(--line);
+  margin-top: 56px;
+  padding-top: 32px;
+}
+.lies h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+.lies ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+.lies a {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 44px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: var(--paper-soft);
+  color: var(--ink);
+  text-decoration: none;
+}
+.lies a:hover {
+  background: var(--accent-soft);
+}
+.lies span {
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+/* Liens du fil d'Ariane, du sommaire et des sources : 44 px de haut pour le doigt */
+.crumbs a,
+.toc a,
+.tocInline a,
+.sources a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.toc li,
+.tocInline li {
+  margin-bottom: 0;
+}
+.crumbs li {
+  display: inline-flex;
+  align-items: center;
 }
