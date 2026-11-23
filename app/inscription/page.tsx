@@ -1,15 +1,10 @@
 'use client'
 
-import { useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, Suspense, type FormEvent } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-
-const ORANGE = '#EA580C'
-const ORANGE_LIGHT = '#FFF7ED'
-const WHITE = '#FFFFFF'
-const TEXT = '#1F2937'
-const TEXT_DIM = '#6B7280'
-const BORDER = '#E5E7EB'
+import AuthShell, { AuthMessage } from '@/components/forms/AuthShell'
+import { BoutonPrincipal, Champ, ErreurFormulaire, emailValide, erreurMotDePasse } from '@/components/forms/Champ'
 
 export default function InscriptionPage() {
   return (
@@ -19,213 +14,181 @@ export default function InscriptionPage() {
   )
 }
 
+const PROFILS = [
+  {
+    cle: 'estHebergeur',
+    titre: 'Publier un logement',
+    texte: 'Je loue une maison, un appartement ou un gîte, sans commission.',
+  },
+  {
+    cle: 'estPrestataire',
+    titre: 'Rejoindre l’annuaire des prestataires',
+    texte: 'Je propose un service : conciergerie, ménage, photo, entretien…',
+  },
+] as const
+
+type Profil = (typeof PROFILS)[number]['cle']
+
 function InscriptionForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const redirectParam = searchParams.get('redirect')
   const redirect = redirectParam && /^\/(?![\/\\])/.test(redirectParam) ? redirectParam : null
+  // Le profil peut être choisi d'avance par le lien : /inscription?profil=prestataire
+  const profilInitial = searchParams.get('profil') === 'prestataire' ? 'estPrestataire' : 'estHebergeur'
 
-  const [form, setForm] = useState({
-    email: '',
-    motDePasse: '',
-    estVoyageur: false,
-    estHebergeur: false,
-    estPrestataire: false,
+  const [email, setEmail] = useState('')
+  const [motDePasse, setMotDePasse] = useState('')
+  const [profils, setProfils] = useState<Record<Profil, boolean>>({
+    estHebergeur: profilInitial === 'estHebergeur',
+    estPrestataire: profilInitial === 'estPrestataire',
   })
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
+  const [erreurs, setErreurs] = useState<{ email?: string; motDePasse?: string; profil?: string; general?: string }>({})
+  const [chargement, setChargement] = useState(false)
+  const [envoye, setEnvoye] = useState(false)
 
-  const set = (key: string, value: any) => {
-    setForm(f => ({ ...f, [key]: value }))
-    setErrors(e => { const ne = { ...e }; delete ne[key]; return ne })
-  }
-
-  const validate = () => {
-    const errs: Record<string, string> = {}
-    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Email valide requis'
-    if (!form.motDePasse || form.motDePasse.length < 8) {
-      errs.motDePasse = '8 caractères minimum'
-    } else if (!/[A-Z]/.test(form.motDePasse)) {
-      errs.motDePasse = 'Une majuscule requise'
-    } else if (!/[0-9]/.test(form.motDePasse)) {
-      errs.motDePasse = 'Un chiffre requis'
-    } else if (!/[!@#$%^&*(),.?":{}|<>_\-]/.test(form.motDePasse)) {
-      errs.motDePasse = 'Un caractère spécial requis (!@#$%...)'
+  const envoyer = async (e: FormEvent) => {
+    e.preventDefault()
+    const errs: typeof erreurs = {}
+    if (!emailValide(email)) errs.email = 'Saisissez une adresse e-mail valide, par exemple nom@exemple.fr.'
+    const mdp = erreurMotDePasse(motDePasse)
+    if (mdp) errs.motDePasse = mdp
+    if (!profils.estHebergeur && !profils.estPrestataire) errs.profil = 'Choisissez au moins une option.'
+    if (Object.keys(errs).length) {
+      setErreurs(errs)
+      return
     }
-    if (!form.estVoyageur && !form.estHebergeur && !form.estPrestataire) errs.profil = 'Sélectionnez au moins un profil'
-    return errs
-  }
-
-  const handleSubmit = async () => {
-    const errs = validate()
-    if (Object.keys(errs).length > 0) { setErrors(errs); return }
-
-    setLoading(true)
+    setChargement(true)
+    setErreurs({})
     try {
       const res = await fetch('/api/inscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, redirect }),
+        // Les voyageurs n'ont plus besoin de compte : estVoyageur reste à false
+        body: JSON.stringify({ email, motDePasse, estVoyageur: false, ...profils, redirect }),
       })
       const data = await res.json()
-
       if (!res.ok) {
-        setErrors({ general: data.error || 'Une erreur est survenue' })
-        setLoading(false)
+        setErreurs({ general: data.error || 'L’inscription n’a pas abouti. Réessayez dans un instant.' })
+        setChargement(false)
         return
       }
-
-      setSuccess(true)
-    } catch (e) {
-      setErrors({ general: 'Une erreur est survenue' })
-      setLoading(false)
+      setEnvoye(true)
+    } catch {
+      setErreurs({ general: 'L’inscription n’a pas abouti. Vérifiez votre réseau et réessayez.' })
+      setChargement(false)
     }
   }
 
-  if (success) {
+  if (envoye) {
     return (
-      <div style={{ background: ORANGE_LIGHT, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: '-apple-system, sans-serif' }}>
-        <div style={{ background: WHITE, borderRadius: 20, padding: 36, maxWidth: 440, textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>📧</div>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: TEXT, marginBottom: 12 }}>Vérifiez votre boîte mail !</h1>
-          <p style={{ fontSize: 14, color: TEXT_DIM, lineHeight: 1.7 }}>
-            Nous avons envoyé un lien de confirmation à <strong>{form.email}</strong>.
-            Cliquez sur ce lien pour activer votre compte.
-          </p>
-        </div>
-      </div>
+      <AuthMessage titre="Confirmez votre adresse e-mail">
+        <p>
+          Nous avons envoyé un lien à <strong className="text-ink">{email}</strong>. Cliquez dessus pour activer votre
+          compte, puis connectez-vous.
+        </p>
+        <p className="text-sm text-muted">
+          Rien reçu après quelques minutes ? Regardez dans les courriers indésirables, ou écrivez-nous à
+          contact@seokraft.fr.
+        </p>
+      </AuthMessage>
     )
   }
 
   return (
-    <div style={{ background: ORANGE_LIGHT, minHeight: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', display: 'flex', flexDirection: 'column' }}>
-      <style>{`
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        a { text-decoration: none; }
-        input { font-family: inherit; }
-        button { font-family: inherit; cursor: pointer; border: none; }
-      `}</style>
+    <AuthShell
+      titre="Créer un compte"
+      intro="Le compte sert à publier une annonce ou une fiche prestataire. Pour louer un logement, vous n’en avez pas besoin."
+      pied={
+        <>
+          Déjà un compte ?{' '}
+          <Link href={`/connexion${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`} className="font-bold text-brand">
+            Se connecter
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={envoyer} noValidate className="flex flex-col gap-5">
+        <ErreurFormulaire>{erreurs.general}</ErreurFormulaire>
 
-      <div style={{ padding: '20px 20px 0' }}>
-        <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 34, height: 34, background: ORANGE, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🏠</div>
-          <span style={{ fontSize: 18, fontWeight: 800, color: TEXT }}>Loca<span style={{ color: ORANGE }}>Direct</span></span>
-        </Link>
-      </div>
-
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
-        <div style={{ width: '100%', maxWidth: 440 }}>
-
-          {redirect && (
-            <div style={{ background: WHITE, border: `1px solid ${ORANGE}`, borderRadius: 14, padding: 16, marginBottom: 20, textAlign: 'center' }}>
-              <p style={{ fontSize: 14, color: TEXT, fontWeight: 600, marginBottom: 4 }}>🔒 Connectez-vous pour voir cette annonce</p>
-              <p style={{ fontSize: 13, color: ORANGE, fontWeight: 700 }}>C'est 100% gratuit !</p>
-            </div>
+        <fieldset className="flex flex-col gap-2" aria-describedby={erreurs.profil ? 'erreur-profil' : undefined}>
+          <legend className="mb-1.5 text-sm font-semibold text-ink">Vous souhaitez…</legend>
+          {PROFILS.map(p => (
+            <label
+              key={p.cle}
+              className={`flex min-h-[56px] cursor-pointer items-start gap-3 rounded-[16px] p-4 ${
+                profils[p.cle]
+                  ? 'bg-brand-soft shadow-[inset_0_0_0_1.5px_#5534e8]'
+                  : 'bg-white shadow-[inset_0_0_0_1.5px_#e4e3ee] hover:bg-surface'
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={profils[p.cle]}
+                onChange={() => {
+                  setProfils(x => ({ ...x, [p.cle]: !x[p.cle] }))
+                  setErreurs(x => ({ ...x, profil: undefined }))
+                }}
+                className="mt-0.5 h-5 w-5 shrink-0 accent-[#5534e8]"
+              />
+              <span className="flex flex-col gap-0.5">
+                <strong className="text-base font-bold">{p.titre}</strong>
+                <span className="text-sm text-ink-soft">{p.texte}</span>
+              </span>
+            </label>
+          ))}
+          {erreurs.profil && (
+            <p id="erreur-profil" className="text-sm font-semibold text-[#c2410c]">
+              {erreurs.profil}
+            </p>
           )}
+        </fieldset>
 
-          <div style={{ background: WHITE, borderRadius: 20, padding: 28, boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
-            <h1 style={{ fontSize: 22, fontWeight: 800, color: TEXT, marginBottom: 6, textAlign: 'center' }}>
-              Créer mon compte gratuit
-            </h1>
-            <p style={{ fontSize: 13, color: TEXT_DIM, textAlign: 'center', marginBottom: 24 }}>
-              Aucune carte bancaire requise
-            </p>
+        <Champ
+          label="Adresse e-mail"
+          type="email"
+          name="email"
+          autoComplete="email"
+          inputMode="email"
+          spellCheck={false}
+          value={email}
+          onChange={v => {
+            setEmail(v)
+            setErreurs(x => ({ ...x, email: undefined }))
+          }}
+          onBlur={() => email && !emailValide(email) && setErreurs(x => ({ ...x, email: 'Saisissez une adresse e-mail valide, par exemple nom@exemple.fr.' }))}
+          erreur={erreurs.email}
+          placeholder="nom@exemple.fr"
+        />
+        <Champ
+          label="Mot de passe"
+          type="password"
+          name="new-password"
+          autoComplete="new-password"
+          value={motDePasse}
+          onChange={v => {
+            setMotDePasse(v)
+            setErreurs(x => ({ ...x, motDePasse: undefined }))
+          }}
+          onBlur={() => motDePasse && setErreurs(x => ({ ...x, motDePasse: erreurMotDePasse(motDePasse) ?? undefined }))}
+          erreur={erreurs.motDePasse}
+          aide="8 caractères minimum, avec une majuscule, un chiffre et un caractère spécial."
+        />
 
-            {errors.general && (
-              <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: 12, marginBottom: 16 }}>
-                <p style={{ fontSize: 13, color: '#DC2626' }}>{errors.general}</p>
-              </div>
-            )}
-
-            <Field label="Email" type="email" value={form.email} onChange={v => set('email', v)} error={errors.email} placeholder="vous@email.com" />
-
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: TEXT, marginBottom: 6, display: 'block' }}>Mot de passe</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={form.motDePasse}
-                  onChange={e => set('motDePasse', e.target.value)}
-                  placeholder="8 car. min, 1 majuscule, 1 chiffre, 1 spécial"
-                  style={{ width: '100%', padding: '12px 44px 12px 14px', borderRadius: 10, border: `1px solid ${errors.motDePasse ? '#FCA5A5' : BORDER}`, fontSize: 15, outline: 'none', color: TEXT }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(s => !s)}
-                  style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'transparent', padding: 6, fontSize: 18, color: TEXT_DIM }}
-                  aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                >
-                  {showPassword ? '🙈' : '👁️'}
-                </button>
-              </div>
-              {errors.motDePasse && <p style={{ fontSize: 12, color: '#DC2626', marginTop: 4 }}>{errors.motDePasse}</p>}
-              {!errors.motDePasse && (
-                <p style={{ fontSize: 11, color: TEXT_DIM, marginTop: 4 }}>
-                  Minimum 8 caractères, 1 majuscule, 1 chiffre, 1 caractère spécial
-                </p>
-              )}
-            </div>
-
-            <p style={{ fontSize: 13, fontWeight: 600, color: TEXT, marginTop: 16, marginBottom: 10 }}>Vous êtes :</p>
-            {errors.profil && <p style={{ fontSize: 12, color: '#DC2626', marginBottom: 8 }}>{errors.profil}</p>}
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
-              <ProfilOption icon="✈️" label="Voyageur" desc="Je cherche un logement" checked={form.estVoyageur} onClick={() => set('estVoyageur', !form.estVoyageur)} />
-              <ProfilOption icon="🏠" label="Hébergeur" desc="Je veux publier mon logement" checked={form.estHebergeur} onClick={() => set('estHebergeur', !form.estHebergeur)} />
-              <ProfilOption icon="🛠️" label="Prestataire" desc="Je propose un service (ménage, conciergerie, photo...)" checked={form.estPrestataire} onClick={() => set('estPrestataire', !form.estPrestataire)} />
-            </div>
-
-            <button onClick={handleSubmit} disabled={loading} style={{ width: '100%', background: ORANGE, color: WHITE, borderRadius: 12, padding: 15, fontSize: 15, fontWeight: 700, opacity: loading ? 0.7 : 1 }}>
-              {loading ? 'Création en cours...' : 'Créer mon compte gratuit'}
-            </button>
-
-            <p style={{ fontSize: 12, color: TEXT_DIM, textAlign: 'center', marginTop: 16, lineHeight: 1.6 }}>
-              En vous inscrivant, vous acceptez nos{' '}
-              <Link href="/cgu" style={{ color: ORANGE }}>CGU</Link> et notre{' '}
-              <Link href="/politique-confidentialite" style={{ color: ORANGE }}>politique de confidentialité</Link>.
-            </p>
-          </div>
-
-          <p style={{ textAlign: 'center', fontSize: 14, color: TEXT_DIM, marginTop: 20 }}>
-            Déjà inscrit ?{' '}
-            <Link href={`/connexion${redirect ? `?redirect=${redirect}` : ''}`} style={{ color: ORANGE, fontWeight: 700 }}>
-              Se connecter
-            </Link>
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Field({ label, type = 'text', value, onChange, error, placeholder }: {
-  label: string, type?: string, value: string, onChange: (v: string) => void, error?: string, placeholder?: string
-}) {
-  return (
-    <div style={{ marginBottom: 14 }}>
-      <label style={{ fontSize: 12, fontWeight: 600, color: TEXT, marginBottom: 6, display: 'block' }}>{label}</label>
-      <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-        style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: `1px solid ${error ? '#FCA5A5' : BORDER}`, fontSize: 15, outline: 'none', color: TEXT }} />
-      {error && <p style={{ fontSize: 12, color: '#DC2626', marginTop: 4 }}>{error}</p>}
-    </div>
-  )
-}
-
-function ProfilOption({ icon, label, desc, checked, onClick }: {
-  icon: string, label: string, desc: string, checked: boolean, onClick: () => void
-}) {
-  return (
-    <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderRadius: 12, border: `2px solid ${checked ? ORANGE : BORDER}`, background: checked ? ORANGE_LIGHT : WHITE, textAlign: 'left', width: '100%' }}>
-      <span style={{ fontSize: 24 }}>{icon}</span>
-      <div style={{ flex: 1 }}>
-        <p style={{ fontSize: 14, fontWeight: 700, color: TEXT }}>{label}</p>
-        <p style={{ fontSize: 12, color: TEXT_DIM }}>{desc}</p>
-      </div>
-      <div style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${checked ? ORANGE : BORDER}`, background: checked ? ORANGE : WHITE, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {checked && <span style={{ color: WHITE, fontSize: 13 }}>✓</span>}
-      </div>
-    </button>
+        <BoutonPrincipal chargement={chargement} libelleChargement="Création du compte…">
+          Créer mon compte gratuit
+        </BoutonPrincipal>
+        <p className="text-sm leading-relaxed text-muted">
+          En créant un compte, vous acceptez les{' '}
+          <Link href="/cgu" className="font-semibold text-ink">
+            conditions d’utilisation
+          </Link>{' '}
+          et la{' '}
+          <Link href="/politique-confidentialite" className="font-semibold text-ink">
+            politique de confidentialité
+          </Link>
+          .
+        </p>
+      </form>
+    </AuthShell>
   )
 }

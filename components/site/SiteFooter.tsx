@@ -7,7 +7,7 @@ const COLONNES = [
     liens: [
       { href: '/logements', label: 'Tous les logements' },
       { href: '/logements/chiens', label: 'Chien accepté' },
-      { href: '/blog/eviter-arnaques-location-saisonniere', label: 'Louer en sécurité' },
+      { href: '/blog/louer-en-securite', label: 'Louer en sécurité' },
       { href: '/blog', label: 'Le guide' },
     ],
   },
@@ -17,13 +17,14 @@ const COLONNES = [
       { href: '/inscription', label: 'Publier une annonce' },
       { href: '/alternative-airbnb', label: 'Comparer avec Airbnb' },
       { href: '/prestataires', label: 'Trouver un prestataire' },
+      { href: '/inscription?profil=prestataire', label: 'Rejoindre l’annuaire' },
     ],
   },
   {
     titre: 'LocaDirect',
     liens: [
       { href: '/mentions-legales', label: 'Mentions légales' },
-      { href: '/cgu', label: "Conditions d'utilisation" },
+      { href: '/cgu', label: 'Conditions d’utilisation' },
       { href: '/politique-confidentialite', label: 'Confidentialité' },
       { href: '/cookies', label: 'Cookies' },
     ],

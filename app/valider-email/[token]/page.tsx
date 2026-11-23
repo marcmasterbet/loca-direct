@@ -1,14 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { AuthMessage } from '@/components/forms/AuthShell'
 
-const ORANGE = '#EA580C'
-const ORANGE_LIGHT = '#FFF7ED'
-const WHITE = '#FFFFFF'
-const TEXT = '#1F2937'
-const TEXT_DIM = '#6B7280'
+type Etat = 'loading' | 'success' | 'already_active' | 'invalid' | 'error'
 
 export default function ValiderEmailPage() {
   const params = useParams()
@@ -17,7 +14,7 @@ export default function ValiderEmailPage() {
   const redirect = redirectParam && /^\/(?![\/\\])/.test(redirectParam) ? redirectParam : null
   const token = params.token as string
 
-  const [status, setStatus] = useState<'loading' | 'success' | 'already_active' | 'invalid' | 'error'>('loading')
+  const [etat, setEtat] = useState<Etat>('loading')
 
   useEffect(() => {
     fetch('/api/valider-email', {
@@ -26,60 +23,49 @@ export default function ValiderEmailPage() {
       body: JSON.stringify({ token }),
     })
       .then(res => res.json())
-      .then(data => setStatus(data.status))
-      .catch(() => setStatus('error'))
+      .then(data => setEtat(data.status))
+      .catch(() => setEtat('error'))
   }, [token])
 
-  if (status === 'loading') {
-    return <Page icon="⏳" title="Vérification..." text="Un instant, nous confirmons votre email." />
-  }
-
-  if (status === 'invalid') {
-    return <Page icon="❌" title="Lien invalide" text="Ce lien de validation n'existe pas." />
-  }
-
-  if (status === 'error') {
-    return <Page icon="❌" title="Une erreur est survenue" text="Veuillez réessayer dans quelques instants." />
-  }
-
-  if (status === 'already_active') {
-    return (
-      <Page
-        icon="✅"
-        title="Compte déjà activé"
-        text="Votre adresse email a déjà été confirmée. Vous pouvez vous connecter."
-        buttonHref="/connexion"
-        buttonLabel="Se connecter"
-      />
-    )
-  }
-
-  return (
-    <Page
-      icon="✅"
-      title="Email confirmé !"
-      text="Votre compte est maintenant actif. Bienvenue sur LocaDirect !"
-      buttonHref={redirect || '/espace'}
-      buttonLabel="Accéder à mon espace"
-    />
+  const bouton = (href: string, texte: string): ReactNode => (
+    <Link
+      href={href}
+      className="flex min-h-[52px] w-full items-center justify-center rounded-[14px] bg-brand px-5 text-base font-bold text-white no-underline hover:bg-brand-strong"
+    >
+      {texte}
+    </Link>
   )
-}
 
-function Page({ icon, title, text, buttonHref, buttonLabel }: {
-  icon: string, title: string, text: string, buttonHref?: string, buttonLabel?: string
-}) {
+  if (etat === 'loading')
+    return (
+      <AuthMessage titre="Confirmation en cours…">
+        <p aria-live="polite">Un instant, nous confirmons votre adresse e-mail.</p>
+      </AuthMessage>
+    )
+  if (etat === 'invalid')
+    return (
+      <AuthMessage titre="Ce lien ne fonctionne pas">
+        <p>Le lien de confirmation est incomplet ou a déjà servi. Essayez de vous connecter : si votre compte est actif, tout est en ordre.</p>
+        {bouton('/connexion', 'Se connecter')}
+      </AuthMessage>
+    )
+  if (etat === 'error')
+    return (
+      <AuthMessage titre="La confirmation n’a pas abouti">
+        <p>Rechargez la page dans quelques instants. Si le problème continue, écrivez-nous à contact@seokraft.fr.</p>
+      </AuthMessage>
+    )
+  if (etat === 'already_active')
+    return (
+      <AuthMessage titre="Votre compte est déjà actif">
+        <p>Votre adresse e-mail a déjà été confirmée. Vous pouvez vous connecter.</p>
+        {bouton('/connexion', 'Se connecter')}
+      </AuthMessage>
+    )
   return (
-    <div style={{ background: ORANGE_LIGHT, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: '-apple-system, sans-serif' }}>
-      <div style={{ background: WHITE, borderRadius: 20, padding: 36, maxWidth: 440, textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
-        <div style={{ fontSize: 48, marginBottom: 16 }}>{icon}</div>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: TEXT, marginBottom: 12 }}>{title}</h1>
-        <p style={{ fontSize: 14, color: TEXT_DIM, lineHeight: 1.7, marginBottom: buttonHref ? 24 : 0 }}>{text}</p>
-        {buttonHref && (
-          <Link href={buttonHref} style={{ display: 'inline-block', background: ORANGE, color: WHITE, borderRadius: 12, padding: '14px 28px', fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>
-            {buttonLabel}
-          </Link>
-        )}
-      </div>
-    </div>
+    <AuthMessage titre="Adresse e-mail confirmée">
+      <p>Votre compte est actif. Bienvenue sur LocaDirect !</p>
+      {bouton(redirect || '/espace', 'Accéder à mon espace')}
+    </AuthMessage>
   )
 }
