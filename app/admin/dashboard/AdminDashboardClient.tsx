@@ -1,477 +1,667 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import PhotoLightbox from '@/components/PhotoLightbox'
+import Image from 'next/image'
+import Link from 'next/link'
+import Logo from '@/components/site/Logo'
+import { Champ } from '@/components/forms/Champ'
+import { Case, Choix, Grille, TeleversementPhotos, Zone } from '@/components/espace/briques'
+import { METIERS } from '@/lib/prestataires'
+import { PAYS } from '@/lib/regions'
 
-const ORANGE = '#EA580C'
-const ORANGE_LIGHT = '#FFF7ED'
-const WHITE = '#FFFFFF'
-const GRAY = '#F9FAFB'
-const TEXT = '#1F2937'
-const TEXT_DIM = '#6B7280'
-const BORDER = '#E5E7EB'
-const GREEN = '#16A34A'
-const RED = '#DC2626'
+/* ───────────── Types ───────────── */
 
-type Vitrine = {
+type Proprio = { directloca_users?: { email: string } | null }
+
+type Vitrine = Proprio & {
   id: string
-  titre: string
-  ville: string
-  pays?: string
-  region?: string
-  prix_nuit: number
-  prix_semaine?: number
-  prix_mois?: number
+  titre: string | null
+  ville: string | null
+  pays?: string | null
+  region?: string | null
+  code_postal?: string | null
+  type_logement?: string | null
+  prix_nuit: number | null
+  prix_semaine?: number | null
+  prix_mois?: number | null
   statut: string
-  photos: string[]
-  description_courte: string
-  description_longue?: string
-  whatsapp: string
+  photos: string[] | null
+  description_courte: string | null
+  description_longue?: string | null
+  whatsapp: string | null
+  numero_enregistrement?: string | null
+  equipements?: string[] | null
+  motif_refus?: string | null
+  nb_vues?: number | null
   created_at: string
-  directloca_users: { email: string }
 }
 
-type Prestataire = {
+type Prestataire = Proprio & {
   id: string
-  nom: string
-  prenom: string
-  siret: string
-  adresse_siege: string
-  ville: string
-  code_postal: string
+  nom: string | null
+  prenom: string | null
+  siret: string | null
+  adresse_siege: string | null
+  ville: string | null
+  code_postal: string | null
   region: string | null
-  activite: string
-  description: string
-  telephone: string
-  whatsapp: string
+  activite: string | null
+  description: string | null
+  telephone: string | null
+  whatsapp: string | null
+  site_web?: string | null
   tarif_horaire: number | null
-  sur_devis: boolean
+  sur_devis: boolean | null
   flyer_url: string | null
-  photos: string[]
+  photos: string[] | null
   statut: string
+  motif_refus?: string | null
+  nb_vues?: number | null
   created_at: string
-  directloca_users: { email: string }
 }
 
-const ACTIVITES = [
-  'Conciergerie', 'Ménage / Entretien', 'Photographe', 'Aide au digital / Communication',
-  'Maintenance / Bricolage', 'Jardinage / Extérieur', 'Décoration / Aménagement',
-  "Kits & paniers d'accueil", 'Autre',
-]
+type Onglet = 'logements' | 'prestataires'
 
-export default function AdminDashboardClient({ vitrines, prestataires }: { vitrines: Vitrine[]; prestataires: Prestataire[] }) {
+const STATUTS: Record<string, { label: string; classes: string }> = {
+  en_attente: { label: 'À valider', classes: 'bg-dog text-[#7a5200]' },
+  active: { label: 'En ligne', classes: 'bg-mint text-mint-ink' },
+  deja_loue: { label: 'Déjà loué', classes: 'bg-surface text-ink-soft' },
+  bientot_dispo: { label: 'Bientôt disponible', classes: 'bg-brand-soft text-brand-strong' },
+  suspendue: { label: 'Suspendue', classes: 'bg-surface text-ink-soft' },
+  refuse: { label: 'Refusée', classes: 'bg-[#fff1ec] text-[#9a3412]' },
+}
+
+const FILTRES: Record<Onglet, string[]> = {
+  logements: ['en_attente', 'active', 'deja_loue', 'bientot_dispo', 'suspendue', 'tous'],
+  prestataires: ['en_attente', 'active', 'suspendue', 'refuse', 'tous'],
+}
+
+const bouton = 'inline-flex min-h-[44px] items-center justify-center rounded-[12px] px-4 text-base font-semibold no-underline disabled:opacity-60'
+const clair = `${bouton} bg-white text-ink shadow-[inset_0_0_0_1.5px_#e4e3ee] hover:bg-surface`
+const violet = `${bouton} bg-brand text-white hover:bg-brand-strong`
+const vert = `${bouton} bg-mint-ink text-white hover:bg-[#095640]`
+const danger = `${bouton} text-[#9a3412] hover:bg-[#fff1ec]`
+const carte = 'rounded-[22px] bg-white shadow-[0_0_0_1px_#e4e3ee,0_4px_16px_rgba(23,22,42,0.04)]'
+
+const date = (d: string) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+const nomPresta = (p: Prestataire) => [p.prenom, p.nom].filter(Boolean).join(' ') || 'Sans nom'
+
+async function envoyer(url: string, corps: object) {
+  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps) })
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Échec')
+}
+
+/* ───────────── Tableau de bord ───────────── */
+
+export default function AdminDashboardClient({
+  ongletInitial,
+  vitrines,
+  prestataires,
+  nbComptes,
+}: {
+  ongletInitial: Onglet
+  vitrines: Vitrine[]
+  prestataires: Prestataire[]
+  nbComptes: number | null
+}) {
   const router = useRouter()
-  const [tab, setTab] = useState<'vitrines' | 'prestataires'>('vitrines')
-  const [filterV, setFilterV] = useState('en_attente')
-  const [filterP, setFilterP] = useState('en_attente')
-  const [processingId, setProcessingId] = useState<string | null>(null)
-  const [refusMotifV, setRefusMotifV] = useState<Record<string, string>>({})
-  const [refusMotifP, setRefusMotifP] = useState<Record<string, string>>({})
-  const [lightbox, setLightbox] = useState<{ photos: string[]; index: number } | null>(null)
+  const [onglet, setOnglet] = useState<Onglet>(ongletInitial)
+  const [filtre, setFiltre] = useState('en_attente')
+  const [recherche, setRecherche] = useState('')
 
-  // Edition vitrines
-  const [editingVId, setEditingVId] = useState<string | null>(null)
-  const [editVData, setEditVData] = useState<any>({})
-  const [uploadingVPhoto, setUploadingVPhoto] = useState(false)
-  const [savingV, setSavingV] = useState(false)
+  const liste: (Vitrine | Prestataire)[] = onglet === 'logements' ? vitrines : prestataires
+  const compte = (s: string) => (s === 'tous' ? liste.length : liste.filter(x => x.statut === s).length)
 
-  // Edition prestataires
-  const [editingPId, setEditingPId] = useState<string | null>(null)
-  const [editPData, setEditPData] = useState<any>({})
-  const [uploadingPPhoto, setUploadingPPhoto] = useState(false)
-  const [uploadingPFlyer, setUploadingPFlyer] = useState(false)
-  const [savingP, setSavingP] = useState(false)
+  const visibles = useMemo(() => {
+    const q = recherche.trim().toLowerCase()
+    return liste.filter(x => {
+      if (filtre !== 'tous' && x.statut !== filtre) return false
+      if (!q) return true
+      const texte =
+        onglet === 'logements'
+          ? [(x as Vitrine).titre, x.ville, x.directloca_users?.email]
+          : [nomPresta(x as Prestataire), (x as Prestataire).activite, x.ville, x.directloca_users?.email, (x as Prestataire).siret]
+      return texte.join(' ').toLowerCase().includes(q)
+    })
+  }, [liste, filtre, recherche, onglet])
 
-  const filteredV = vitrines.filter(v => filterV === 'tous' || v.statut === filterV)
-  const filteredP = prestataires.filter(p => filterP === 'tous' || p.statut === filterP)
-
-  const countsV = {
-    en_attente: vitrines.filter(v => v.statut === 'en_attente').length,
-    active: vitrines.filter(v => v.statut === 'active').length,
-    deja_loue: vitrines.filter(v => v.statut === 'deja_loue').length,
-    bientot_dispo: vitrines.filter(v => v.statut === 'bientot_dispo').length,
-    suspendue: vitrines.filter(v => v.statut === 'suspendue').length,
-  }
-  const countsP = {
-    en_attente: prestataires.filter(p => p.statut === 'en_attente').length,
-    active: prestataires.filter(p => p.statut === 'active').length,
-    refuse: prestataires.filter(p => p.statut === 'refuse').length,
+  const changerOnglet = (o: Onglet) => {
+    setOnglet(o)
+    setFiltre('en_attente')
+    setRecherche('')
+    window.history.replaceState(null, '', o === 'logements' ? '/admin/dashboard' : '/admin/dashboard?onglet=prestataires')
   }
 
-  // Actions vitrines
-  const handleValiderV = async (id: string) => { setProcessingId(id); await fetch('/api/admin-update-vitrine', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, statut: 'active' }) }); router.refresh(); setProcessingId(null) }
-  const handleRefuserV = async (id: string) => { setProcessingId(id); await fetch('/api/admin-update-vitrine', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, statut: 'suspendue', motif_refus: refusMotifV[id] || 'Annonce refusée' }) }); router.refresh(); setProcessingId(null) }
-  const handleChangeStatutV = async (id: string, statut: string) => { setProcessingId(id); await fetch('/api/admin-update-vitrine', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, statut }) }); router.refresh(); setProcessingId(null) }
-  const handleSupprimerV = async (id: string) => {
-  if (!confirm('Supprimer cette vitrine définitivement ?')) return
-  setProcessingId(id)
-  await fetch('/api/admin-supprimer-vitrine', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
-  setProcessingId(null)
-  router.refresh()
-}
-
-const handleSupprimerP = async (id: string) => {
-  if (!confirm('Supprimer ce prestataire définitivement ?')) return
-  setProcessingId(id)
-  await fetch('/api/admin-supprimer-prestataire', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
-  setProcessingId(null)
-  router.refresh()
-}
-  const handleStartEditV = (v: Vitrine) => {
-    setEditingVId(v.id)
-    setEditVData({ titre: v.titre || '', ville: v.ville || '', pays: v.pays || 'France', region: v.region || '', prix_nuit: v.prix_nuit || '', prix_semaine: v.prix_semaine || '', prix_mois: v.prix_mois || '', description_courte: v.description_courte || '', description_longue: v.description_longue || '', whatsapp: v.whatsapp || '', photos: v.photos || [] })
-  }
-  const handleSaveV = async (id: string) => {
-    setSavingV(true)
-    await fetch('/api/admin-update-vitrine', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...editVData }) })
-    setSavingV(false); setEditingVId(null); router.refresh()
-  }
-  const handleUploadVPhoto = async (file: File) => {
-    if (editVData.photos.length >= 10) return
-    setUploadingVPhoto(true)
-    try {
-      const formData = new FormData(); formData.append('file', file)
-      const res = await fetch('/api/upload-photo', { method: 'POST', body: formData })
-      const result = await res.json()
-      if (result.url) setEditVData((d: any) => ({ ...d, photos: [...d.photos, result.url] }))
-    } catch (e) { console.error(e) }
-    setUploadingVPhoto(false)
+  const deconnecter = async () => {
+    await fetch('/api/deconnexion', { method: 'POST' })
+    router.push('/admin')
   }
 
-  // Actions prestataires
-  const handleValiderP = async (id: string) => { setProcessingId(id); await fetch('/api/admin-update-prestataire', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, statut: 'active' }) }); router.refresh(); setProcessingId(null) }
-  const handleRefuserP = async (id: string) => { setProcessingId(id); await fetch('/api/admin-update-prestataire', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, statut: 'refuse', motif_refus: refusMotifP[id] || 'Profil refusé' }) }); router.refresh(); setProcessingId(null) }
-  const handleChangeStatutP = async (id: string, statut: string) => { setProcessingId(id); await fetch('/api/admin-update-prestataire', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, statut }) }); router.refresh(); setProcessingId(null) }
-
-  const handleStartEditP = (p: Prestataire) => {
-    setEditingPId(p.id)
-    setEditPData({ nom: p.nom || '', prenom: p.prenom || '', siret: p.siret || '', adresse_siege: p.adresse_siege || '', ville: p.ville || '', code_postal: p.code_postal || '', region: p.region || '', activite: p.activite || 'Conciergerie', description: p.description || '', telephone: p.telephone || '', whatsapp: p.whatsapp || '', tarif_horaire: p.tarif_horaire || '', sur_devis: p.sur_devis || false, flyer_url: p.flyer_url || '', photos: p.photos || [] })
-  }
-  const handleSaveP = async (id: string) => {
-    setSavingP(true)
-    await fetch('/api/admin-update-prestataire', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...editPData }) })
-    setSavingP(false); setEditingPId(null); router.refresh()
-  }
-  const handleUploadPPhoto = async (file: File) => {
-    if (editPData.photos.length >= 10) return
-    setUploadingPPhoto(true)
-    try {
-      const formData = new FormData(); formData.append('file', file)
-      const res = await fetch('/api/upload-photo', { method: 'POST', body: formData })
-      const result = await res.json()
-      if (result.url) setEditPData((d: any) => ({ ...d, photos: [...d.photos, result.url] }))
-    } catch (e) { console.error(e) }
-    setUploadingPPhoto(false)
-  }
-  const handleUploadPFlyer = async (file: File) => {
-    setUploadingPFlyer(true)
-    try {
-      const formData = new FormData(); formData.append('file', file)
-      const res = await fetch('/api/upload-photo', { method: 'POST', body: formData })
-      const result = await res.json()
-      if (result.url) setEditPData((d: any) => ({ ...d, flyer_url: result.url }))
-    } catch (e) { console.error(e) }
-    setUploadingPFlyer(false)
-  }
-
-  const setV = (key: string, value: any) => setEditVData((d: any) => ({ ...d, [key]: value }))
-  const setP = (key: string, value: any) => setEditPData((d: any) => ({ ...d, [key]: value }))
-
-  const inputStyle = { width: '100%', padding: '8px 12px', borderRadius: 8, border: `1px solid ${BORDER}`, fontSize: 13, outline: 'none', background: WHITE }
-  const labelStyle = { fontSize: 11, fontWeight: 600, color: TEXT_DIM, display: 'block', marginBottom: 4 } as any
+  const aValider = vitrines.filter(v => v.statut === 'en_attente').length + prestataires.filter(p => p.statut === 'en_attente').length
+  const chiffres = [
+    { label: 'À valider', valeur: aValider, fort: aValider > 0 },
+    { label: 'Logements en ligne', valeur: vitrines.filter(v => v.statut === 'active').length },
+    { label: 'Prestataires en ligne', valeur: prestataires.filter(p => p.statut === 'active').length },
+    { label: 'Comptes', valeur: nbComptes ?? '—' },
+  ]
 
   return (
-    <div style={{ background: GRAY, minHeight: '100vh', fontFamily: '-apple-system, sans-serif' }}>
-      <style>{`* { box-sizing: border-box; } button { cursor: pointer; border: none; font-family: inherit; } textarea, input, select { font-family: inherit; }`}</style>
-
-      <div style={{ background: WHITE, borderBottom: `1px solid ${BORDER}`, padding: '16px 20px' }}>
-        <h1 style={{ fontSize: 18, fontWeight: 800, color: TEXT, marginBottom: 14 }}>🔐 Admin LocaDirect</h1>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={() => setTab('vitrines')} style={{ padding: '10px 18px', borderRadius: 10, fontSize: 14, fontWeight: 700, background: tab === 'vitrines' ? ORANGE : GRAY, color: tab === 'vitrines' ? WHITE : TEXT_DIM }}>🏠 Logements ({vitrines.length})</button>
-          <button onClick={() => setTab('prestataires')} style={{ padding: '10px 18px', borderRadius: 10, fontSize: 14, fontWeight: 700, background: tab === 'prestataires' ? ORANGE : GRAY, color: tab === 'prestataires' ? WHITE : TEXT_DIM }}>🛠️ Prestataires ({prestataires.length})</button>
+    <div className="min-h-screen bg-surface text-ink">
+      <header className="border-b border-line bg-white">
+        <div className="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-3 px-5 py-3 sm:px-8">
+          <div className="flex items-center gap-3">
+            <Link href="/" aria-label="Voir le site" className="flex min-h-[44px] items-center">
+              <Logo />
+            </Link>
+            <span className="rounded-[8px] bg-night px-2.5 py-1 text-sm font-semibold text-white">Admin</span>
+          </div>
+          <div className="flex gap-2">
+            <Link href="/" className={clair}>
+              Voir le site
+            </Link>
+            <button type="button" onClick={deconnecter} className={clair}>
+              Se déconnecter
+            </button>
+          </div>
         </div>
-      </div>
+      </header>
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px' }}>
+      <main id="contenu" className="mx-auto flex max-w-[1120px] flex-col gap-6 px-5 py-8 sm:px-8">
+        <h1 className="text-[28px] font-bold tracking-[-0.03em]">Tableau de bord</h1>
 
-        {/* ===== VITRINES ===== */}
-        {tab === 'vitrines' && (
-          <>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-              {[
-                { id: 'en_attente', label: `⏳ En attente (${countsV.en_attente})` },
-                { id: 'active', label: `✅ Actives (${countsV.active})` },
-                { id: 'deja_loue', label: `🔴 Déjà louées (${countsV.deja_loue})` },
-                { id: 'bientot_dispo', label: `🟡 Bientôt dispo (${countsV.bientot_dispo})` },
-                { id: 'suspendue', label: `⏸️ Suspendues (${countsV.suspendue})` },
-                { id: 'tous', label: `Tous (${vitrines.length})` },
-              ].map(f => (
-                <button key={f.id} onClick={() => setFilterV(f.id)} style={{ padding: '8px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, background: filterV === f.id ? ORANGE : WHITE, color: filterV === f.id ? WHITE : TEXT_DIM, border: `1px solid ${filterV === f.id ? ORANGE : BORDER}` }}>{f.label}</button>
-              ))}
+        <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {chiffres.map(c => (
+            <div key={c.label} className={`flex flex-col-reverse gap-1 rounded-[18px] p-4 ${c.fort ? 'bg-dog' : 'bg-white shadow-[0_0_0_1px_#e4e3ee]'}`}>
+              <dt className="text-base text-ink-soft">{c.label}</dt>
+              <dd className="text-[28px] font-bold tabular-nums">{c.valeur}</dd>
             </div>
+          ))}
+        </dl>
 
-            {filteredV.length === 0 ? (
-              <div style={{ background: WHITE, borderRadius: 16, padding: 40, textAlign: 'center', border: `1px solid ${BORDER}` }}><p style={{ fontSize: 14, color: TEXT_DIM }}>Aucune vitrine dans cette catégorie</p></div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {filteredV.map(v => {
-                  const photos = v.photos || []
-                  const isEditing = editingVId === v.id
-                  return (
-                    <div key={v.id} style={{ background: WHITE, border: `1px solid ${isEditing ? ORANGE : BORDER}`, borderRadius: 16, padding: 18 }}>
+        <nav aria-label="Rubriques" className="flex gap-1.5 self-start rounded-[14px] bg-white p-1.5 shadow-[0_0_0_1px_#e4e3ee]">
+          {(['logements', 'prestataires'] as Onglet[]).map(o => (
+            <button
+              key={o}
+              type="button"
+              onClick={() => changerOnglet(o)}
+              aria-current={onglet === o ? 'page' : undefined}
+              className={`min-h-[44px] rounded-[10px] px-4 text-base font-semibold ${onglet === o ? 'bg-brand-soft text-brand-strong' : 'text-ink-soft hover:bg-surface'}`}
+            >
+              {o === 'logements' ? `Logements (${vitrines.length})` : `Prestataires (${prestataires.length})`}
+            </button>
+          ))}
+        </nav>
 
-                      {/* MODE NORMAL */}
-                      {!isEditing && (
-                        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                          {photos.length > 0 && (
-                            <div style={{ position: 'relative', cursor: 'zoom-in', flexShrink: 0 }} onClick={() => setLightbox({ photos, index: 0 })}>
-                              <img src={photos[0]} alt="" style={{ width: 100, height: 100, borderRadius: 12, objectFit: 'cover', display: 'block' }} />
-                              {photos.length > 1 && <span style={{ position: 'absolute', bottom: 4, right: 4, background: 'rgba(0,0,0,0.65)', color: WHITE, fontSize: 10, fontWeight: 700, borderRadius: 10, padding: '2px 7px' }}>+{photos.length - 1}</span>}
-                            </div>
-                          )}
-                          <div style={{ flex: 1, minWidth: 200 }}>
-                            <p style={{ fontSize: 15, fontWeight: 700, color: TEXT }}>{v.titre}</p>
-                            <p style={{ fontSize: 13, color: TEXT_DIM, marginBottom: 4 }}>{v.ville}{v.region ? `, ${v.region}` : ''}{v.pays && v.pays !== 'France' ? ` · ${v.pays}` : ''} · {v.prix_nuit}€/nuit</p>
-                            <p style={{ fontSize: 12, color: TEXT_DIM }}>Par : {v.directloca_users?.email}</p>
-                            <p style={{ fontSize: 11, color: TEXT_DIM }}>Publié le {new Date(v.created_at).toLocaleDateString('fr-FR')}</p>
-                            <p style={{ fontSize: 12, color: TEXT, marginTop: 6 }}>{v.description_courte}</p>
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 180 }}>
-                            <button onClick={() => handleStartEditV(v)} style={{ background: ORANGE_LIGHT, color: ORANGE, borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 700, border: `1px solid ${ORANGE}` }}>✏️ Modifier</button>
-                            {v.statut === 'en_attente' && (
-                              <>
-                                <button onClick={() => handleValiderV(v.id)} disabled={processingId === v.id} style={{ background: GREEN, color: WHITE, borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700 }}>✅ Valider</button>
-                                <textarea value={refusMotifV[v.id] || ''} onChange={e => setRefusMotifV(m => ({ ...m, [v.id]: e.target.value }))} placeholder="Motif de refus (optionnel)" rows={2} style={{ width: '100%', padding: 8, borderRadius: 8, border: `1px solid ${BORDER}`, fontSize: 12, outline: 'none', resize: 'none' }} />
-                                <button onClick={() => handleRefuserV(v.id)} disabled={processingId === v.id} style={{ background: '#FEF2F2', color: RED, borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, border: '1px solid #FECACA' }}>❌ Refuser</button>
-                              </>
-                            )}
-                            {v.statut === 'active' && (
-                              <>
-                                <button onClick={() => handleChangeStatutV(v.id, 'deja_loue')} disabled={processingId === v.id} style={{ background: GRAY, color: TEXT, borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 600, border: `1px solid ${BORDER}` }}>🔴 Déjà loué</button>
-                                <button onClick={() => handleChangeStatutV(v.id, 'bientot_dispo')} disabled={processingId === v.id} style={{ background: '#FFFBEB', color: '#D97706', borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 600, border: '1px solid #FDE68A' }}>🟡 Bientôt dispo</button>
-                                <button onClick={() => handleChangeStatutV(v.id, 'suspendue')} disabled={processingId === v.id} style={{ background: '#FEF2F2', color: RED, borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 600, border: '1px solid #FECACA' }}>⏸️ Suspendre</button>
-                              </>
-                            )}
-                            {(v.statut === 'deja_loue' || v.statut === 'bientot_dispo' || v.statut === 'suspendue') && (
-                              <button onClick={() => handleChangeStatutV(v.id, 'active')} disabled={processingId === v.id} style={{ background: GREEN, color: WHITE, borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 600 }}>✅ Réactiver</button>
-                            )}
-                            <button onClick={() => handleSupprimerV(v.id)} disabled={processingId === v.id} style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-  🗑️ Supprimer
-</button>
-                            <a href={`https://loca-direct.fr/vitrine/${v.id}`} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: ORANGE, textAlign: 'center', textDecoration: 'underline' }}>Voir la page publique</a>
-                          </div>
-                        </div>
-                      )}
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div role="group" aria-label="Filtrer par état" className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 lg:mx-0 lg:flex-wrap lg:px-0">
+            {FILTRES[onglet].map(s => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setFiltre(s)}
+                aria-pressed={filtre === s}
+                className={`min-h-[44px] shrink-0 whitespace-nowrap rounded-full px-4 text-base font-semibold ${
+                  filtre === s ? 'bg-ink text-white' : 'bg-white text-ink-soft shadow-[inset_0_0_0_1.5px_#e4e3ee] hover:text-ink'
+                }`}
+              >
+                {s === 'tous' ? 'Tous' : STATUTS[s]?.label} <span className="tabular-nums opacity-70">{compte(s)}</span>
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-col gap-1.5 lg:w-[320px]">
+            <label htmlFor="recherche-admin" className="text-sm font-semibold">
+              Rechercher
+            </label>
+            <input
+              id="recherche-admin"
+              type="search"
+              value={recherche}
+              onChange={e => setRecherche(e.target.value)}
+              placeholder={onglet === 'logements' ? 'Titre, ville, e-mail…' : 'Nom, métier, ville, SIRET…'}
+              className="min-h-[48px] w-full rounded-[14px] border-0 bg-white px-4 text-base shadow-[inset_0_0_0_1.5px_#e4e3ee] placeholder:text-muted focus:shadow-[inset_0_0_0_2px_#5534e8]"
+            />
+          </div>
+        </div>
 
-                      {/* MODE ÉDITION VITRINE */}
-                      {isEditing && (
-                        <div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                            <p style={{ fontSize: 15, fontWeight: 700, color: ORANGE }}>✏️ Modification du logement</p>
-                            <button onClick={() => setEditingVId(null)} style={{ background: GRAY, color: TEXT_DIM, borderRadius: 8, padding: '6px 12px', fontSize: 12 }}>Annuler</button>
-                          </div>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-                            <div><label style={labelStyle}>Titre</label><input value={editVData.titre} onChange={e => setV('titre', e.target.value)} style={inputStyle} /></div>
-                            <div><label style={labelStyle}>Ville</label><input value={editVData.ville} onChange={e => setV('ville', e.target.value)} style={inputStyle} /></div>
-                            <div>
-                              <label style={labelStyle}>Pays</label>
-                              <select value={editVData.pays} onChange={e => setV('pays', e.target.value)} style={inputStyle}>
-                                <option value="France">🇫🇷 France</option>
-                                <option value="Belgique">🇧🇪 Belgique</option>
-                                <option value="Suisse">🇨🇭 Suisse</option>
-                                <option value="Espagne">🇪🇸 Espagne</option>
-                              </select>
-                            </div>
-                            <div><label style={labelStyle}>Région</label><input value={editVData.region} onChange={e => setV('region', e.target.value)} placeholder="ex: Grand Est" style={inputStyle} /></div>
-                            <div><label style={labelStyle}>Prix / nuit (€)</label><input type="number" value={editVData.prix_nuit} onChange={e => setV('prix_nuit', e.target.value)} style={inputStyle} /></div>
-                            <div><label style={labelStyle}>WhatsApp</label><input value={editVData.whatsapp} onChange={e => setV('whatsapp', e.target.value)} style={inputStyle} /></div>
-                          </div>
-                          <div style={{ marginBottom: 10 }}><label style={labelStyle}>Description courte</label><textarea value={editVData.description_courte} onChange={e => setV('description_courte', e.target.value)} rows={2} style={{ ...inputStyle, resize: 'none' }} /></div>
-                          <div style={{ marginBottom: 14 }}><label style={labelStyle}>Description complète</label><textarea value={editVData.description_longue} onChange={e => setV('description_longue', e.target.value)} rows={5} style={{ ...inputStyle, resize: 'none' }} /></div>
-
-                          <div style={{ marginBottom: 14 }}>
-                            <label style={labelStyle}>Photos ({editVData.photos.length}/10)</label>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
-                              {editVData.photos.map((url: string, i: number) => (
-                                <div key={i} style={{ position: 'relative', aspectRatio: '1', borderRadius: 8, overflow: 'hidden' }}>
-                                  <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                  <button onClick={() => setV('photos', editVData.photos.filter((p: string) => p !== url))} style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.7)', color: WHITE, borderRadius: '50%', width: 20, height: 20, fontSize: 10 }}>✕</button>
-                                  {i === 0 && <span style={{ position: 'absolute', bottom: 2, left: 2, background: ORANGE, color: WHITE, fontSize: 8, fontWeight: 700, borderRadius: 4, padding: '1px 4px' }}>Principale</span>}
-                                </div>
-                              ))}
-                              {editVData.photos.length < 10 && (
-                                <div onClick={() => !uploadingVPhoto && document.getElementById('admin-v-photo')?.click()} style={{ aspectRatio: '1', borderRadius: 8, border: `2px dashed ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexDirection: 'column', gap: 2 }}>
-                                  {uploadingVPhoto ? <span style={{ fontSize: 10, color: TEXT_DIM }}>...</span> : <><span style={{ fontSize: 20, color: TEXT_DIM }}>+</span><span style={{ fontSize: 9, color: TEXT_DIM }}>Ajouter</span></>}
-                                </div>
-                              )}
-                            </div>
-                            <input id="admin-v-photo" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadVPhoto(f) }} />
-                          </div>
-
-                          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                            <button onClick={() => setEditingVId(null)} style={{ background: GRAY, color: TEXT_DIM, borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600 }}>Annuler</button>
-                            <button onClick={() => handleSaveV(v.id)} disabled={savingV} style={{ background: ORANGE, color: WHITE, borderRadius: 10, padding: '10px 24px', fontSize: 13, fontWeight: 700, opacity: savingV ? 0.7 : 1 }}>{savingV ? 'Enregistrement...' : '✓ Enregistrer'}</button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
+        {visibles.length === 0 ? (
+          <div className={`${carte} flex flex-col items-start gap-3 p-6`}>
+            <p className="text-base text-ink-soft">
+              {filtre === 'en_attente' && !recherche ? 'Rien à valider pour le moment.' : 'Aucun résultat pour ce filtre.'}
+            </p>
+            {(filtre !== 'tous' || recherche) && (
+              <button type="button" onClick={() => { setFiltre('tous'); setRecherche('') }} className={clair}>
+                Tout afficher
+              </button>
             )}
-          </>
+          </div>
+        ) : (
+          <ul className="flex flex-col gap-4">
+            {onglet === 'logements'
+              ? (visibles as Vitrine[]).map(v => <CarteLogement key={v.id} v={v} />)
+              : (visibles as Prestataire[]).map(p => <CartePrestataire key={p.id} p={p} />)}
+          </ul>
         )}
-
-        {/* ===== PRESTATAIRES ===== */}
-        {tab === 'prestataires' && (
-          <>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-              {[
-                { id: 'en_attente', label: `⏳ En attente (${countsP.en_attente})` },
-                { id: 'active', label: `✅ Actifs (${countsP.active})` },
-                { id: 'refuse', label: `❌ Refusés (${countsP.refuse})` },
-                { id: 'tous', label: `Tous (${prestataires.length})` },
-              ].map(f => (
-                <button key={f.id} onClick={() => setFilterP(f.id)} style={{ padding: '8px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, background: filterP === f.id ? ORANGE : WHITE, color: filterP === f.id ? WHITE : TEXT_DIM, border: `1px solid ${filterP === f.id ? ORANGE : BORDER}` }}>{f.label}</button>
-              ))}
-            </div>
-
-            {filteredP.length === 0 ? (
-              <div style={{ background: WHITE, borderRadius: 16, padding: 40, textAlign: 'center', border: `1px solid ${BORDER}` }}><p style={{ fontSize: 14, color: TEXT_DIM }}>Aucun prestataire dans cette catégorie</p></div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {filteredP.map(p => {
-                  const photos = p.photos || []
-                  const allPhotos = [...(p.flyer_url ? [p.flyer_url] : []), ...photos]
-                  const isEditing = editingPId === p.id
-                  return (
-                    <div key={p.id} style={{ background: WHITE, border: `1px solid ${isEditing ? ORANGE : BORDER}`, borderRadius: 16, padding: 18 }}>
-
-                      {/* MODE NORMAL */}
-                      {!isEditing && (
-                        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                          {allPhotos.length > 0 && (
-                            <div style={{ position: 'relative', cursor: 'zoom-in', flexShrink: 0 }} onClick={() => setLightbox({ photos: allPhotos, index: 0 })}>
-                              <img src={allPhotos[0]} alt="" style={{ width: 100, height: 100, borderRadius: 12, objectFit: 'cover', display: 'block' }} />
-                              {allPhotos.length > 1 && <span style={{ position: 'absolute', bottom: 4, right: 4, background: 'rgba(0,0,0,0.65)', color: WHITE, fontSize: 10, fontWeight: 700, borderRadius: 10, padding: '2px 7px' }}>+{allPhotos.length - 1}</span>}
-                            </div>
-                          )}
-                          <div style={{ flex: 1, minWidth: 200 }}>
-                            <p style={{ fontSize: 15, fontWeight: 700, color: TEXT }}>{p.prenom} {p.nom}</p>
-                            <p style={{ fontSize: 13, color: TEXT_DIM, marginBottom: 4 }}>{p.activite} · {p.ville}{p.region ? ` (${p.region})` : ''}</p>
-                            <p style={{ fontSize: 12, color: TEXT_DIM }}>SIRET : {p.siret}</p>
-                            <p style={{ fontSize: 12, color: TEXT_DIM }}>{p.adresse_siege}, {p.code_postal} {p.ville}</p>
-                            <p style={{ fontSize: 12, color: TEXT_DIM }}>📞 {p.telephone} · WhatsApp {p.whatsapp}</p>
-                            <p style={{ fontSize: 12, color: TEXT_DIM }}>{p.sur_devis ? 'Sur devis' : p.tarif_horaire ? `${p.tarif_horaire}€/h` : 'Tarif non précisé'}</p>
-                            <p style={{ fontSize: 12, color: TEXT_DIM }}>Compte : {p.directloca_users?.email}</p>
-                            <p style={{ fontSize: 11, color: TEXT_DIM }}>Inscrit le {new Date(p.created_at).toLocaleDateString('fr-FR')}</p>
-                            {p.description && <p style={{ fontSize: 12, color: TEXT, marginTop: 6 }}>{p.description}</p>}
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 180 }}>
-                            <button onClick={() => handleStartEditP(p)} style={{ background: ORANGE_LIGHT, color: ORANGE, borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 700, border: `1px solid ${ORANGE}` }}>✏️ Modifier</button>
-                            {p.statut === 'en_attente' && (
-                              <>
-                                <button onClick={() => handleValiderP(p.id)} disabled={processingId === p.id} style={{ background: GREEN, color: WHITE, borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700 }}>✅ Valider</button>
-                                <textarea value={refusMotifP[p.id] || ''} onChange={e => setRefusMotifP(m => ({ ...m, [p.id]: e.target.value }))} placeholder="Motif de refus (optionnel)" rows={2} style={{ width: '100%', padding: 8, borderRadius: 8, border: `1px solid ${BORDER}`, fontSize: 12, outline: 'none', resize: 'none' }} />
-                                <button onClick={() => handleRefuserP(p.id)} disabled={processingId === p.id} style={{ background: '#FEF2F2', color: RED, borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, border: '1px solid #FECACA' }}>❌ Refuser</button>
-                              </>
-                            )}
-                          <>
-  {(p.statut === 'active' || p.statut === 'refuse') && (
-    <button onClick={() => handleChangeStatutP(p.id, p.statut === 'active' ? 'suspendue' : 'active')} disabled={processingId === p.id} style={{ background: '#F3F4F6', color: '#374151', border: '1px solid #E5E7EB', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-      {p.statut === 'active' ? '⏸ Désactiver' : '✅ Réactiver'}
-    </button>
-  )}
-  <button onClick={() => handleSupprimerP(p.id)} disabled={processingId === p.id} style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-    🗑️ Supprimer
-  </button>
-</>
-                            {p.statut === 'active' && <a href={`https://loca-direct.fr/prestataires/${p.id}`} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: ORANGE, textAlign: 'center', textDecoration: 'underline' }}>Voir la page publique</a>}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* MODE ÉDITION PRESTATAIRE */}
-                      {isEditing && (
-                        <div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                            <p style={{ fontSize: 15, fontWeight: 700, color: ORANGE }}>✏️ Modification du prestataire</p>
-                            <button onClick={() => setEditingPId(null)} style={{ background: GRAY, color: TEXT_DIM, borderRadius: 8, padding: '6px 12px', fontSize: 12 }}>Annuler</button>
-                          </div>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-                            <div><label style={labelStyle}>Prénom</label><input value={editPData.prenom} onChange={e => setP('prenom', e.target.value)} style={inputStyle} /></div>
-                            <div><label style={labelStyle}>Nom</label><input value={editPData.nom} onChange={e => setP('nom', e.target.value)} style={inputStyle} /></div>
-                            <div><label style={labelStyle}>SIRET</label><input value={editPData.siret} onChange={e => setP('siret', e.target.value)} style={inputStyle} /></div>
-                            <div><label style={labelStyle}>Activité</label>
-                              <select value={editPData.activite} onChange={e => setP('activite', e.target.value)} style={inputStyle}>
-                                {ACTIVITES.map(a => <option key={a} value={a}>{a}</option>)}
-                              </select>
-                            </div>
-                            <div><label style={labelStyle}>Ville</label><input value={editPData.ville} onChange={e => setP('ville', e.target.value)} style={inputStyle} /></div>
-                            <div><label style={labelStyle}>Code postal</label><input value={editPData.code_postal} onChange={e => setP('code_postal', e.target.value)} style={inputStyle} /></div>
-                            <div><label style={labelStyle}>Région</label><input value={editPData.region} onChange={e => setP('region', e.target.value)} style={inputStyle} /></div>
-                            <div><label style={labelStyle}>Téléphone</label><input value={editPData.telephone} onChange={e => setP('telephone', e.target.value)} style={inputStyle} /></div>
-                            <div><label style={labelStyle}>WhatsApp</label><input value={editPData.whatsapp} onChange={e => setP('whatsapp', e.target.value)} style={inputStyle} /></div>
-                            <div><label style={labelStyle}>Tarif horaire (€)</label><input type="number" value={editPData.tarif_horaire} onChange={e => setP('tarif_horaire', e.target.value)} disabled={editPData.sur_devis} style={{ ...inputStyle, opacity: editPData.sur_devis ? 0.5 : 1 }} /></div>
-                          </div>
-                          <div style={{ marginBottom: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <input type="checkbox" checked={editPData.sur_devis} onChange={e => setP('sur_devis', e.target.checked)} id="sur_devis" />
-                            <label htmlFor="sur_devis" style={{ fontSize: 13, color: TEXT }}>Sur devis</label>
-                          </div>
-                          <div style={{ marginBottom: 14 }}><label style={labelStyle}>Description</label><textarea value={editPData.description} onChange={e => setP('description', e.target.value)} rows={5} style={{ ...inputStyle, resize: 'none' }} /></div>
-
-                          {/* FLYER */}
-                          <div style={{ marginBottom: 14 }}>
-                            <label style={labelStyle}>Flyer / Visuel principal</label>
-                            {editPData.flyer_url ? (
-                              <div style={{ position: 'relative', display: 'inline-block' }}>
-                                <img src={editPData.flyer_url} alt="" style={{ width: '100%', maxHeight: 120, objectFit: 'cover', borderRadius: 8, display: 'block' }} />
-                                <button onClick={() => setP('flyer_url', '')} style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.7)', color: WHITE, borderRadius: '50%', width: 22, height: 22, fontSize: 11 }}>✕</button>
-                              </div>
-                            ) : (
-                              <div onClick={() => !uploadingPFlyer && document.getElementById('admin-p-flyer')?.click()} style={{ height: 80, borderRadius: 8, border: `2px dashed ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 6 }}>
-                                {uploadingPFlyer ? <span style={{ fontSize: 12, color: TEXT_DIM }}>Envoi...</span> : <><span style={{ fontSize: 20, color: TEXT_DIM }}>+</span><span style={{ fontSize: 12, color: TEXT_DIM }}>Ajouter un flyer</span></>}
-                              </div>
-                            )}
-                            <input id="admin-p-flyer" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPFlyer(f) }} />
-                          </div>
-
-                          {/* PHOTOS */}
-                          <div style={{ marginBottom: 14 }}>
-                            <label style={labelStyle}>Photos de réalisations ({editPData.photos.length}/10)</label>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
-                              {editPData.photos.map((url: string, i: number) => (
-                                <div key={i} style={{ position: 'relative', aspectRatio: '1', borderRadius: 8, overflow: 'hidden' }}>
-                                  <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                  <button onClick={() => setP('photos', editPData.photos.filter((ph: string) => ph !== url))} style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,0.7)', color: WHITE, borderRadius: '50%', width: 20, height: 20, fontSize: 10 }}>✕</button>
-                                </div>
-                              ))}
-                              {editPData.photos.length < 10 && (
-                                <div onClick={() => !uploadingPPhoto && document.getElementById('admin-p-photo')?.click()} style={{ aspectRatio: '1', borderRadius: 8, border: `2px dashed ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexDirection: 'column', gap: 2 }}>
-                                  {uploadingPPhoto ? <span style={{ fontSize: 10, color: TEXT_DIM }}>...</span> : <><span style={{ fontSize: 20, color: TEXT_DIM }}>+</span><span style={{ fontSize: 9, color: TEXT_DIM }}>Ajouter</span></>}
-                                </div>
-                              )}
-                            </div>
-                            <input id="admin-p-photo" type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadPPhoto(f) }} />
-                          </div>
-
-                          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                            <button onClick={() => setEditingPId(null)} style={{ background: GRAY, color: TEXT_DIM, borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600 }}>Annuler</button>
-                            <button onClick={() => handleSaveP(p.id)} disabled={savingP} style={{ background: ORANGE, color: WHITE, borderRadius: 10, padding: '10px 24px', fontSize: 13, fontWeight: 700, opacity: savingP ? 0.7 : 1 }}>{savingP ? 'Enregistrement...' : '✓ Enregistrer'}</button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {lightbox && <PhotoLightbox photos={lightbox.photos} startIndex={lightbox.index} onClose={() => setLightbox(null)} />}
+      </main>
     </div>
+  )
+}
+
+/* ───────────── Briques ───────────── */
+
+function Statut({ statut }: { statut: string }) {
+  const s = STATUTS[statut] ?? { label: statut, classes: 'bg-surface text-ink-soft' }
+  return <span className={`inline-flex self-start rounded-[8px] px-2.5 py-1 text-sm font-semibold ${s.classes}`}>{s.label}</span>
+}
+
+function Vignettes({ photos, alt }: { photos: string[]; alt: string }) {
+  if (!photos.length) return <div className="flex h-[96px] items-center justify-center rounded-[14px] bg-surface px-4 text-sm text-muted">Aucune photo</div>
+  return (
+    <ul className="flex gap-2 overflow-x-auto">
+      {photos.map((src, i) => (
+        <li key={src} className="shrink-0">
+          <a href={src} target="_blank" rel="noreferrer" aria-label={`Ouvrir la photo ${i + 1} de ${alt}`} className="relative block h-[96px] w-[128px] overflow-hidden rounded-[12px] bg-surface">
+            <Image src={src} alt="" fill sizes="128px" className="object-cover" />
+          </a>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function Infos({ lignes }: { lignes: [string, ReactNode][] }) {
+  return (
+    <dl className="grid grid-cols-1 gap-x-6 gap-y-1 text-base sm:grid-cols-2">
+      {lignes
+        .filter(([, v]) => v !== null && v !== undefined && v !== '')
+        .map(([k, v]) => (
+          <div key={k} className="flex min-w-0 gap-2">
+            <dt className="shrink-0 text-ink-soft">{k}&nbsp;:</dt>
+            <dd className="min-w-0 break-words font-semibold">{v}</dd>
+          </div>
+        ))}
+    </dl>
+  )
+}
+
+/** Actions de modération communes : valider, refuser avec motif, changer d'état, supprimer */
+function Moderation({
+  nom,
+  statut,
+  api,
+  apiSupprimer,
+  id,
+  statutRefus,
+  changements,
+  onModifier,
+}: {
+  nom: string
+  statut: string
+  api: string
+  apiSupprimer: string
+  id: string
+  statutRefus: string
+  changements: { statut: string; label: string }[]
+  onModifier: () => void
+}) {
+  const router = useRouter()
+  const [action, setAction] = useState<string | null>(null)
+  const [mode, setMode] = useState<'refus' | 'suppression' | null>(null)
+  const [motif, setMotif] = useState('')
+  const [erreur, setErreur] = useState('')
+
+  const faire = async (cle: string, fn: () => Promise<void>) => {
+    setAction(cle)
+    setErreur('')
+    try {
+      await fn()
+      setMode(null)
+      router.refresh()
+    } catch (e) {
+      setErreur(`${(e as Error).message}. Réessayez.`)
+    }
+    setAction(null)
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap gap-2">
+        {statut === 'en_attente' && (
+          <>
+            <button type="button" disabled={!!action} onClick={() => faire('valider', () => envoyer(api, { id, statut: 'active' }))} className={vert}>
+              {action === 'valider' ? 'Validation…' : 'Valider et mettre en ligne'}
+            </button>
+            <button type="button" disabled={!!action} onClick={() => setMode('refus')} className={clair}>
+              Refuser
+            </button>
+          </>
+        )}
+        {changements.map(c => (
+          <button key={c.statut} type="button" disabled={!!action} onClick={() => faire(c.statut, () => envoyer(api, { id, statut: c.statut }))} className={clair}>
+            {action === c.statut ? 'Mise à jour…' : c.label}
+          </button>
+        ))}
+        <button type="button" onClick={onModifier} className={clair}>
+          Modifier
+        </button>
+        <button type="button" onClick={() => setMode('suppression')} className={`${danger} sm:ml-auto`}>
+          Supprimer
+        </button>
+      </div>
+
+      {mode === 'refus' && (
+        <div className="flex flex-col gap-3 rounded-[14px] bg-surface p-4">
+          <Zone
+            label="Motif du refus, visible par l’annonceur"
+            rows={2}
+            value={motif}
+            onChange={setMotif}
+            placeholder="Ex. Les photos sont floues : ajoutez des photos nettes de chaque pièce."
+          />
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={!!action}
+              onClick={() => faire('refus', () => envoyer(api, { id, statut: statutRefus, motif_refus: motif.trim() || 'Annonce refusée' }))}
+              className={`${bouton} bg-[#c2410c] text-white hover:bg-[#9a3412]`}
+            >
+              {action === 'refus' ? 'Envoi…' : 'Refuser'}
+            </button>
+            <button type="button" onClick={() => setMode(null)} className={clair}>
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
+      {mode === 'suppression' && (
+        <div role="alertdialog" aria-label="Confirmer la suppression" className="flex flex-col gap-3 rounded-[14px] bg-[#fff1ec] p-4">
+          <p className="text-base text-[#7c2d12]">Supprimer «&nbsp;{nom}&nbsp;» ? Elle sera effacée définitivement de la base.</p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" disabled={!!action} onClick={() => faire('suppr', () => envoyer(apiSupprimer, { id }))} className={`${bouton} bg-[#c2410c] text-white hover:bg-[#9a3412]`}>
+              {action === 'suppr' ? 'Suppression…' : 'Supprimer définitivement'}
+            </button>
+            <button type="button" onClick={() => setMode(null)} className={clair} autoFocus>
+              Garder
+            </button>
+          </div>
+        </div>
+      )}
+
+      {erreur && (
+        <p role="alert" className="text-base font-semibold text-[#c2410c]">
+          {erreur}
+        </p>
+      )}
+    </div>
+  )
+}
+
+/** Panneau de modification : enregistre uniquement les champs affichés */
+function Edition({ children, onAnnuler, onEnregistrer }: { children: ReactNode; onAnnuler: () => void; onEnregistrer: () => Promise<void> }) {
+  const [envoi, setEnvoi] = useState(false)
+  const [erreur, setErreur] = useState('')
+  return (
+    <form
+      onSubmit={async e => {
+        e.preventDefault()
+        setEnvoi(true)
+        setErreur('')
+        try {
+          await onEnregistrer()
+        } catch (err) {
+          setErreur(`${(err as Error).message}. Les modifications ne sont pas enregistrées.`)
+          setEnvoi(false)
+        }
+      }}
+      className="flex flex-col gap-4 rounded-[18px] bg-surface p-4 sm:p-5"
+    >
+      {children}
+      {erreur && (
+        <p role="alert" className="text-base font-semibold text-[#c2410c]">
+          {erreur}
+        </p>
+      )}
+      <div className="flex flex-wrap gap-2">
+        <button type="submit" disabled={envoi} className={violet}>
+          {envoi ? 'Enregistrement…' : 'Enregistrer'}
+        </button>
+        <button type="button" onClick={onAnnuler} className={clair}>
+          Annuler
+        </button>
+      </div>
+    </form>
+  )
+}
+
+/* ───────────── Logement ───────────── */
+
+function CarteLogement({ v }: { v: Vitrine }) {
+  const router = useRouter()
+  const [edition, setEdition] = useState(false)
+  const titre = v.titre?.trim() || 'Sans titre'
+  const enLigne = ['active', 'deja_loue', 'bientot_dispo'].includes(v.statut)
+  const t = (x: unknown) => (x === null || x === undefined ? '' : String(x))
+  const [d, setD] = useState({
+    titre: t(v.titre),
+    ville: t(v.ville),
+    pays: t(v.pays) || 'France',
+    region: t(v.region),
+    prix_nuit: t(v.prix_nuit),
+    prix_semaine: t(v.prix_semaine),
+    prix_mois: t(v.prix_mois),
+    description_courte: t(v.description_courte),
+    description_longue: t(v.description_longue),
+    whatsapp: t(v.whatsapp),
+    photos: v.photos || [],
+  })
+  const maj = <K extends keyof typeof d>(k: K, val: (typeof d)[K]) => setD(p => ({ ...p, [k]: val }))
+
+  const changements =
+    v.statut === 'active'
+      ? [
+          { statut: 'deja_loue', label: 'Déjà loué' },
+          { statut: 'bientot_dispo', label: 'Bientôt disponible' },
+          { statut: 'suspendue', label: 'Suspendre' },
+        ]
+      : v.statut === 'en_attente'
+        ? []
+        : [{ statut: 'active', label: 'Remettre en ligne' }]
+
+  return (
+    <li className={`${carte} flex flex-col gap-4 p-4 sm:p-5`}>
+      <Vignettes photos={v.photos || []} alt={titre} />
+      <div className="flex flex-col gap-2">
+        <Statut statut={v.statut} />
+        <h2 className="text-[20px] font-bold leading-snug">
+          {enLigne ? (
+            <Link href={`/vitrine/${v.id}`} target="_blank" className="text-ink underline-offset-4 hover:underline">
+              {titre}
+            </Link>
+          ) : (
+            titre
+          )}
+        </h2>
+        {v.description_courte && <p className="max-w-[70ch] text-base text-ink-soft">{v.description_courte}</p>}
+      </div>
+      <Infos
+        lignes={[
+          ['Lieu', [v.ville, v.code_postal, v.region, v.pays !== 'France' ? v.pays : null].filter(Boolean).join(', ')],
+          ['Prix', v.prix_nuit ? `${v.prix_nuit} € / nuit` : ''],
+          ['Type', v.type_logement],
+          ['Propriétaire', v.directloca_users?.email],
+          ['WhatsApp', v.whatsapp],
+          ['N° d’enregistrement', v.numero_enregistrement],
+          ['Chien de plus de 10 kg', v.equipements?.includes('chien_10kg') ? 'Accepté' : ''],
+          ['Publiée le', date(v.created_at)],
+          ['Visites', v.nb_vues ?? 0],
+        ]}
+      />
+      {v.motif_refus && v.statut !== 'active' && (
+        <p className="rounded-[14px] bg-[#fff1ec] px-4 py-3 text-base text-[#9a3412]">
+          <strong className="font-semibold">Motif envoyé&nbsp;:</strong> {v.motif_refus}
+        </p>
+      )}
+
+      {edition ? (
+        <Edition
+          onAnnuler={() => setEdition(false)}
+          onEnregistrer={async () => {
+            await envoyer('/api/admin-update-vitrine', { id: v.id, ...d })
+            setEdition(false)
+            router.refresh()
+          }}
+        >
+          <Champ label="Titre" value={d.titre} onChange={x => maj('titre', x)} />
+          <Grille>
+            <Champ label="Ville" value={d.ville} onChange={x => maj('ville', x)} />
+            <Champ label="Région" value={d.region} onChange={x => maj('region', x)} />
+            <Choix label="Pays" value={d.pays} onChange={x => maj('pays', x)} options={PAYS} />
+            <Champ label="WhatsApp" type="tel" value={d.whatsapp} onChange={x => maj('whatsapp', x)} />
+            <Champ label="Prix par nuit (€)" type="number" value={d.prix_nuit} onChange={x => maj('prix_nuit', x)} />
+            <Champ label="Prix par semaine (€)" type="number" value={d.prix_semaine} onChange={x => maj('prix_semaine', x)} />
+            <Champ label="Prix par mois (€)" type="number" value={d.prix_mois} onChange={x => maj('prix_mois', x)} />
+          </Grille>
+          <Zone label="Résumé" rows={2} value={d.description_courte} onChange={x => maj('description_courte', x)} />
+          <Zone label="Description complète" rows={6} value={d.description_longue} onChange={x => maj('description_longue', x)} />
+          <TeleversementPhotos id={`photos-${v.id}`} photos={d.photos} onChange={p => maj('photos', p)} />
+        </Edition>
+      ) : (
+        <Moderation
+          nom={titre}
+          statut={v.statut}
+          id={v.id}
+          api="/api/admin-update-vitrine"
+          apiSupprimer="/api/admin-supprimer-vitrine"
+          statutRefus="suspendue"
+          changements={changements}
+          onModifier={() => setEdition(true)}
+        />
+      )}
+    </li>
+  )
+}
+
+/* ───────────── Prestataire ───────────── */
+
+function CartePrestataire({ p }: { p: Prestataire }) {
+  const router = useRouter()
+  const [edition, setEdition] = useState(false)
+  const nom = nomPresta(p)
+  const t = (x: unknown) => (x === null || x === undefined ? '' : String(x))
+  const [d, setD] = useState({
+    prenom: t(p.prenom),
+    nom: t(p.nom),
+    siret: t(p.siret),
+    adresse_siege: t(p.adresse_siege),
+    ville: t(p.ville),
+    code_postal: t(p.code_postal),
+    region: t(p.region),
+    activite: t(p.activite) || 'Conciergerie',
+    description: t(p.description),
+    telephone: t(p.telephone),
+    whatsapp: t(p.whatsapp),
+    site_web: t(p.site_web),
+    tarif_horaire: t(p.tarif_horaire),
+    sur_devis: !!p.sur_devis,
+    flyer_url: t(p.flyer_url),
+    photos: p.photos || [],
+  })
+  const maj = <K extends keyof typeof d>(k: K, val: (typeof d)[K]) => setD(x => ({ ...x, [k]: val }))
+  const photos = [p.flyer_url, ...(p.photos || [])].filter((x): x is string => !!x && !x.toLowerCase().endsWith('.pdf'))
+
+  return (
+    <li className={`${carte} flex flex-col gap-4 p-4 sm:p-5`}>
+      <Vignettes photos={photos} alt={nom} />
+      <div className="flex flex-col gap-2">
+        <Statut statut={p.statut} />
+        <h2 className="text-[20px] font-bold leading-snug">
+          {p.statut === 'active' ? (
+            <Link href={`/prestataires/${p.id}`} target="_blank" className="text-ink underline-offset-4 hover:underline">
+              {nom}
+            </Link>
+          ) : (
+            nom
+          )}
+        </h2>
+        {p.description && <p className="line-clamp-3 max-w-[70ch] text-base text-ink-soft">{p.description}</p>}
+      </div>
+      <Infos
+        lignes={[
+          ['Métier', p.activite],
+          ['Lieu', [p.ville, p.code_postal, p.region].filter(Boolean).join(', ')],
+          ['SIRET', p.siret],
+          ['Siège', p.adresse_siege],
+          ['Tarif', p.sur_devis ? 'Sur devis' : p.tarif_horaire ? `${p.tarif_horaire} € / h` : ''],
+          ['Compte', p.directloca_users?.email],
+          ['Téléphone', p.telephone],
+          ['WhatsApp', p.whatsapp],
+          ['Site', p.site_web],
+          ['Inscrit le', date(p.created_at)],
+        ]}
+      />
+      {p.siret && (
+        <a
+          href={`https://annuaire-entreprises.data.gouv.fr/rechercher?terme=${encodeURIComponent(p.siret.replace(/\s/g, ''))}`}
+          target="_blank"
+          rel="noreferrer"
+          className={`${clair} self-start`}
+        >
+          Vérifier le SIRET sur l’annuaire des entreprises
+        </a>
+      )}
+      {p.motif_refus && p.statut !== 'active' && (
+        <p className="rounded-[14px] bg-[#fff1ec] px-4 py-3 text-base text-[#9a3412]">
+          <strong className="font-semibold">Motif envoyé&nbsp;:</strong> {p.motif_refus}
+        </p>
+      )}
+
+      {edition ? (
+        <Edition
+          onAnnuler={() => setEdition(false)}
+          onEnregistrer={async () => {
+            await envoyer('/api/admin-update-prestataire', { id: p.id, ...d })
+            setEdition(false)
+            router.refresh()
+          }}
+        >
+          <Grille>
+            <Champ label="Prénom" value={d.prenom} onChange={x => maj('prenom', x)} />
+            <Champ label="Nom" value={d.nom} onChange={x => maj('nom', x)} />
+            <Choix label="Métier" value={d.activite} onChange={x => maj('activite', x)} options={METIERS.map(m => m.nom)} />
+            <Champ label="SIRET" value={d.siret} onChange={x => maj('siret', x)} />
+            <Champ label="Ville" value={d.ville} onChange={x => maj('ville', x)} />
+            <Champ label="Code postal" value={d.code_postal} onChange={x => maj('code_postal', x)} />
+            <Champ label="Région" value={d.region} onChange={x => maj('region', x)} />
+            <Champ label="Adresse du siège" value={d.adresse_siege} onChange={x => maj('adresse_siege', x)} />
+            <Champ label="Téléphone" type="tel" value={d.telephone} onChange={x => maj('telephone', x)} />
+            <Champ label="WhatsApp" type="tel" value={d.whatsapp} onChange={x => maj('whatsapp', x)} />
+            <Champ label="Site internet" value={d.site_web} onChange={x => maj('site_web', x)} />
+            {!d.sur_devis && <Champ label="Tarif horaire (€)" type="number" value={d.tarif_horaire} onChange={x => maj('tarif_horaire', x)} />}
+          </Grille>
+          <Case label="Sur devis" checked={d.sur_devis} onChange={x => maj('sur_devis', x)} />
+          <Zone label="Présentation" rows={5} value={d.description} onChange={x => maj('description', x)} />
+          <div className="flex flex-col gap-2">
+            <h3 className="text-base font-bold">Logo ou flyer</h3>
+            <TeleversementPhotos id={`flyer-${p.id}`} photos={d.flyer_url ? [d.flyer_url] : []} onChange={x => maj('flyer_url', x[0] ?? '')} max={1} principale={null} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <h3 className="text-base font-bold">Réalisations</h3>
+            <TeleversementPhotos id={`real-${p.id}`} photos={d.photos} onChange={x => maj('photos', x)} principale={null} />
+          </div>
+        </Edition>
+      ) : (
+        <Moderation
+          nom={nom}
+          statut={p.statut}
+          id={p.id}
+          api="/api/admin-update-prestataire"
+          apiSupprimer="/api/admin-supprimer-prestataire"
+          statutRefus="refuse"
+          changements={p.statut === 'active' ? [{ statut: 'suspendue', label: 'Suspendre' }] : p.statut === 'en_attente' ? [] : [{ statut: 'active', label: 'Remettre en ligne' }]}
+          onModifier={() => setEdition(true)}
+        />
+      )}
+    </li>
   )
 }

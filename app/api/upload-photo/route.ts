@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getSessionUserId } from '@/lib/session'
+import { getSessionUserId, isAdmin } from '@/lib/session'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,7 +9,8 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const userId = await getSessionUserId()
+    // L'administrateur peut aussi ajouter des photos depuis le tableau de bord
+    const userId = (await getSessionUserId()) ?? ((await isAdmin()) ? 'admin' : null)
     if (!userId) return NextResponse.json({ error: 'Non connecté' }, { status: 401 })
 
     const formData = await req.formData()
