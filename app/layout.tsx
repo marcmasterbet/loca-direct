@@ -17,25 +17,25 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.loca-direct.fr"),
   title: {
-    default: "Location vacances entre particuliers | LocaDirect",
+    default: "Location vacances entre particuliers sans commission",
     template: "%s | LocaDirect",
   },
   description:
-    "Louez ou trouvez un logement directement entre particuliers, sans commission. Contact direct par WhatsApp. Annuaire gratuit de prestataires (conciergerie, ménage, photographe).",
+    "Maisons, appartements et gîtes en France, loués par leurs propriétaires. Chien accepté. Écrivez directement sur WhatsApp, sans commission ni frais.",
   openGraph: {
     type: "website",
     locale: "fr_FR",
     siteName: "LocaDirect",
-    title: "LocaDirect — Location directe sans commission",
+    title: "Location vacances entre particuliers sans commission",
     description:
-      "Louez ou trouvez un logement directement entre particuliers, sans commission. Contact direct par WhatsApp.",
+      "Maisons, appartements et gîtes en France, loués par leurs propriétaires. Chien accepté. Écrivez directement sur WhatsApp, sans commission ni frais.",
     url: "https://www.loca-direct.fr",
   },
   twitter: {
     card: "summary_large_image",
-    title: "LocaDirect — Location directe sans commission",
+    title: "Location vacances entre particuliers sans commission",
     description:
-      "Louez ou trouvez un logement directement entre particuliers, sans commission.",
+      "Maisons, appartements et gîtes en France, loués par leurs propriétaires. Chien accepté. Écrivez directement sur WhatsApp, sans commission ni frais.",
   },
   robots: {
     index: true,

@@ -9,7 +9,7 @@ import SiteHeader from '@/components/site/SiteHeader'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Locations de vacances entre particuliers en France',
+  title: { absolute: 'Locations de vacances entre particuliers en France' },
   description:
     'Toutes les locations de vacances entre particuliers sur LocaDirect : maisons, appartements, gîtes. Sans commission, vous écrivez directement au propriétaire.',
   alternates: { canonical: `${SITE_URL}/logements` },

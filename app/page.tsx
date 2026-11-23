@@ -11,10 +11,11 @@ import CarteLogements, { type PointLogement } from '@/components/home/CarteLogem
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: { absolute: 'Location vacances entre particuliers | LocaDirect' },
+  title: { absolute: 'Location vacances entre particuliers sans commission' },
   description:
-    'Maisons et appartements de vacances loués en direct par leurs propriétaires. 0 € de frais de service, contact WhatsApp, grands chiens bienvenus.',
+    'Maisons, appartements et gîtes en France, loués par leurs propriétaires. Chien accepté. Écrivez directement sur WhatsApp, sans commission ni frais.',
   alternates: { canonical: 'https://www.loca-direct.fr' },
+  openGraph: { title: 'Location vacances entre particuliers sans commission', description: 'Maisons, appartements et gîtes en France, loués par leurs propriétaires. Chien accepté. Écrivez directement sur WhatsApp, sans commission ni frais.', url: 'https://www.loca-direct.fr' },
 }
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)

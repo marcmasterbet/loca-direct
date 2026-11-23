@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 import VitrineClient, { type Voisin } from './VitrineClient'
 import { getSessionUserId } from '@/lib/session'
 import { centreCommune } from '@/lib/geo'
-import { SITE_URL, STATUTS_VISIBLES } from '@/lib/seo'
+import { SITE_URL, STATUTS_VISIBLES, titreAnnonce } from '@/lib/seo'
 import { slugifier, slugRegion } from '@/lib/france'
 
 export const dynamic = 'force-dynamic'
@@ -36,11 +36,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     `${vitrine.type_logement || 'Location de vacances'} à ${vitrine.ville}${vitrine.capacite ? ` pour ${vitrine.capacite} personnes` : ''}${chien ? ', chien accepté' : ''}, à partir de ${vitrine.prix_nuit} € la nuit. Location entre particuliers, sans commission.`
 
   return {
-    title,
+    title: { absolute: titreAnnonce(vitrine.titre || vitrine.type_logement || 'Location de vacances', vitrine.ville) },
     description: description.length > 160 ? `${description.slice(0, 157).trimEnd()}…` : description,
     alternates: { canonical: `${SITE_URL}/vitrine/${id}` },
     openGraph: {
-      title: `${title} | LocaDirect`,
+      title,
       description,
       images: vitrine.photos?.[0] ? [vitrine.photos[0]] : undefined,
     },
