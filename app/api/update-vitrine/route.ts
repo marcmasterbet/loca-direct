@@ -70,6 +70,8 @@ export async function POST(req: Request) {
         whatsapp: data.whatsapp,
         site_web: data.site_web || null,
         photos: data.photos,
+        // Seulement si le formulaire l'envoie : une ancienne version du formulaire ne l'efface pas
+        ...('numero_enregistrement' in data ? { numero_enregistrement: data.numero_enregistrement || null } : {}),
       })
       .eq('id', data.id)
       .eq('user_id', userId)

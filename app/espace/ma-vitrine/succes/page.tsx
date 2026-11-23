@@ -1,25 +1,23 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
+import AuthShell from '@/components/forms/AuthShell'
 
-const ORANGE = '#EA580C'
-const ORANGE_LIGHT = '#FFF7ED'
-const WHITE = '#FFFFFF'
-const TEXT = '#1F2937'
-const TEXT_DIM = '#6B7280'
+export const metadata: Metadata = { title: 'Annonce envoyée', robots: { index: false, follow: false } }
 
-export default function SuccesPage() {
+export default function AnnonceEnvoyeePage() {
   return (
-    <div style={{ background: ORANGE_LIGHT, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: '-apple-system, sans-serif' }}>
-      <div style={{ background: WHITE, borderRadius: 20, padding: 36, maxWidth: 440, textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
-        <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: TEXT, marginBottom: 12 }}>Annonce envoyée !</h1>
-        <p style={{ fontSize: 14, color: TEXT_DIM, lineHeight: 1.7, marginBottom: 24 }}>
-          Votre annonce est en cours de vérification par notre équipe.
-          Vous recevrez un email dès qu'elle sera en ligne (généralement sous 24-48h).
-        </p>
-        <Link href="/espace" style={{ display: 'inline-block', background: ORANGE, color: WHITE, borderRadius: 12, padding: '14px 28px', fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>
+    <AuthShell
+      titre="Annonce envoyée"
+      intro="Merci ! Nous vérifions votre annonce et la mettons en ligne sous 24 à 48 heures. Vous recevrez un e-mail dès qu’elle sera visible."
+    >
+      <div className="flex flex-col gap-3">
+        <Link href="/espace" className="flex min-h-[52px] items-center justify-center rounded-[14px] bg-brand px-5 text-base font-bold text-white no-underline hover:bg-brand-strong">
           Retour à mon espace
         </Link>
+        <Link href="/espace/ma-vitrine" className="flex min-h-[52px] items-center justify-center rounded-[14px] px-5 text-base font-semibold text-ink no-underline shadow-[inset_0_0_0_1.5px_#e4e3ee] hover:bg-surface">
+          Publier un autre logement
+        </Link>
       </div>
-    </div>
+    </AuthShell>
   )
 }

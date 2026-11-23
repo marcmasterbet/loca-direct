@@ -52,6 +52,8 @@ export async function POST(req: Request) {
         description: data.description || null,
         telephone: data.telephone,
         whatsapp: data.whatsapp,
+        // Le champ existait dans le formulaire mais n'était pas enregistré
+        ...('site_web' in data ? { site_web: data.site_web || null } : {}),
         tarif_horaire: data.sur_devis ? null : (data.tarif_horaire ? parseFloat(data.tarif_horaire) : null),
         sur_devis: !!data.sur_devis,
         flyer_url: data.flyer_url || null,
