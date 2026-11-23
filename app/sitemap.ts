@@ -277,11 +277,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }))
 
+  // Pages métier (/prestataires/conciergerie…) : celles qui ont au moins un prestataire
+  const metiersPresents = new Set(Array.from(metierRegion.keys()).map(k => k.split('/')[0]))
+  for (const p of prestataires || []) {
+    const slug = Object.entries(ACTIVITES_SLUGS).find(([, nom]) => nom === p.activite)?.[0]
+    if (slug) metiersPresents.add(slug)
+  }
+  const metiersPages: MetadataRoute.Sitemap = Array.from(metiersPresents).map(slug => ({
+    url: `${BASE_URL}/prestataires/${slug}`,
+    lastModified: now,
+    changeFrequency: 'weekly' as const,
+    priority: 0.75,
+  }))
+
   return [
     ...staticPages,
     ...articlesPages,
     ...regionsPages,
     ...villesPages,
+    ...metiersPages,
     ...prestatairesRegionsPages,
     ...vitrinesPages,
     ...prestatairesPages,
