@@ -22,6 +22,31 @@ const FRANCE: [[number, number], [number, number]] = [
   [9.7, 51.2],
 ]
 
+// On ne peut pas sortir de la France : la carte bloque le déplacement au-delà.
+// Large à l'ouest (pour caler la France à droite du bloc de recherche) et en hauteur
+// (pour qu'elle tienne entière sur un téléphone en plein écran).
+const LIMITES: [[number, number], [number, number]] = [
+  [-28, 28],
+  [22, 62],
+]
+
+// Contour de la France métropolitaine (Natural Earth) : tout ce qui est hors de France
+// est recouvert, pour n'afficher que la France. Le cache s'efface quand on zoome
+// sur une ville, pour ne jamais masquer une côte.
+const CONTOUR_FRANCE = '/carte-france.json'
+const COULEUR_HORS_FRANCE = '#eceaf4'
+
+// Sur grand écran, le bloc de recherche recouvre la gauche de la carte :
+// on cale la France à sa droite.
+function marges(pleinEcran: boolean) {
+  if (typeof window === 'undefined' || pleinEcran || window.innerWidth < 1024) {
+    return { top: 70, bottom: 30, left: 20, right: 20 }
+  }
+  // Même calcul que la position du bloc de recherche sur la page d'accueil.
+  const bordDroitDuBloc = Math.max(32, (window.innerWidth - 1280) / 2 + 32) + 500
+  return { top: 90, bottom: 40, left: bordDroitDuBloc + 40, right: 60 }
+}
+
 // Fond de carte vectoriel gratuit et sans clé (OpenFreeMap, données OpenStreetMap).
 const STYLE = 'https://tiles.openfreemap.org/styles/positron'
 
@@ -99,7 +124,9 @@ const DECALAGE_POPUP: Record<'top' | 'bottom' | 'left' | 'right' | 'center' | 't
 const ZOOM_MAX_GROUPES = 12
 
 export default function CarteLogements({ points }: { points: PointLogement[] }) {
+  const enveloppe = useRef<HTMLDivElement>(null)
   const conteneur = useRef<HTMLDivElement>(null)
+  const [pleinEcran, setPleinEcran] = useState(false)
   const carte = useRef<MapLibreMap | null>(null)
   const reperes = useRef<Marker[]>([])
   const [prete, setPrete] = useState(false)
@@ -119,12 +146,42 @@ export default function CarteLogements({ points }: { points: PointLogement[] }) 
         container: conteneur.current,
         style: STYLE,
         bounds: FRANCE,
-        fitBoundsOptions: { padding: 24 },
+        fitBoundsOptions: { padding: marges(false) },
+        maxBounds: LIMITES,
         attributionControl: { compact: true },
         cooperativeGestures: true,
+        dragRotate: false,
+        pitchWithRotate: false,
       })
-      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
-      map.on('load', () => setPrete(true))
+      map.touchZoomRotate.disableRotation()
+      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right')
+      map.on('load', () => {
+        // Pas de dézoom au-delà de la France entière.
+        map.setMinZoom(Math.max(3.5, map.getZoom() - 0.4))
+        map.addSource('contour-france', { type: 'geojson', data: CONTOUR_FRANCE })
+        map.addLayer({
+          id: 'hors-france',
+          type: 'fill',
+          source: 'contour-france',
+          filter: ['==', ['get', 'role'], 'masque'],
+          paint: {
+            'fill-color': COULEUR_HORS_FRANCE,
+            'fill-opacity': ['interpolate', ['linear'], ['zoom'], 8, 1, 10, 0],
+          },
+        })
+        map.addLayer({
+          id: 'bord-france',
+          type: 'line',
+          source: 'contour-france',
+          filter: ['==', ['get', 'role'], 'france'],
+          paint: {
+            'line-color': '#c9bffb',
+            'line-width': 1.5,
+            'line-opacity': ['interpolate', ['linear'], ['zoom'], 8, 1, 10, 0],
+          },
+        })
+        setPrete(true)
+      })
       carte.current = map
     })
     return () => {
@@ -133,6 +190,27 @@ export default function CarteLogements({ points }: { points: PointLogement[] }) 
       carte.current = null
     }
   }, [])
+
+  // Plein écran : la carte prend toute la fenêtre (fonctionne aussi sur iPhone,
+  // contrairement au plein écran du navigateur). On déplace la carte d'un doigt.
+  useEffect(() => {
+    const map = carte.current
+    if (!map) return
+    map.resize()
+    // On recadre sur la France entière à chaque ouverture ou fermeture.
+    map.fitBounds(FRANCE, { padding: marges(pleinEcran), duration: 0 })
+    if (pleinEcran) map.cooperativeGestures.disable()
+    else map.cooperativeGestures.enable()
+    if (!pleinEcran) return
+    const avant = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const echap = (e: KeyboardEvent) => e.key === 'Escape' && setPleinEcran(false)
+    window.addEventListener('keydown', echap)
+    return () => {
+      document.body.style.overflow = avant
+      window.removeEventListener('keydown', echap)
+    }
+  }, [pleinEcran, prete])
 
   // Regroupement des logements proches : « 5 logements », qui se sépare quand on zoome.
   const index = useMemo(() => {
@@ -191,38 +269,60 @@ export default function CarteLogements({ points }: { points: PointLogement[] }) 
     }
   }, [index, prete])
 
+  const bouton = 'rounded-[10px] px-3.5 py-2'
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div role="group" aria-label="Afficher sur la carte" className="flex gap-1.5 rounded-[14px] bg-white p-1.5 text-sm font-bold">
+    <div
+      ref={enveloppe}
+      className={pleinEcran ? 'fixed inset-0 z-[60] bg-white' : 'relative h-full w-full overflow-hidden lg:rounded-none'}
+    >
+      <div
+        ref={conteneur}
+        role="region"
+        aria-label="Carte des logements en France"
+        className="h-full w-full bg-[#eceaf4]"
+      />
+
+      <div
+        className={`pointer-events-none absolute inset-x-3 top-3 z-10 flex flex-wrap items-start justify-between gap-2 ${
+          pleinEcran ? '' : 'lg:left-auto lg:right-6 lg:top-6 lg:justify-end'
+        }`}
+      >
+        <div
+          role="group"
+          aria-label="Afficher sur la carte"
+          className="pointer-events-auto flex gap-1 rounded-[14px] bg-white p-1 text-sm font-bold shadow-[0_6px_20px_rgba(23,22,42,0.15)]"
+        >
           <button
             type="button"
             aria-pressed={filtre === 'tous'}
             onClick={() => setFiltre('tous')}
-            className={`rounded-[10px] px-3.5 py-2 ${filtre === 'tous' ? 'bg-brand text-white' : 'text-ink-soft hover:text-ink'}`}
+            className={`${bouton} ${filtre === 'tous' ? 'bg-brand text-white' : 'text-ink-soft hover:text-ink'}`}
           >
-            Tous les logements
+            Tous ({points.length})
           </button>
           <button
             type="button"
             aria-pressed={filtre === 'chien'}
             onClick={() => setFiltre('chien')}
-            className={`rounded-[10px] px-3.5 py-2 ${filtre === 'chien' ? 'bg-[#ffcf4d] text-ink' : 'text-ink-soft hover:text-ink'}`}
+            className={`${bouton} ${filtre === 'chien' ? 'bg-[#ffcf4d] text-ink' : 'text-ink-soft hover:text-ink'}`}
           >
-            Chien accepté
+            Chien accepté ({points.filter(p => p.chien).length})
           </button>
         </div>
-        <span className="text-sm text-ink-soft">
-          {visibles.length} logement{visibles.length > 1 ? 's' : ''} sur la carte
-        </span>
+        <button
+          type="button"
+          onClick={() => setPleinEcran(v => !v)}
+          aria-pressed={pleinEcran}
+          className="pointer-events-auto rounded-[14px] bg-white px-3.5 py-3 text-sm font-bold text-ink shadow-[0_6px_20px_rgba(23,22,42,0.15)] hover:text-brand"
+        >
+          {pleinEcran ? 'Fermer' : 'Plein écran'}
+        </button>
       </div>
-      <div
-        ref={conteneur}
-        role="region"
-        aria-label="Carte des logements en France"
-        className="h-[360px] w-full overflow-hidden rounded-[22px] bg-surface sm:h-[460px]"
-      />
-      <p className="text-xs text-muted">Les logements sont placés au centre de leur commune. L&apos;adresse exacte est donnée par le propriétaire.</p>
+
+      <p className="pointer-events-none absolute bottom-2 left-3 z-10 max-w-[60%] rounded-lg bg-white/85 px-2 py-1 text-[11px] text-ink-soft">
+        Logements placés au centre de leur commune
+      </p>
     </div>
   )
 }

@@ -62,12 +62,13 @@ export default async function Accueil() {
       <SiteHeader isLoggedIn={isLoggedIn} />
 
       {/* Accroche, recherche et carte */}
-      <section className="mx-auto grid max-w-[1280px] items-center gap-12 px-5 pb-16 pt-6 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
-        <div className="flex flex-col gap-6">
+      {/* Sur grand écran, la carte occupe tout l'écran et la recherche flotte à gauche. */}
+      <section className="relative lg:h-[calc(100svh-96px)] lg:min-h-[640px]">
+        <div className="relative z-20 flex flex-col gap-6 px-5 pb-8 pt-6 sm:px-8 lg:absolute lg:left-8 lg:top-1/2 lg:w-[500px] lg:-translate-y-1/2 lg:rounded-[28px] lg:bg-white lg:p-9 lg:shadow-[0_30px_80px_-30px_rgba(23,22,42,0.45)] xl:left-[max(2rem,calc((100vw-1280px)/2+2rem))]">
           <span className="self-start rounded-full bg-mint px-3.5 py-2 text-sm font-bold text-mint-ink">
             0 € de commission, 0 € de frais de service
           </span>
-          <h1 className="text-[44px] font-extrabold leading-[1.02] tracking-[-0.05em] sm:text-[64px]">
+          <h1 className="text-[44px] font-extrabold leading-[1.02] tracking-[-0.05em] sm:text-[56px] lg:text-[46px]">
             Trouvez votre location. Écrivez au propriétaire.
           </h1>
           <p className="max-w-[520px] text-lg leading-relaxed text-ink-soft">
@@ -99,7 +100,7 @@ export default async function Accueil() {
           </form>
         </div>
 
-        <div className="rounded-[28px] bg-surface p-4 sm:p-6">
+        <div className="relative h-[78svh] min-h-[460px] lg:absolute lg:inset-0 lg:h-auto lg:min-h-0">
           <CarteLogements points={points} />
         </div>
       </section>
