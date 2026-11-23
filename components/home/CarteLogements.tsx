@@ -52,13 +52,17 @@ function marges(pleinEcran: boolean) {
 const STYLE = 'https://tiles.openfreemap.org/styles/positron'
 
 function etiquette(p: PointLogement) {
+  // Zone cliquable de 44 px autour de l'étiquette, pour le doigt
   const el = document.createElement('button')
   el.type = 'button'
-  el.textContent = p.prix ? `${Math.round(p.prix)} €` : 'Voir'
-  el.setAttribute('aria-label', `${p.titre}, ${p.ville}${p.prix ? `, ${Math.round(p.prix)} € la nuit` : ''}`)
-  el.className = p.chien
-    ? 'rounded-full bg-[#ffcf4d] px-2.5 py-1 text-[13px] font-extrabold text-ink shadow-[0_4px_12px_rgba(23,22,42,0.25)] ring-2 ring-white'
-    : 'rounded-full bg-brand px-2.5 py-1 text-[13px] font-extrabold text-white shadow-[0_4px_12px_rgba(23,22,42,0.25)] ring-2 ring-white'
+  el.setAttribute('aria-label', `${p.titre}, ${p.ville}${p.prix ? `, ${Math.round(p.prix)}\u00a0€ la nuit` : ''}`)
+  el.className = 'group flex min-h-[44px] min-w-[44px] items-center justify-center p-1'
+  const pastille = document.createElement('span')
+  pastille.textContent = p.prix ? `${Math.round(p.prix)}\u00a0€` : 'Voir'
+  pastille.className = p.chien
+    ? 'rounded-full bg-[#ffcf4d] px-2.5 py-1 text-sm font-bold tabular-nums text-ink shadow-[0_2px_8px_rgba(23,22,42,0.08)] ring-2 ring-white group-hover:bg-[#ffc21f]'
+    : 'rounded-full bg-brand px-2.5 py-1 text-sm font-bold tabular-nums text-white shadow-[0_2px_8px_rgba(23,22,42,0.08)] ring-2 ring-white group-hover:bg-brand-strong'
+  el.append(pastille)
   return el
 }
 
@@ -66,14 +70,14 @@ function miniFiche(p: PointLogement) {
   const box = document.createElement('div')
   box.className = 'flex min-w-[200px] flex-col gap-1 font-sans text-ink'
   const titre = document.createElement('strong')
-  titre.className = 'text-[15px]'
+  titre.className = 'text-base'
   titre.textContent = p.titre
   const lieu = document.createElement('span')
-  lieu.className = 'text-[13px] text-muted'
+  lieu.className = 'text-sm text-muted'
   lieu.textContent = p.chien ? `${p.ville}, grand chien bienvenu` : p.ville
   const lien = document.createElement('a')
   lien.href = `/vitrine/${p.id}`
-  lien.className = 'mt-2 rounded-[10px] bg-brand px-3 py-2 text-center text-[13px] font-bold text-white no-underline'
+  lien.className = 'mt-2 flex min-h-[44px] items-center justify-center rounded-[12px] bg-brand px-3 text-sm font-bold text-white no-underline hover:bg-brand-strong'
   lien.textContent = 'Voir le logement'
   box.append(titre, lieu, lien)
   return box
@@ -83,14 +87,16 @@ function miniFiche(p: PointLogement) {
 function bulleGroupe(nombre: number) {
   const el = document.createElement('button')
   el.type = 'button'
-  el.textContent = String(nombre)
-  el.title = `${nombre} logements`
   el.setAttribute('aria-label', `${nombre} logements à cet endroit, zoomer pour les voir`)
+  el.className = 'group flex min-h-[44px] min-w-[44px] items-center justify-center'
+  const rond = document.createElement('span')
+  rond.textContent = String(nombre)
   const taille = nombre < 5 ? 34 : nombre < 15 ? 40 : 48
-  el.style.width = `${taille}px`
-  el.style.height = `${taille}px`
-  el.className =
-    'flex items-center justify-center rounded-full bg-ink text-[14px] font-extrabold text-white shadow-[0_0_0_5px_rgba(85,52,232,0.25),0_4px_12px_rgba(23,22,42,0.3)] ring-2 ring-white hover:bg-brand'
+  rond.style.width = `${taille}px`
+  rond.style.height = `${taille}px`
+  rond.className =
+    'flex items-center justify-center rounded-full bg-ink text-sm font-bold tabular-nums text-white shadow-[0_0_0_5px_rgba(85,52,232,0.22)] ring-2 ring-white group-hover:bg-brand'
+  el.append(rond)
   return el
 }
 
@@ -98,7 +104,7 @@ function listeCommune(liste: PointLogement[]) {
   const box = document.createElement('div')
   box.className = 'flex min-w-[220px] flex-col gap-2 font-sans text-ink'
   const titre = document.createElement('strong')
-  titre.className = 'text-[15px]'
+  titre.className = 'text-base'
   titre.textContent = `${liste.length} logements à ${liste[0]?.ville ?? ''}`
   const items = document.createElement('div')
   items.className = '-m-1 flex max-h-[136px] flex-col gap-2 overflow-y-auto p-1'
@@ -106,12 +112,12 @@ function listeCommune(liste: PointLogement[]) {
   for (const p of liste) {
     const a = document.createElement('a')
     a.href = `/vitrine/${p.id}`
-    a.className = 'flex justify-between gap-3 rounded-[10px] bg-surface px-3 py-2 text-[13px] text-ink no-underline hover:bg-brand-soft'
+    a.className = 'flex min-h-[44px] items-center justify-between gap-3 rounded-[12px] bg-surface px-3 py-2 text-sm text-ink no-underline hover:bg-brand-soft'
     const nom = document.createElement('span')
     nom.textContent = p.chien ? `${p.titre} (chien accepté)` : p.titre
     const prix = document.createElement('strong')
-    prix.className = 'shrink-0 whitespace-nowrap'
-    prix.textContent = p.prix ? `${Math.round(p.prix)} €` : ''
+    prix.className = 'shrink-0 whitespace-nowrap tabular-nums'
+    prix.textContent = p.prix ? `${Math.round(p.prix)}\u00a0€` : ''
     a.append(nom, prix)
     items.append(a)
   }
@@ -133,6 +139,7 @@ export default function CarteLogements({ points }: { points: PointLogement[] }) 
   const enveloppe = useRef<HTMLDivElement>(null)
   const conteneur = useRef<HTMLDivElement>(null)
   const [pleinEcran, setPleinEcran] = useState(false)
+  const boutonPleinEcran = useRef<HTMLButtonElement>(null)
   const carte = useRef<MapLibreMap | null>(null)
   const reperes = useRef<Marker[]>([])
   const [prete, setPrete] = useState(false)
@@ -218,11 +225,31 @@ export default function CarteLogements({ points }: { points: PointLogement[] }) 
     if (!pleinEcran) return
     const avant = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    const echap = (e: KeyboardEvent) => e.key === 'Escape' && setPleinEcran(false)
+    // Le focus va sur « Fermer » ; Tab reste dans la carte tant qu'elle est ouverte
+    boutonPleinEcran.current?.focus()
+    const echap = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPleinEcran(false)
+      if (e.key !== 'Tab' || !enveloppe.current) return
+      const focusables = [...enveloppe.current.querySelectorAll<HTMLElement>('button, a[href], [tabindex]:not([tabindex="-1"])')].filter(
+        el => el.offsetParent !== null
+      )
+      if (!focusables.length) return
+      const premier = focusables[0]
+      const dernier = focusables[focusables.length - 1]
+      if (e.shiftKey && document.activeElement === premier) {
+        e.preventDefault()
+        dernier.focus()
+      } else if (!e.shiftKey && document.activeElement === dernier) {
+        e.preventDefault()
+        premier.focus()
+      }
+    }
     window.addEventListener('keydown', echap)
+    const bouton = boutonPleinEcran.current
     return () => {
       document.body.style.overflow = avant
       window.removeEventListener('keydown', echap)
+      bouton?.focus()
     }
   }, [pleinEcran, prete])
 
@@ -283,12 +310,15 @@ export default function CarteLogements({ points }: { points: PointLogement[] }) 
     }
   }, [index, prete])
 
-  const bouton = 'rounded-[10px] px-3.5 py-2'
+  const bouton = 'flex min-h-[44px] items-center rounded-[10px] px-3.5'
 
   return (
     <div
       ref={enveloppe}
-      className={pleinEcran ? 'fixed inset-0 z-[60] bg-white' : 'relative h-full w-full overflow-hidden lg:rounded-none'}
+      role={pleinEcran ? 'dialog' : undefined}
+      aria-modal={pleinEcran ? true : undefined}
+      aria-label={pleinEcran ? 'Carte des logements en plein écran' : undefined}
+      className={pleinEcran ? 'fixed inset-0 z-[60] bg-white' : 'relative h-full w-full overflow-hidden'}
     >
       <div
         ref={conteneur}
@@ -305,7 +335,7 @@ export default function CarteLogements({ points }: { points: PointLogement[] }) 
         <div
           role="group"
           aria-label="Afficher sur la carte"
-          className="pointer-events-auto flex gap-1 rounded-[14px] bg-white p-1 text-sm font-bold shadow-[0_6px_20px_rgba(23,22,42,0.15)]"
+          className="pointer-events-auto flex gap-1 rounded-[14px] bg-white p-1 text-sm font-bold shadow-[0_0_0_1px_#e4e3ee,0_4px_16px_rgba(23,22,42,0.08)]"
         >
           <button
             type="button"
@@ -313,7 +343,7 @@ export default function CarteLogements({ points }: { points: PointLogement[] }) 
             onClick={() => setFiltre('tous')}
             className={`${bouton} ${filtre === 'tous' ? 'bg-brand text-white' : 'text-ink-soft hover:text-ink'}`}
           >
-            Tous ({points.length})
+            Tous&nbsp;({points.length})
           </button>
           <button
             type="button"
@@ -321,20 +351,23 @@ export default function CarteLogements({ points }: { points: PointLogement[] }) 
             onClick={() => setFiltre('chien')}
             className={`${bouton} ${filtre === 'chien' ? 'bg-[#ffcf4d] text-ink' : 'text-ink-soft hover:text-ink'}`}
           >
-            Chien accepté ({points.filter(p => p.chien).length})
+            <span className="sm:hidden">Chien</span>
+            <span className="hidden sm:inline">Chien accepté</span>
+            &nbsp;({points.filter(p => p.chien).length})
           </button>
         </div>
         <button
+          ref={boutonPleinEcran}
           type="button"
           onClick={() => setPleinEcran(v => !v)}
-          aria-pressed={pleinEcran}
-          className="pointer-events-auto rounded-[14px] bg-white px-3.5 py-3 text-sm font-bold text-ink shadow-[0_6px_20px_rgba(23,22,42,0.15)] hover:text-brand"
+          className="pointer-events-auto flex min-h-[48px] items-center rounded-[14px] bg-white px-4 text-sm font-bold text-ink shadow-[0_0_0_1px_#e4e3ee,0_4px_16px_rgba(23,22,42,0.08)] hover:text-brand"
         >
-          {pleinEcran ? 'Fermer' : 'Plein écran'}
+          <span className="sm:hidden">{pleinEcran ? 'Fermer' : 'Agrandir'}</span>
+          <span className="hidden sm:inline">{pleinEcran ? 'Fermer la carte' : 'Agrandir la carte'}</span>
         </button>
       </div>
 
-      <p className="pointer-events-none absolute bottom-2 left-3 z-10 max-w-[60%] rounded-lg bg-white/85 px-2 py-1 text-[11px] text-ink-soft">
+      <p className="pointer-events-none absolute bottom-2 left-3 z-10 max-w-[60%] rounded-lg bg-white px-2 py-1 text-xs text-ink-soft">
         Logements placés au centre de leur commune
       </p>
     </div>

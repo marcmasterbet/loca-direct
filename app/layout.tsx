@@ -67,6 +67,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
       </head>
       <body className="min-h-screen flex flex-col bg-white">
+        <a href="#contenu" className="lien-evitement">
+          Aller au contenu
+        </a>
         <main className="flex-1">{children}</main>
 
         <SiteFooter />

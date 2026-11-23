@@ -33,10 +33,39 @@
   color-scheme: light;
 }
 
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+}
+
+a,
+button,
+input,
+select,
+label {
+  touch-action: manipulation;
+}
+
+/* Lien « Aller au contenu » : invisible tant qu'on n'arrive pas dessus au clavier */
+.lien-evitement {
+  position: absolute;
+  left: 16px;
+  top: -100px;
+  z-index: 100;
+  border-radius: 12px;
+  background: var(--color-ink);
+  color: #fff;
+  padding: 12px 16px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.lien-evitement:focus {
+  top: 16px;
 }
 
 :focus-visible {
@@ -51,4 +80,14 @@ body {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Boutons + et − des cartes : 44 px, assez grands pour le doigt */
+.maplibregl-ctrl-group button {
+  width: 44px !important;
+  height: 44px !important;
+}
+.maplibregl-ctrl-group {
+  border-radius: 12px !important;
+  box-shadow: 0 0 0 1px #e4e3ee !important;
 }

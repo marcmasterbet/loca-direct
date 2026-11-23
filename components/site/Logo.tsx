@@ -18,7 +18,7 @@ export default function Logo({ size = 40, withName = true, className = '' }: Pro
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
       <LogoMark size={size} />
-      {withName && <span className="text-[22px] font-extrabold tracking-[-0.04em] text-ink">locadirect</span>}
+      {withName && <span className="text-[22px] font-bold tracking-[-0.04em] text-ink">locadirect</span>}
     </span>
   )
 }

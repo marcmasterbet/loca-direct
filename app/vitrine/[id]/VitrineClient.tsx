@@ -64,7 +64,7 @@ type Props = {
 
 function euros(v: unknown) {
   const n = Number(v)
-  return Number.isFinite(n) && n > 0 ? `${Math.round(n)} €` : null
+  return Number.isFinite(n) && n > 0 ? `${Math.round(n)}\u00a0€` : null
 }
 
 function texte(v: unknown) {
@@ -102,7 +102,7 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
     vitrine.capacite && { valeur: vitrine.capacite, label: Number(vitrine.capacite) > 1 ? 'voyageurs' : 'voyageur' },
     vitrine.nb_chambres && { valeur: vitrine.nb_chambres, label: Number(vitrine.nb_chambres) > 1 ? 'chambres' : 'chambre' },
     vitrine.nb_pieces && { valeur: vitrine.nb_pieces, label: Number(vitrine.nb_pieces) > 1 ? 'pièces' : 'pièce' },
-    vitrine.surface && { valeur: `${vitrine.surface} m²`, label: 'surface' },
+    vitrine.surface && { valeur: `${vitrine.surface}\u00a0m²`, label: 'surface' },
   ].filter(Boolean) as { valeur: string | number; label: string }[]
 
   const bonASavoir = [
@@ -125,13 +125,13 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
     <div className="flex flex-col gap-4">
       <div className="flex items-end justify-between gap-3">
         {prix ? (
-          <p className="text-[15px] text-ink-soft">
-            <strong className="text-[32px] font-extrabold tracking-[-0.03em] text-ink">{prix}</strong> la nuit
+          <p className="text-base text-ink-soft">
+            <strong className="text-[32px] font-bold tracking-[-0.03em] text-ink">{prix}</strong> la nuit
           </p>
         ) : (
-          <p className="text-[15px] text-ink-soft">Prix à voir avec le propriétaire</p>
+          <p className="text-base text-ink-soft">Prix à voir avec le propriétaire</p>
         )}
-        <span className={`rounded-full px-3 py-1.5 text-[13px] font-bold ${statut.classe}`}>{statut.label}</span>
+        <span className={`rounded-full px-3 py-1.5 text-sm font-bold ${statut.classe}`}>{statut.label}</span>
       </div>
       {(euros(vitrine.prix_semaine) || euros(vitrine.prix_mois)) && (
         <div className="flex gap-4 text-sm text-ink-soft">
@@ -146,7 +146,7 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
             ? 'Ce logement est déjà loué pour le moment. Regardez les autres logements de la région, plus bas.'
             : vitrine.statut === 'bientot_dispo'
               ? 'Ce logement sera bientôt disponible. Revenez dans quelques jours pour contacter le propriétaire.'
-              : 'Le propriétaire n\'a pas encore indiqué de numéro WhatsApp.'}
+              : 'Le propriétaire n’a pas encore indiqué de numéro WhatsApp.'}
         </p>
       ) : (
         <div className="flex flex-col gap-2.5">
@@ -155,7 +155,7 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
             target="_blank"
             rel="nofollow noreferrer"
             onClick={() => trackEvent('clic_whatsapp_logement', { logement_id: vitrine.id, ville: vitrine.ville })}
-            className="flex min-h-[56px] items-center justify-center gap-2.5 rounded-2xl bg-[#25D366] px-5 text-[17px] font-bold text-white no-underline hover:bg-[#1ebe5b]"
+            className="flex min-h-[56px] items-center justify-center gap-2.5 rounded-2xl bg-[#25D366] px-5 text-lg font-bold text-white no-underline hover:bg-[#1ebe5b]"
           >
             <IconeWhatsapp />
             Écrire au propriétaire
@@ -165,7 +165,7 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
               href={siteWebUrl}
               target="_blank"
               rel="noreferrer"
-              className="flex min-h-[48px] items-center justify-center rounded-2xl px-5 text-[15px] font-bold text-brand no-underline shadow-[inset_0_0_0_1.5px_#c9bffb] hover:bg-brand-soft"
+              className="flex min-h-[48px] items-center justify-center rounded-2xl px-5 text-base font-bold text-brand no-underline shadow-[inset_0_0_0_1.5px_#c9bffb] hover:bg-brand-soft"
             >
               Voir le site du propriétaire
             </a>
@@ -173,7 +173,7 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
         </div>
       )}
 
-      <p className="border-t border-line pt-4 text-[13px] leading-relaxed text-muted">
+      <p className="border-t border-line pt-4 text-sm leading-relaxed text-muted">
         0 € de commission : vous réglez le séjour directement avec le propriétaire.
       </p>
     </div>
@@ -183,19 +183,19 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
     <div className="bg-white pb-24 text-ink lg:pb-0">
       <SiteHeader isLoggedIn={isLoggedIn} current="logements" />
 
-      <main className="mx-auto flex max-w-[1180px] flex-col gap-6 px-5 pb-16 sm:px-8">
+      <main id="contenu" className="mx-auto flex max-w-[1180px] flex-col gap-6 px-5 pb-16 sm:px-8">
         {/* Fil d'Ariane */}
         <nav aria-label="Fil d'Ariane" className="text-sm text-muted">
-          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <ol className="-mx-5 flex items-center gap-x-2 overflow-x-auto whitespace-nowrap px-5 [scrollbar-width:none] sm:mx-0 sm:px-0">
             <li>
-              <Link href="/" className="text-muted no-underline hover:text-ink">
+              <Link href="/" className="inline-flex min-h-[44px] items-center text-muted no-underline hover:text-ink">
                 Accueil
               </Link>
             </li>
             {fil.map(f => (
               <li key={f.href} className="flex items-center gap-2">
                 <span aria-hidden>›</span>
-                <Link href={f.href} className="text-muted no-underline hover:text-ink">
+                <Link href={f.href} className="inline-flex min-h-[44px] items-center text-muted no-underline hover:text-ink">
                   {f.nom}
                 </Link>
               </li>
@@ -205,13 +205,13 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
 
         {/* Titre */}
         <div className="flex flex-col gap-3">
-          <h1 className="text-[30px] font-extrabold leading-[1.08] tracking-[-0.04em] sm:text-[42px]">{titre}</h1>
-          <div className="flex flex-wrap items-center gap-2 text-[15px] text-ink-soft">
+          <h1 className="text-balance text-[30px] font-bold leading-[1.1] tracking-[-0.04em] sm:text-[42px]">{titre}</h1>
+          <div className="flex flex-wrap items-center gap-2 text-base text-ink-soft">
             <span>
               {[vitrine.type_logement, vitrine.ville, vitrine.quartier].filter(Boolean).join(', ')}
             </span>
             {chien && (
-              <span className="rounded-full bg-dog px-3 py-1 text-[13px] font-bold text-ink">Chien accepté</span>
+              <span className="rounded-full bg-dog px-3 py-1 text-sm font-bold text-ink">Chien accepté</span>
             )}
           </div>
         </div>
@@ -241,7 +241,7 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
                 ))}
               </div>
               {photos.length > 1 && (
-                <span className="absolute bottom-3 right-3 rounded-full bg-ink/75 px-3 py-1 text-[13px] font-bold text-white">
+                <span className="absolute bottom-3 right-3 rounded-full bg-ink/80 px-3 py-1 text-sm font-semibold tabular-nums text-white">
                   {photoMobile + 1} / {photos.length}
                 </span>
               )}
@@ -277,7 +277,7 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
                 <button
                   type="button"
                   onClick={() => setLightboxIndex(0)}
-                  className="absolute bottom-4 right-4 rounded-[12px] bg-white px-4 py-2.5 text-sm font-bold text-ink shadow-[0_6px_20px_rgba(23,22,42,0.2)] hover:text-brand"
+                  className="absolute bottom-4 right-4 flex min-h-[44px] items-center rounded-[12px] bg-white px-4 text-sm font-bold text-ink shadow-[0_0_0_1px_#e4e3ee,0_4px_16px_rgba(23,22,42,0.08)] hover:text-brand"
                 >
                   Voir les {photos.length} photos
                 </button>
@@ -286,7 +286,7 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
           </>
         ) : (
           <div className="flex h-[220px] items-center justify-center rounded-[26px] bg-surface text-muted">
-            Le propriétaire n&apos;a pas encore ajouté de photo.
+            Le propriétaire n’a pas encore ajouté de photo.
           </div>
         )}
 
@@ -297,7 +297,7 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
                 {faits.map(f => (
                   <div key={f.label} className="flex flex-col">
                     <dt className="order-2 text-sm text-muted">{f.label}</dt>
-                    <dd className="text-[26px] font-extrabold tracking-[-0.03em]">{f.valeur}</dd>
+                    <dd className="text-[26px] font-bold tracking-[-0.03em]">{f.valeur}</dd>
                   </div>
                 ))}
               </dl>
@@ -306,7 +306,7 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
             {chien && (
               <div className="flex flex-col gap-1 rounded-[22px] bg-dog p-6">
                 <strong className="text-lg">Votre chien est le bienvenu</strong>
-                <p className="text-[15px] leading-relaxed text-ink-soft">
+                <p className="text-base leading-relaxed text-ink-soft">
                   Le propriétaire accepte les chiens, y compris ceux de plus de 10 kg. Précisez sa taille et sa race dans
                   votre premier message.{' '}
                   <Link href="/logements/chiens" className="font-semibold text-ink">
@@ -318,7 +318,7 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
 
             {(texte(vitrine.description_courte) || texte(vitrine.description_longue)) && (
               <section className="flex flex-col gap-4">
-                <h2 className="text-[22px] font-extrabold tracking-[-0.02em]">Le logement</h2>
+                <h2 className="text-balance text-[22px] font-bold tracking-[-0.02em]">Le logement</h2>
                 {texte(vitrine.description_courte) && (
                   <p className="text-lg leading-relaxed text-ink">{vitrine.description_courte}</p>
                 )}
@@ -332,10 +332,10 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
 
             {equipements.length > 0 && (
               <section className="flex flex-col gap-4">
-                <h2 className="text-[22px] font-extrabold tracking-[-0.02em]">Équipements</h2>
+                <h2 className="text-balance text-[22px] font-bold tracking-[-0.02em]">Équipements</h2>
                 <ul className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
                   {(tousEquipements ? equipements : equipements.slice(0, NB_EQUIPEMENTS_VISIBLES)).map(e => (
-                    <li key={e} className="flex items-center gap-3 text-[15px]">
+                    <li key={e} className="flex items-center gap-3 text-base">
                       <span
                         aria-hidden
                         className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${e === 'chien_10kg' ? 'bg-[#ffcf4d]' : 'bg-brand-soft'}`}
@@ -352,7 +352,7 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
                   <button
                     type="button"
                     onClick={() => setTousEquipements(v => !v)}
-                    className="self-start rounded-[12px] px-4 py-2.5 text-sm font-bold text-ink shadow-[inset_0_0_0_1.5px_#e4e3ee] hover:shadow-[inset_0_0_0_1.5px_#17162a]"
+                    className="flex min-h-[44px] items-center self-start rounded-[12px] px-4 text-sm font-bold text-ink shadow-[inset_0_0_0_1.5px_#e4e3ee] hover:shadow-[inset_0_0_0_1.5px_#17162a]"
                   >
                     {tousEquipements ? 'Afficher moins' : `Voir les ${equipements.length} équipements`}
                   </button>
@@ -362,11 +362,11 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
 
             {(bonASavoir.length > 0 || reglesTexte) && (
               <section className="flex flex-col gap-4">
-                <h2 className="text-[22px] font-extrabold tracking-[-0.02em]">Bon à savoir</h2>
+                <h2 className="text-balance text-[22px] font-bold tracking-[-0.02em]">Bon à savoir</h2>
                 {bonASavoir.length > 0 && (
                   <dl className="grid gap-x-8 sm:grid-cols-2">
                     {bonASavoir.map(([k, v]) => (
-                      <div key={k} className="flex justify-between gap-4 border-b border-line py-3 text-[15px]">
+                      <div key={k} className="flex justify-between gap-4 border-b border-line py-3 text-base">
                         <dt className="text-ink-soft">{k}</dt>
                         <dd className="text-right font-semibold">{v}</dd>
                       </div>
@@ -374,36 +374,36 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
                   </dl>
                 )}
                 {reglesTexte && (
-                  <p className="max-w-[68ch] whitespace-pre-line text-[15px] leading-relaxed text-ink-soft">{reglesTexte}</p>
+                  <p className="max-w-[68ch] whitespace-pre-line text-base leading-relaxed text-ink-soft">{reglesTexte}</p>
                 )}
               </section>
             )}
 
             {centre && (
               <section className="flex flex-col gap-4">
-                <h2 className="text-[22px] font-extrabold tracking-[-0.02em]">Où se trouve le logement</h2>
+                <h2 className="text-balance text-[22px] font-bold tracking-[-0.02em]">Où se trouve le logement</h2>
                 <MiniCarte centre={centre} ville={vitrine.ville} />
                 <p className="text-sm text-muted">
                   {vitrine.ville}
-                  {vitrine.code_postal ? ` (${vitrine.code_postal})` : ''}. Le propriétaire vous donnera l&apos;adresse exacte.
+                  {vitrine.code_postal ? ` (${vitrine.code_postal})` : ''}. Le propriétaire vous donnera l’adresse exacte.
                 </p>
               </section>
             )}
 
             {texte(vitrine.numero_enregistrement) && (
-              <p className="text-[13px] text-muted">Numéro d&apos;enregistrement en mairie : {vitrine.numero_enregistrement}</p>
+              <p className="text-sm text-muted">Numéro d’enregistrement en mairie : {vitrine.numero_enregistrement}</p>
             )}
           </div>
 
           {/* Contact, toujours visible sur ordinateur */}
           <aside id="contact" className="scroll-mt-6">
             <div className="flex flex-col gap-3 lg:sticky lg:top-6">
-              <div className="rounded-[26px] bg-white p-6 shadow-[0_0_0_1px_#e4e3ee,0_24px_60px_-30px_rgba(23,22,42,0.35)]">
+              <div className="rounded-[26px] bg-white p-6 shadow-[0_0_0_1px_#e4e3ee,0_8px_24px_rgba(23,22,42,0.06)]">
                 {contact}
               </div>
               <a
                 href={`mailto:bienvenue@loca-direct.fr?subject=${encodeURIComponent(`Signalement de l'annonce ${vitrine.id}`)}`}
-                className="text-center text-[13px] text-muted no-underline hover:text-ink hover:underline"
+                className="flex min-h-[44px] items-center justify-center text-sm text-muted no-underline hover:text-ink hover:underline"
               >
                 Signaler cette annonce
               </a>
@@ -414,9 +414,9 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
         {voisins.length > 0 && (
           <section className="flex flex-col gap-6 border-t border-line pt-12">
             <div className="flex flex-wrap items-end justify-between gap-3">
-              <h2 className="text-[26px] font-extrabold tracking-[-0.03em]">Autres logements en {vitrine.region}</h2>
+              <h2 className="text-balance text-[26px] font-bold tracking-[-0.03em]">Autres logements en {vitrine.region}</h2>
               {fil[1] && (
-                <Link href={fil[1].href} className="text-[15px] font-bold text-brand no-underline hover:underline">
+                <Link href={fil[1].href} className="flex min-h-[44px] items-center text-base font-bold text-brand no-underline hover:underline">
                   Tous les logements en {vitrine.region}
                 </Link>
               )}
@@ -435,11 +435,11 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
       </main>
 
       {/* Barre de contact en bas de l'écran sur téléphone */}
-      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between gap-4 border-t border-line bg-white/95 px-5 py-3 backdrop-blur lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between gap-4 border-t border-line bg-white px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
         <p className="text-sm text-ink-soft">
           {prix ? (
             <>
-              <strong className="text-xl font-extrabold text-ink">{prix}</strong> la nuit
+              <strong className="text-xl font-bold text-ink">{prix}</strong> la nuit
             </>
           ) : (
             vitrine.ville
@@ -451,13 +451,13 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
             target="_blank"
             rel="nofollow noreferrer"
             onClick={() => trackEvent('clic_whatsapp_logement', { logement_id: vitrine.id, ville: vitrine.ville, endroit: 'barre_mobile' })}
-            className="flex min-h-[48px] items-center gap-2 rounded-2xl bg-[#25D366] px-5 text-[15px] font-bold text-white no-underline"
+            className="flex min-h-[48px] items-center gap-2 rounded-2xl bg-[#25D366] px-5 text-base font-bold text-white no-underline"
           >
             <IconeWhatsapp />
             Écrire au propriétaire
           </a>
         ) : (
-          <a href="#contact" className="flex min-h-[48px] items-center rounded-2xl bg-brand px-5 text-[15px] font-bold text-white no-underline">
+          <a href="#contact" className="flex min-h-[48px] items-center rounded-2xl bg-brand px-5 text-base font-bold text-white no-underline">
             Voir les détails
           </a>
         )}

@@ -85,35 +85,37 @@ export default function LogementsClient({ logements }: { logements: Logement[] }
   const regionChoisie = REGIONS_METRO.find(r => r.nom === region)
 
   const champ =
-    'min-h-[48px] rounded-[14px] border-0 bg-white px-4 text-[15px] text-ink shadow-[inset_0_0_0_1.5px_#e4e3ee] outline-none focus:shadow-[inset_0_0_0_2px_#5534e8]'
+    'min-h-[48px] rounded-[14px] border-0 bg-white px-4 text-base text-ink shadow-[inset_0_0_0_1.5px_#e4e3ee] outline-none focus:shadow-[inset_0_0_0_2px_#5534e8]'
 
   return (
-    <main className="mx-auto flex max-w-[1280px] flex-col gap-8 px-5 pb-20 pt-4 sm:px-8">
+    <main id="contenu" className="mx-auto flex max-w-[1280px] flex-col gap-8 px-5 pb-20 pt-4 sm:px-8">
       <div className="flex flex-col gap-3">
-        <h1 className="text-[34px] font-extrabold leading-[1.05] tracking-[-0.04em] sm:text-[48px]">
+        <h1 className="text-balance text-[34px] font-bold leading-[1.08] tracking-[-0.04em] sm:text-[48px]">
           {chien ? 'Locations de vacances avec chien' : 'Locations de vacances en France'}
         </h1>
-        <p className="max-w-[640px] text-[17px] leading-relaxed text-ink-soft">
+        <p className="max-w-[640px] text-lg leading-relaxed text-ink-soft">
           {logements.length} maisons et appartements loués par leurs propriétaires. Vous écrivez directement au
           propriétaire, sans commission.
         </p>
       </div>
 
       {/* Filtres */}
-      <div className="sticky top-0 z-30 -mx-5 flex flex-col gap-3 bg-white/95 px-5 py-3 backdrop-blur sm:-mx-8 sm:px-8">
+      <div className="sticky top-0 z-30 -mx-5 flex flex-col gap-3 border-b border-line bg-white px-5 py-3 sm:-mx-8 sm:px-8">
         <div className="flex flex-wrap gap-2.5">
-          <label className="flex min-w-[200px] flex-1">
-            <span className="sr-only">Ville</span>
+          <label className="flex min-w-[200px] flex-1 flex-col gap-1">
+            <span className="text-sm font-semibold text-ink-soft">Ville</span>
             <input
               type="search"
+              name="ville"
+              autoComplete="off"
               value={ville}
               onChange={e => setVille(e.target.value)}
-              placeholder="Une ville"
+              placeholder="Ex. Biarritz…"
               className={`${champ} w-full`}
             />
           </label>
-          <label className="flex">
-            <span className="sr-only">Région</span>
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-semibold text-ink-soft">Région</span>
             <select value={region} onChange={e => setRegion(e.target.value)} className={`${champ} pr-9`}>
               <option value="">Toutes les régions</option>
               {REGIONS_METRO.map(r => (
@@ -123,8 +125,8 @@ export default function LogementsClient({ logements }: { logements: Logement[] }
               ))}
             </select>
           </label>
-          <label className="flex">
-            <span className="sr-only">Type de logement</span>
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-semibold text-ink-soft">Type</span>
             <select value={type} onChange={e => setType(e.target.value)} className={`${champ} pr-9`}>
               <option value="">Tous les types</option>
               {TYPES.map(t => (
@@ -138,7 +140,7 @@ export default function LogementsClient({ logements }: { logements: Logement[] }
             type="button"
             aria-pressed={chien}
             onClick={() => setChien(c => !c)}
-            className={`min-h-[48px] rounded-[14px] px-4 text-[15px] font-bold ${
+            className={`min-h-[48px] self-end rounded-[14px] px-4 text-base font-bold ${
               chien ? 'bg-[#ffcf4d] text-ink' : 'bg-dog-soft text-ink shadow-[inset_0_0_0_1.5px_#f3e3b0]'
             }`}
           >
@@ -146,8 +148,8 @@ export default function LogementsClient({ logements }: { logements: Logement[] }
           </button>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-          <p className="text-ink-soft">
-            <strong className="text-ink">{resultats.length}</strong> logement{resultats.length > 1 ? 's' : ''}
+          <p className="text-ink-soft" aria-live="polite">
+            <strong className="tabular-nums text-ink">{resultats.length}</strong> logement{resultats.length > 1 ? 's' : ''}
             {filtresActifs && (
               <button
                 type="button"
@@ -157,7 +159,7 @@ export default function LogementsClient({ logements }: { logements: Logement[] }
                   setType('')
                   setChien(false)
                 }}
-                className="ml-3 font-semibold text-brand hover:underline"
+                className="ml-3 min-h-[44px] font-semibold text-brand hover:underline"
               >
                 Effacer les filtres
               </button>
@@ -168,7 +170,7 @@ export default function LogementsClient({ logements }: { logements: Logement[] }
             <select
               value={tri}
               onChange={e => setTri(e.target.value as Tri)}
-              className="rounded-[10px] border-0 bg-surface px-3 py-2 font-semibold text-ink outline-none"
+              className="min-h-[44px] rounded-[10px] border-0 bg-surface px-3 font-semibold text-ink"
             >
               {Object.entries(TRIS).map(([k, l]) => (
                 <option key={k} value={k}>
@@ -182,8 +184,8 @@ export default function LogementsClient({ logements }: { logements: Logement[] }
 
       {resultats.length === 0 ? (
         <div className="flex flex-col items-start gap-3 rounded-[26px] bg-surface p-8 sm:p-10">
-          <strong className="text-xl">Aucun logement ne correspond à ces filtres</strong>
-          <p className="text-[15px] text-ink-soft">
+          <h2 className="text-xl font-bold">Aucun logement ne correspond à ces filtres</h2>
+          <p className="text-base text-ink-soft">
             {ville
               ? `Pas encore de logement à « ${ville} ». Essayez une ville voisine ou toute la région.`
               : 'Retirez un filtre pour voir plus de logements.'}
@@ -192,17 +194,18 @@ export default function LogementsClient({ logements }: { logements: Logement[] }
             type="button"
             onClick={() => {
               setVille('')
+              setRegion('')
               setType('')
               setChien(false)
             }}
-            className="mt-2 rounded-[14px] bg-brand px-5 py-3 text-[15px] font-bold text-white hover:bg-brand-strong"
+            className="mt-2 flex min-h-[48px] items-center rounded-[14px] bg-brand px-5 text-base font-bold text-white hover:bg-brand-strong"
           >
-            Voir tous les logements{region ? ` en ${region}` : ''}
+            Effacer les filtres
           </button>
         </div>
       ) : (
         <>
-          <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {resultats.slice(0, nombre).map((v, i) => (
               <ListingCard key={v.id} v={v} priorite={i < 4} badge={chienOk(v) ? 'Chien accepté' : undefined} />
             ))}
@@ -211,7 +214,7 @@ export default function LogementsClient({ logements }: { logements: Logement[] }
             <button
               type="button"
               onClick={() => setPagination({ cle, nombre: nombre + PAR_PAGE })}
-              className="self-center rounded-[14px] px-6 py-3.5 text-[15px] font-bold text-ink shadow-[inset_0_0_0_1.5px_#e4e3ee] hover:shadow-[inset_0_0_0_1.5px_#17162a]"
+              className="flex min-h-[48px] items-center self-center rounded-[14px] px-6 text-base font-bold text-ink shadow-[inset_0_0_0_1.5px_#e4e3ee] hover:shadow-[inset_0_0_0_1.5px_#17162a]"
             >
               Voir plus de logements ({resultats.length - nombre})
             </button>
@@ -221,7 +224,7 @@ export default function LogementsClient({ logements }: { logements: Logement[] }
 
       {/* Liens vers les pages région, utiles aux visiteurs et à Google */}
       <nav aria-label="Locations par région" className="flex flex-col gap-4 border-t border-line pt-10">
-        <h2 className="text-[22px] font-extrabold tracking-[-0.02em]">
+        <h2 className="text-balance text-[22px] font-bold tracking-[-0.02em]">
           {regionChoisie ? `Plus de locations en ${regionChoisie.nom}` : 'Locations de vacances par région'}
         </h2>
         <ul className="flex flex-wrap gap-2">
@@ -229,7 +232,7 @@ export default function LogementsClient({ logements }: { logements: Logement[] }
             <li key={r.slug}>
               <Link
                 href={`/location-vacances/${r.slug}`}
-                className="block rounded-full bg-surface px-4 py-2 text-sm font-semibold text-ink no-underline hover:bg-brand-soft hover:text-brand-strong"
+                className="flex min-h-[44px] items-center rounded-full bg-surface px-4 text-sm font-semibold text-ink no-underline hover:bg-brand-soft hover:text-brand-strong"
               >
                 Location de vacances en {r.nom}
               </Link>

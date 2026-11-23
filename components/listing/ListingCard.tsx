@@ -24,7 +24,7 @@ export default function ListingCard({ v, badge, surFond = false, priorite = fals
   return (
     <Link
       href={`/vitrine/${v.id}`}
-      className={`group flex flex-col gap-3 text-ink no-underline ${surFond ? 'rounded-[22px] bg-white p-2.5 pb-4' : ''}`}
+      className={`group flex min-w-0 flex-col gap-3 text-ink no-underline ${surFond ? 'rounded-[22px] bg-white p-2.5 pb-4' : ''}`}
     >
       <div className="relative aspect-[4/3] overflow-hidden rounded-[18px] bg-surface">
         {photo ? (
@@ -37,15 +37,15 @@ export default function ListingCard({ v, badge, surFond = false, priorite = fals
             className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-[13px] text-muted">Photo à venir</div>
+          <div className="flex h-full items-center justify-center text-sm text-muted">Photo à venir</div>
         )}
         {badge && (
-          <span className="absolute left-3 top-3 rounded-[10px] bg-white px-2.5 py-1.5 text-[13px] font-bold text-brand-strong">
+          <span className="absolute left-3 top-3 rounded-[10px] bg-white px-2.5 py-1.5 text-sm font-bold text-brand-strong">
             {badge}
           </span>
         )}
         {(v.statut === 'deja_loue' || v.statut === 'bientot_dispo') && (
-          <span className="absolute bottom-3 left-3 rounded-[10px] bg-white px-2.5 py-1.5 text-[13px] font-semibold text-muted">
+          <span className="absolute bottom-3 left-3 rounded-[10px] bg-white px-2.5 py-1.5 text-sm font-semibold text-muted">
             {v.statut === 'deja_loue' ? 'Déjà loué' : 'Bientôt disponible'}
           </span>
         )}
@@ -56,9 +56,9 @@ export default function ListingCard({ v, badge, surFond = false, priorite = fals
           <span className="truncate text-sm text-muted">{v.ville}</span>
         </div>
         {v.prix_nuit ? (
-          <span className="whitespace-nowrap text-[15px]">
-            <strong className="font-extrabold">{Math.round(v.prix_nuit)} €</strong>
-            <span className="text-muted"> /nuit</span>
+          <span className="whitespace-nowrap text-base">
+            <strong className="font-bold tabular-nums">{Math.round(v.prix_nuit)}&nbsp;€</strong>
+            <span className="text-muted">&nbsp;/&nbsp;nuit</span>
           </span>
         ) : null}
       </div>

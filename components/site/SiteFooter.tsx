@@ -37,16 +37,16 @@ export default function SiteFooter() {
         <div className="flex flex-wrap justify-between gap-10">
           <div className="flex max-w-xs flex-col gap-3">
             <Logo size={32} />
-            <p className="text-[15px] leading-relaxed text-muted">
+            <p className="text-base leading-relaxed text-muted">
               La location de vacances en direct avec le propriétaire, sans commission.
             </p>
           </div>
-          <nav aria-label="Pied de page" className="flex flex-wrap gap-14 text-[15px]">
+          <nav aria-label="Pied de page" className="flex flex-wrap gap-14 text-base">
             {COLONNES.map(col => (
-              <div key={col.titre} className="flex flex-col gap-3">
-                <strong className="font-bold text-ink">{col.titre}</strong>
+              <div key={col.titre} className="flex flex-col gap-0.5">
+                <h2 className="mb-1.5 text-base font-bold text-ink">{col.titre}</h2>
                 {col.liens.map(l => (
-                  <Link key={l.href} href={l.href} className="text-muted no-underline hover:text-ink">
+                  <Link key={l.href} href={l.href} className="flex min-h-[44px] items-center text-muted no-underline hover:text-ink">
                     {l.label}
                   </Link>
                 ))}

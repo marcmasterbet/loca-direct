@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const WHITE = '#FFFFFF'
 
@@ -18,10 +18,16 @@ type PhotoLightboxProps = {
  */
 export default function PhotoLightbox({ photos, startIndex, onClose }: PhotoLightboxProps) {
   const [index, setIndex] = useState(startIndex)
+  const fermer = useRef<HTMLButtonElement>(null)
 
+  // Focus sur « Fermer » à l'ouverture, retour au bouton d'origine à la fermeture
   useEffect(() => {
-    setIndex(startIndex)
-  }, [startIndex])
+    const avant = document.activeElement as HTMLElement | null
+    fermer.current?.focus()
+    return () => avant?.focus()
+  }, [])
+
+  // La visionneuse est recréée à chaque ouverture : startIndex sert de valeur de départ.
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -50,6 +56,9 @@ export default function PhotoLightbox({ photos, startIndex, onClose }: PhotoLigh
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Photos du logement"
       onClick={onClose}
       style={{
         position: 'fixed',
@@ -64,6 +73,7 @@ export default function PhotoLightbox({ photos, startIndex, onClose }: PhotoLigh
     >
       {/* Bouton fermer */}
       <button
+        ref={fermer}
         onClick={onClose}
         style={{
           position: 'absolute',
@@ -81,7 +91,7 @@ export default function PhotoLightbox({ photos, startIndex, onClose }: PhotoLigh
           alignItems: 'center',
           justifyContent: 'center',
         }}
-        aria-label="Fermer"
+        aria-label="Fermer les photos"
       >
         ✕
       </button>
