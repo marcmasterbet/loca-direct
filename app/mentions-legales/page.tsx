@@ -21,7 +21,6 @@ export default function MentionsLegalesPage() {
         <li>
           E-mail&nbsp;: <a href="mailto:contact@seokraft.fr">contact@seokraft.fr</a>
         </li>
-        <li>Téléphone&nbsp;: 06&nbsp;59&nbsp;14&nbsp;96&nbsp;14</li>
       </ul>
       <p>Directeur de la publication&nbsp;: Marc Bretzner.</p>
 
