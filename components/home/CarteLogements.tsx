@@ -154,6 +154,8 @@ export default function CarteLogements({ points }: { points: PointLogement[] }) 
   useEffect(() => {
     let annule = false
     import('maplibre-gl').then(maplibregl => {
+      // MapLibre 6 : le « worker » est servi depuis /public (copié à l'installation)
+      maplibregl.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs')
       if (annule || !conteneur.current) return
       const map = new maplibregl.Map({
         container: conteneur.current,

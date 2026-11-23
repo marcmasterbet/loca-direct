@@ -16,6 +16,8 @@ export default function MiniCarte({ centre, ville }: { centre: [number, number];
     let map: import('maplibre-gl').Map | null = null
     let annule = false
     import('maplibre-gl').then(maplibregl => {
+      // MapLibre 6 : le « worker » est servi depuis /public (copié à l'installation)
+      maplibregl.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs')
       if (annule || !conteneur.current) return
       map = new maplibregl.Map({
         container: conteneur.current,
