@@ -1,200 +1,212 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import SiteHeader from '@/components/site/SiteHeader'
+import FilAriane from '@/components/pages/FilAriane'
+import Faq from '@/components/pages/Faq'
+import { getSessionUserId } from '@/lib/session'
+
+// 57 caractères : sous la limite de 60 de Google
+const TITRE = 'Alternative à Airbnb sans commission pour propriétaires'
 
 export const metadata: Metadata = {
-  title: 'Alternative à Airbnb sans commission',
+  title: { absolute: TITRE },
   description:
-    "LocaDirect est une alternative gratuite à Airbnb : 0% de commission, contact direct WhatsApp, annonces vérifiées. Découvrez pourquoi de plus en plus de propriétaires changent de plateforme.",
+    'Depuis octobre 2026, Airbnb prélève 15,5 % à l’hôte. Sur LocaDirect, publier est gratuit, sans commission : les voyageurs vous écrivent directement.',
+  alternates: { canonical: '/alternative-airbnb' },
   openGraph: {
-    title: 'Alternative à Airbnb sans commission',
-    description:
-      "0% de commission, contact direct WhatsApp, annonces vérifiées. Découvrez l'alternative gratuite à Airbnb.",
+    title: TITRE,
+    description: 'Publiez votre location de vacances gratuitement, sans commission, et gardez 100 % de vos revenus.',
   },
 }
 
-const ORANGE = '#EA580C'
-const ORANGE_LIGHT = '#FFF7ED'
-const WHITE = '#FFFFFF'
-const GRAY = '#F9FAFB'
-const TEXT = '#1F2937'
-const TEXT_DIM = '#6B7280'
-const BORDER = '#E5E7EB'
-const GREEN = '#16A34A'
+const COMPARAISON: { critere: string; airbnb: string; loca: string }[] = [
+  { critere: 'Publier une annonce', airbnb: 'Gratuit', loca: 'Gratuit' },
+  { critere: 'Commission sur chaque réservation', airbnb: '15,5 % prélevés sur votre versement', loca: 'Aucune' },
+  { critere: 'Contact avec le voyageur', airbnb: 'Par la messagerie Airbnb, coordonnées masquées avant réservation', loca: 'Direct, sur WhatsApp, dès la première question' },
+  { critere: 'Paiement', airbnb: 'Encaissé par Airbnb, versé après l’arrivée', loca: 'Entre vous et le voyageur, selon vos conditions' },
+  { critere: 'Choix du voyageur', airbnb: 'Réservation instantanée fréquente', loca: 'Vous échangez avant d’accepter' },
+  { critere: 'Vos règles', airbnb: 'Conditions d’annulation et de remboursement d’Airbnb', loca: 'Votre contrat, votre acompte, votre caution' },
+]
 
-export default function AlternativeAirbnbPage() {
+const EXEMPLES = [2000, 6000, 12000]
+const euros = (n: number) => `${Math.round(n).toLocaleString('fr-FR')} €`
+
+const QUESTIONS = [
+  {
+    q: 'Combien Airbnb prend-il aux propriétaires en 2026 ?',
+    r: 'Depuis le 13 octobre 2026, Airbnb applique en France des frais uniques d’environ 15,5 % à la charge de l’hôte, calculés sur le prix des nuits et les frais de ménage. Pour 1 000 € de réservations, environ 155 € partent à Airbnb.',
+  },
+  {
+    q: 'LocaDirect est-il vraiment gratuit ?',
+    r: 'Oui. Publier une annonce est gratuit et LocaDirect ne prend aucune commission sur vos locations : le voyageur vous contacte et vous paie directement.',
+  },
+  {
+    q: 'Puis-je garder mon annonce Airbnb en plus ?',
+    r: 'Oui, rien ne l’interdit. Beaucoup de propriétaires gardent Airbnb pour la visibilité et publient aussi sur LocaDirect pour louer sans commission aux voyageurs qui préfèrent traiter en direct. Pensez simplement à tenir un seul calendrier à jour pour éviter les doubles réservations.',
+  },
+  {
+    q: 'Comment me protéger sans le paiement d’Airbnb ?',
+    r: 'Faites signer un contrat de location saisonnière, demandez un acompte par virement ou carte, puis le solde avant l’arrivée, et prévoyez une caution. Vérifiez aussi votre assurance habitation pour la location saisonnière.',
+  },
+  {
+    q: 'Les voyageurs doivent-ils créer un compte ?',
+    r: 'Non. Les voyageurs consultent les annonces et vous écrivent sur WhatsApp sans inscription. Seuls les propriétaires créent un compte pour publier.',
+  },
+]
+
+export default async function AlternativeAirbnbPage() {
+  const connecte = !!(await getSessionUserId())
+  const publier = connecte ? '/espace/ma-vitrine' : '/inscription'
+
   return (
-    <div style={{ background: WHITE, color: TEXT, fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', minHeight: '100vh' }}>
-      <style>{`
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        a { text-decoration: none; color: inherit; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-        @media (max-width: 768px) {
-          .grid-2 { grid-template-columns: 1fr; }
-          .grid-3 { grid-template-columns: 1fr; }
-        }
-      `}</style>
+    <div className="bg-white text-ink">
+      <SiteHeader isLoggedIn={connecte} />
+      <main id="contenu" className="mx-auto flex max-w-[1080px] flex-col gap-16 px-5 pb-20 pt-4 sm:px-8 sm:pt-8">
+        <FilAriane etapes={[{ nom: 'Alternative à Airbnb' }]} />
 
-      {/* NAVBAR */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: WHITE, borderBottom: `1px solid ${BORDER}`, padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 34, height: 34, background: ORANGE, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🏠</div>
-          <span style={{ fontSize: 18, fontWeight: 800, color: TEXT }}>Loca<span style={{ color: ORANGE }}>Direct</span></span>
-        </Link>
-        <Link href="/inscription" style={{ background: ORANGE, color: WHITE, borderRadius: 10, padding: '10px 18px', fontSize: 14, fontWeight: 700 }}>
-          Publier gratuitement
-        </Link>
-      </nav>
-
-      {/* HERO */}
-      <section style={{ padding: '56px 20px 40px', background: `linear-gradient(135deg, ${ORANGE_LIGHT} 0%, ${WHITE} 60%)`, textAlign: 'center' }}>
-        <div style={{ maxWidth: 720, margin: '0 auto' }}>
-          <p style={{ fontSize: 11, color: ORANGE, letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 12 }}>
-            Comparatif
-          </p>
-          <h1 style={{ fontSize: 32, fontWeight: 800, lineHeight: 1.25, marginBottom: 16, color: TEXT }}>
-            La meilleure alternative à Airbnb<br />
-            <span style={{ color: ORANGE }}>sans commission</span>
+        <header className="flex max-w-[760px] flex-col gap-5">
+          <h1 className="text-balance text-[34px] font-bold leading-[1.1] tracking-[-0.035em] sm:text-[52px]">
+            Louez sans laisser 15,5&nbsp;% à Airbnb
           </h1>
-          <p style={{ fontSize: 16, color: TEXT_DIM, lineHeight: 1.7, maxWidth: 560, margin: '0 auto' }}>
-            Airbnb prélève 15 à 20% de commission sur chaque réservation. LocaDirect vous permet de louer votre logement directement, sans intermédiaire, et de garder l'intégralité de vos revenus.
+          <p className="text-[18px] leading-relaxed text-ink-soft">
+            Depuis octobre 2026, Airbnb prélève environ 15,5&nbsp;% sur chaque réservation, à la charge du seul
+            propriétaire. Sur LocaDirect, vous publiez gratuitement, sans commission, et les voyageurs vous écrivent
+            directement sur WhatsApp.
           </p>
-        </div>
-      </section>
+          <div className="flex flex-wrap gap-3">
+            <Link href={publier} className="inline-flex min-h-[52px] items-center rounded-[14px] bg-brand px-6 text-base font-bold text-white no-underline hover:bg-brand-strong">
+              Publier mon logement gratuitement
+            </Link>
+            <Link href="/logements" className="inline-flex min-h-[52px] items-center rounded-[14px] px-5 text-base font-semibold text-ink no-underline shadow-[inset_0_0_0_1.5px_#e4e3ee] hover:bg-surface">
+              Voir les annonces
+            </Link>
+          </div>
+        </header>
 
-      {/* CHIFFRE CLÉ */}
-      <section style={{ padding: '32px 20px', background: ORANGE }}>
-        <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.85)', marginBottom: 8 }}>
-            Pour un logement loué 100€/nuit, 200 nuits par an
-          </p>
-          <p style={{ fontSize: 36, fontWeight: 800, color: WHITE }}>
-            Jusqu'à 4 000€ d'économie par an
-          </p>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 6 }}>
-            en évitant la commission Airbnb (15-20%)
-          </p>
-        </div>
-      </section>
-
-      {/* TABLEAU COMPARATIF DÉTAILLÉ */}
-      <section style={{ padding: '56px 20px', maxWidth: 800, margin: '0 auto' }}>
-        <h2 style={{ fontSize: 24, fontWeight: 800, color: TEXT, marginBottom: 28, textAlign: 'center' }}>
-          LocaDirect vs Airbnb : la comparaison complète
-        </h2>
-        <div style={{ background: WHITE, borderRadius: 20, overflow: 'hidden', border: `1px solid ${BORDER}` }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-            <thead>
-              <tr style={{ background: ORANGE }}>
-                <th style={{ padding: '14px 16px', textAlign: 'left', color: WHITE, fontWeight: 600 }}>Critère</th>
-                <th style={{ padding: '14px 16px', textAlign: 'center', color: WHITE, fontWeight: 700 }}>LocaDirect</th>
-                <th style={{ padding: '14px 16px', textAlign: 'center', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>Airbnb</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                ['Commission propriétaire', '0%', '15-20%'],
-                ['Commission voyageur', '0%', '10-15%'],
-                ['Abonnement obligatoire', 'Non', 'Non'],
-                ['Contact direct WhatsApp', '✅ Oui', '❌ Via messagerie interne'],
-                ['Numéro de téléphone visible', '✅ Oui (inscrits)', '❌ Masqué'],
-                ['Annonce vérifiée manuellement', '✅ Oui', '❌ Modération automatisée'],
-                ['Liberté de négociation directe', '✅ Totale', '❌ Limitée par la plateforme'],
-                ['Référencement Google par annonce', '✅ Oui', '✅ Oui'],
-                ['Annuaire de prestataires intégré', '✅ Oui (conciergerie, ménage...)', '❌ Non'],
-                ['Délai de versement des revenus', 'Immédiat (paiement direct)', '24-48h après arrivée'],
-              ].map(([feature, loca, airbnb], i) => (
-                <tr key={feature} style={{ background: i % 2 === 0 ? WHITE : GRAY }}>
-                  <td style={{ padding: '12px 16px', color: TEXT, fontWeight: 500 }}>{feature}</td>
-                  <td style={{ padding: '12px 16px', textAlign: 'center', color: GREEN, fontWeight: 700 }}>{loca}</td>
-                  <td style={{ padding: '12px 16px', textAlign: 'center', color: TEXT_DIM }}>{airbnb}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* POURQUOI CHANGER */}
-      <section style={{ padding: '56px 20px', background: GRAY }}>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <h2 style={{ fontSize: 24, fontWeight: 800, color: TEXT, marginBottom: 28, textAlign: 'center' }}>
-            Pourquoi de plus en plus de propriétaires changent
+        <section aria-labelledby="calcul" className="flex flex-col gap-5">
+          <h2 id="calcul" className="text-[26px] font-bold tracking-[-0.025em] sm:text-[32px]">
+            Ce que la commission vous coûte
           </h2>
-          <div className="grid-3">
-            {[
-              { icon: '💰', title: 'Garder ses revenus', desc: "Sur un an, la commission Airbnb représente souvent plusieurs centaines voire milliers d'euros perdus. Avec LocaDirect, cet argent reste dans votre poche." },
-              { icon: '🤝', title: 'Relation directe', desc: "Échanger directement avec le voyageur par WhatsApp permet de mieux cerner ses attentes, de négocier librement et de construire une relation de confiance, sans filtre algorithmique." },
-              { icon: '🔓', title: 'Indépendance', desc: "Aucune dépendance à un algorithme qui décide de la visibilité de votre annonce. Votre lien LocaDirect vous appartient, vous pouvez le partager où vous voulez." },
-            ].map(item => (
-              <div key={item.title} style={{ background: WHITE, borderRadius: 16, padding: 24, border: `1px solid ${BORDER}` }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>{item.icon}</div>
-                <h3 style={{ fontSize: 16, fontWeight: 700, color: TEXT, marginBottom: 8 }}>{item.title}</h3>
-                <p style={{ fontSize: 13, color: TEXT_DIM, lineHeight: 1.6 }}>{item.desc}</p>
-              </div>
+          <p className="max-w-[640px] text-base leading-relaxed text-ink-soft">
+            Montant prélevé par Airbnb à 15,5&nbsp;%, comparé à LocaDirect, pour une saison de location.
+          </p>
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {EXEMPLES.map(montant => (
+              <li key={montant} className="flex flex-col gap-4 rounded-[22px] bg-surface p-6">
+                <p className="text-base text-ink-soft">
+                  Pour <strong className="font-bold text-ink tabular-nums">{euros(montant)}</strong> de locations
+                </p>
+                <div className="flex items-baseline justify-between gap-3 border-b border-line pb-3">
+                  <span className="text-base text-ink-soft">Airbnb</span>
+                  <span className="text-[22px] font-bold tabular-nums text-[#9a3412]">−{euros(montant * 0.155)}</span>
+                </div>
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-base text-ink-soft">LocaDirect</span>
+                  <span className="text-[22px] font-bold tabular-nums text-mint-ink">0&nbsp;€</span>
+                </div>
+              </li>
             ))}
-          </div>
-        </div>
-      </section>
+          </ul>
+        </section>
 
-      {/* FAQ SPÉCIFIQUE */}
-      <section style={{ padding: '56px 20px', maxWidth: 700, margin: '0 auto' }}>
-        <h2 style={{ fontSize: 24, fontWeight: 800, color: TEXT, marginBottom: 28, textAlign: 'center' }}>
-          Questions fréquentes
-        </h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {[
-            {
-              q: 'Dois-je quitter Airbnb pour utiliser LocaDirect ?',
-              r: "Non, vous pouvez utiliser les deux en parallèle. Beaucoup de propriétaires gardent leur annonce Airbnb pour la visibilité, tout en publiant aussi sur LocaDirect pour récupérer une partie des réservations sans commission.",
-            },
-            {
-              q: 'LocaDirect est-il aussi sécurisé qu\'Airbnb ?',
-              r: "Chaque annonce est vérifiée manuellement par notre équipe avant publication. La différence avec Airbnb est que la transaction se fait directement entre vous et le voyageur, comme pour une location classique entre particuliers.",
-            },
-            {
-              q: 'Comment les voyageurs me trouvent-ils sur LocaDirect ?',
-              r: "Chaque annonce génère sa propre page indexée sur Google, et vous pouvez aussi partager votre lien directement sur vos réseaux sociaux, dans des groupes Facebook ou par bouche-à-oreille.",
-            },
-            {
-              q: 'Est-ce vraiment gratuit, sans piège ?',
-              r: "Oui, la publication d'annonces est et restera gratuite. Aucune carte bancaire n'est demandée à l'inscription. Des options payantes optionnelles pourront être proposées plus tard pour ceux qui souhaitent plus de visibilité, mais l'usage de base reste gratuit.",
-            },
-          ].map((item, i) => (
-            <div key={i} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 20 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 8 }}>{item.q}</h3>
-              <p style={{ fontSize: 13, color: TEXT_DIM, lineHeight: 1.7 }}>{item.r}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA FINAL */}
-      <section style={{ padding: '56px 20px', background: ORANGE, textAlign: 'center' }}>
-        <div style={{ maxWidth: 560, margin: '0 auto' }}>
-          <div style={{ fontSize: 44, marginBottom: 16 }}>🏠</div>
-          <h2 style={{ fontSize: 26, fontWeight: 800, color: WHITE, marginBottom: 14, lineHeight: 1.3 }}>
-            Prêt à arrêter de payer des commissions ?
+        <section aria-labelledby="comparatif" className="flex flex-col gap-5">
+          <h2 id="comparatif" className="text-[26px] font-bold tracking-[-0.025em] sm:text-[32px]">
+            Airbnb ou LocaDirect, point par point
           </h2>
-          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.85)', marginBottom: 28, lineHeight: 1.7 }}>
-            Publiez votre logement gratuitement en quelques minutes, en complément ou à la place d'Airbnb.
-          </p>
-          <Link href="/inscription" style={{ background: WHITE, color: ORANGE, borderRadius: 14, padding: '15px 36px', fontSize: 15, fontWeight: 800, display: 'inline-block' }}>
-            Publier mon logement gratuitement →
-          </Link>
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer style={{ background: TEXT, padding: '32px 20px' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, justifyContent: 'center' }}>
-            <div style={{ width: 28, height: 28, background: ORANGE, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>🏠</div>
-            <span style={{ fontSize: 16, fontWeight: 800, color: WHITE }}>Loca<span style={{ color: ORANGE }}>Direct</span></span>
+          <div className="overflow-hidden rounded-[22px] shadow-[0_0_0_1px_#e4e3ee]">
+            <table className="w-full border-collapse text-left text-base">
+              <thead className="bg-surface">
+                <tr>
+                  <th scope="col" className="hidden p-4 font-semibold sm:table-cell">
+                    <span className="sr-only">Critère</span>
+                  </th>
+                  <th scope="col" className="p-4 font-semibold">Airbnb</th>
+                  <th scope="col" className="p-4 font-semibold text-brand-strong">LocaDirect</th>
+                </tr>
+              </thead>
+              <tbody>
+                {COMPARAISON.map(l => (
+                  <tr key={l.critere} className="border-t border-line align-top">
+                    <th scope="row" className="hidden w-[28%] p-4 font-semibold sm:table-cell">
+                      {l.critere}
+                    </th>
+                    <td className="p-4 text-ink-soft">
+                      <span className="mb-1 block text-sm font-semibold text-ink sm:hidden">{l.critere}</span>
+                      {l.airbnb}
+                    </td>
+                    <td className="bg-brand-soft/40 p-4 font-semibold text-ink max-sm:pt-9">
+                      {l.loca}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>© 2026 LocaDirect · loca-direct.fr</p>
-        </div>
-      </footer>
+        </section>
+
+        <section aria-labelledby="honnete" className="grid grid-cols-1 gap-8 rounded-[26px] bg-dog-soft p-6 sm:p-10 lg:grid-cols-2">
+          <div className="flex flex-col gap-3">
+            <h2 id="honnete" className="text-[24px] font-bold tracking-[-0.02em] sm:text-[28px]">
+              Ce qu’Airbnb fait et que nous ne faisons pas
+            </h2>
+            <p className="text-base leading-relaxed text-ink-soft">
+              Airbnb encaisse le paiement à votre place et propose sa propre garantie en cas de dégâts. En louant en
+              direct, ces deux points reposent sur vous. Ils se gèrent très bien avec quelques réflexes.
+            </p>
+          </div>
+          <ul className="flex flex-col gap-3 text-base leading-relaxed text-ink-soft">
+            <li>
+              <strong className="font-semibold text-ink">Un contrat de location saisonnière</strong> signé avant
+              l’arrivée, avec les dates, le prix et les conditions d’annulation.
+            </li>
+            <li>
+              <strong className="font-semibold text-ink">Un acompte</strong> à la réservation, puis le solde avant
+              l’arrivée, par virement ou carte.
+            </li>
+            <li>
+              <strong className="font-semibold text-ink">Une caution</strong> rendue après l’état des lieux de sortie.
+            </li>
+            <li>
+              <strong className="font-semibold text-ink">Votre assurance habitation</strong>, à vérifier pour la
+              location saisonnière.
+            </li>
+            <li>
+              <Link href="/blog/louer-en-securite" className="font-semibold text-brand-strong underline underline-offset-2">
+                Tous nos conseils pour louer en sécurité
+              </Link>
+            </li>
+          </ul>
+        </section>
+
+        <section aria-labelledby="etapes" className="flex flex-col gap-6">
+          <h2 id="etapes" className="text-[26px] font-bold tracking-[-0.025em] sm:text-[32px]">
+            Publier en trois étapes
+          </h2>
+          <ol className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {[
+              ['Créez votre compte', 'Une adresse e-mail et un mot de passe suffisent.'],
+              ['Décrivez le logement', 'Photos, prix, équipements, et votre numéro WhatsApp, jamais affiché sur la page.'],
+              ['Recevez les messages', 'Après vérification, l’annonce est en ligne et les voyageurs vous écrivent directement.'],
+            ].map(([t, d], i) => (
+              <li key={t} className="flex flex-col gap-2 rounded-[22px] p-6 shadow-[0_0_0_1px_#e4e3ee]">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-soft text-base font-bold text-brand-strong">{i + 1}</span>
+                <h3 className="text-[18px] font-bold">{t}</h3>
+                <p className="text-base leading-relaxed text-ink-soft">{d}</p>
+              </li>
+            ))}
+          </ol>
+          <Link href={publier} className="inline-flex min-h-[52px] items-center self-start rounded-[14px] bg-brand px-6 text-base font-bold text-white no-underline hover:bg-brand-strong">
+            Publier mon logement gratuitement
+          </Link>
+        </section>
+
+        <Faq questions={QUESTIONS} />
+
+        <p className="text-sm text-muted">
+          Frais Airbnb&nbsp;: frais uniques à la charge de l’hôte appliqués en France depuis le 13&nbsp;octobre&nbsp;2026,
+          d’environ 15,5&nbsp;% du sous-total (nuits et frais de ménage). Le taux exact figure dans votre compte Airbnb.
+        </p>
+      </main>
     </div>
   )
 }
