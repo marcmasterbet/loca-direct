@@ -378,7 +378,19 @@ function LigneLogement({ v }: { v: Vitrine }) {
 }
 
 function LignePrestataire({ p }: { p: Prestataire }) {
+  const router = useRouter()
+  const [confirmer, setConfirmer] = useState(false)
+  const [enCours, setEnCours] = useState(false)
   const nom = nomPresta(p)
+  const supprimer = async () => {
+    setEnCours(true)
+    await fetch('/api/supprimer-prestataire', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: p.id }),
+    })
+    router.refresh()
+  }
   const enLigne = p.statut === 'active'
   return (
     <li className={`${carte} flex flex-col gap-4 p-4 sm:p-5`}>
@@ -412,7 +424,27 @@ function LignePrestataire({ p }: { p: Prestataire }) {
             Voir ma fiche
           </Link>
         )}
+        {!confirmer && (
+          <button type="button" onClick={() => setConfirmer(true)} className={`${bouton} text-[#9a3412] hover:bg-[#fff1ec] sm:ml-auto`}>
+            Supprimer
+          </button>
+        )}
       </div>
+      {confirmer && (
+        <div role="alertdialog" aria-label="Confirmer la suppression" className="flex flex-col gap-3 rounded-[14px] bg-[#fff1ec] p-4">
+          <p className="text-base text-[#7c2d12]">
+            Supprimer la fiche «&nbsp;{nom}&nbsp;» de l’annuaire ? Elle sera effacée définitivement.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={supprimer} disabled={enCours} className={`${bouton} bg-[#c2410c] text-white hover:bg-[#9a3412]`}>
+              {enCours ? 'Suppression…' : 'Supprimer la fiche'}
+            </button>
+            <button type="button" onClick={() => setConfirmer(false)} className={boutonClair} autoFocus>
+              Garder la fiche
+            </button>
+          </div>
+        </div>
+      )}
     </li>
   )
 }
