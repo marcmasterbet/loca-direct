@@ -14,7 +14,7 @@ const LIENS = [
 ] as const
 
 export default function SiteHeader({ isLoggedIn = false, current }: Props) {
-  const publier = isLoggedIn ? '/espace/ma-vitrine' : '/inscription'
+  const publier = isLoggedIn ? '/espace/ma-vitrine' : '/publier'
   const compte = isLoggedIn
     ? { href: '/espace', label: 'Mon espace' }
     : { href: '/connexion', label: 'Se connecter' }

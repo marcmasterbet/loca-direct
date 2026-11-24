@@ -15,10 +15,10 @@ const COLONNES = [
   {
     titre: 'Propriétaires',
     liens: [
-      { href: '/inscription', label: 'Publier une annonce' },
+      { href: '/publier', label: 'Publier une annonce' },
       { href: '/alternative-airbnb', label: 'Comparer avec Airbnb' },
       { href: '/prestataires', label: 'Trouver un prestataire' },
-      { href: '/inscription?profil=prestataire', label: 'Rejoindre l’annuaire' },
+      { href: '/rejoindre-annuaire', label: 'Rejoindre l’annuaire' },
     ],
   },
   {

@@ -177,7 +177,7 @@ export default async function Accueil() {
               Vous gardez 100 % de vos loyers. Publiez votre annonce gratuitement, les voyageurs vous écrivent directement.
             </p>
             <div className="mt-2 flex flex-wrap gap-3">
-              <Link href={isLoggedIn ? '/espace/ma-vitrine' : '/inscription'} className="rounded-[14px] bg-brand px-5 py-3.5 font-bold text-white no-underline hover:bg-brand-strong">
+              <Link href={isLoggedIn ? '/espace/ma-vitrine' : '/publier'} className="rounded-[14px] bg-brand px-5 py-3.5 font-bold text-white no-underline hover:bg-brand-strong">
                 Publier gratuitement
               </Link>
               <Link href="/alternative-airbnb" className="rounded-[14px] px-5 py-3.5 font-bold text-white no-underline ring-1 ring-inset ring-white/60 hover:bg-white/10">
@@ -192,7 +192,7 @@ export default async function Accueil() {
                 Rejoignez l’annuaire des professionnels de la location saisonnière et recevez les demandes des propriétaires de vos villes.
               </p>
             </div>
-            <Link href={isLoggedIn ? '/espace/devenir-prestataire' : '/inscription'} className="self-start rounded-[14px] px-5 py-3 font-bold text-white no-underline ring-1 ring-inset ring-white/60 hover:bg-white/10">
+            <Link href={isLoggedIn ? '/espace/devenir-prestataire' : '/rejoindre-annuaire'} className="self-start rounded-[14px] px-5 py-3 font-bold text-white no-underline ring-1 ring-inset ring-white/60 hover:bg-white/10">
               Rejoindre l’annuaire
             </Link>
           </div>

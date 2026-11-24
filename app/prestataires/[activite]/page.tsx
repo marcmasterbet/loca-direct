@@ -185,7 +185,7 @@ async function PageMetier({ m, isLoggedIn }: { m: Metier; isLoggedIn: boolean })
         />
 
         <BandeauPros
-          href={isLoggedIn ? '/espace/devenir-prestataire' : '/inscription'}
+          href={isLoggedIn ? '/espace/devenir-prestataire' : '/rejoindre-annuaire'}
           titre={`Vous proposez un service « ${m.court.toLowerCase()} » ?`}
         />
       </main>

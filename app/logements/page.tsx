@@ -76,7 +76,7 @@ export default async function LogementsPage() {
         </nav>
 
         <BandeauProprietaires
-          href={isLoggedIn ? '/espace/ma-vitrine' : '/inscription'}
+          href={isLoggedIn ? '/espace/ma-vitrine' : '/publier'}
           titre="Vous louez un logement de vacances ?"
           texte="Publiez votre annonce gratuitement. Les voyageurs vous écrivent directement sur WhatsApp et vous gardez 100 % de vos loyers."
         />

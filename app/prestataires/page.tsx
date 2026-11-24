@@ -97,7 +97,7 @@ export default async function PrestatairesPage() {
           ]}
         />
 
-        <BandeauPros href={isLoggedIn ? '/espace/devenir-prestataire' : '/inscription'} />
+        <BandeauPros href={isLoggedIn ? '/espace/devenir-prestataire' : '/rejoindre-annuaire'} />
       </main>
     </div>
   )

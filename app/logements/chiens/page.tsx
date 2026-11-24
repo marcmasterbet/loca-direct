@@ -133,7 +133,7 @@ export default async function ChiensPage() {
           <Faq titre="Partir en vacances avec son chien : vos questions" questions={questions} />
 
           <BandeauProprietaires
-            href={isLoggedIn ? '/espace/ma-vitrine' : '/inscription'}
+            href={isLoggedIn ? '/espace/ma-vitrine' : '/publier'}
             titre="Vous acceptez les chiens dans votre logement ?"
             texte="Beaucoup de voyageurs cherchent un logement où leur chien est le bienvenu. Publiez votre annonce gratuitement et cochez « Chiens de plus de 10 kg acceptés » pour apparaître ici."
           />

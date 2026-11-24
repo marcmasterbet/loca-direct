@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { getSessionUserId } from '@/lib/session'
 import { MIN_PRESTATAIRES_INDEX, NOINDEX, SITE_URL, premierTitre } from '@/lib/seo'
-import { REGIONS_METRO, REGIONS_SLUGS } from '@/lib/france'
+import { REGIONS_METRO, REGIONS_SLUGS, slugifier, slugRegion } from '@/lib/france'
 import { COLONNES_PUBLIQUES, METIERS, metierParSlug, type PrestatairePublic } from '@/lib/prestataires'
 import SiteHeader from '@/components/site/SiteHeader'
 import FilAriane from '@/components/pages/FilAriane'
@@ -23,31 +23,55 @@ export async function generateStaticParams() {
   return METIERS.flatMap(m => Object.keys(REGIONS_SLUGS).map(region => ({ activite: m.slug, region })))
 }
 
-async function donnees(activite: string, regionSlug: string) {
+/**
+ * Le dernier segment est soit une région (/prestataires/conciergerie/occitanie),
+ * soit une ville (/prestataires/conciergerie/bordeaux). Une ville n'existe que si
+ * au moins un professionnel de ce métier y est inscrit.
+ */
+async function donnees(activite: string, slug: string) {
   const m = metierParSlug(activite)
-  const region = REGIONS_SLUGS[regionSlug]
-  if (!m || !region) return null
+  if (!m) return null
+  const region = REGIONS_SLUGS[slug]
+  if (region) {
+    const { data } = await supabase
+      .from('prestataires')
+      .select(COLONNES_PUBLIQUES)
+      .eq('statut', 'active')
+      .eq('activite', m.nom)
+      .eq('region', region)
+      .order('created_at', { ascending: false })
+    return { m, region, ville: null as string | null, liste: (data || []) as PrestatairePublic[] }
+  }
   const { data } = await supabase
     .from('prestataires')
     .select(COLONNES_PUBLIQUES)
     .eq('statut', 'active')
     .eq('activite', m.nom)
-    .eq('region', region)
     .order('created_at', { ascending: false })
-  return { m, region, liste: (data || []) as PrestatairePublic[] }
+  const liste = ((data || []) as PrestatairePublic[]).filter(p => p.ville && slugifier(p.ville) === slug)
+  if (!liste.length) return null
+  const ville = liste[0].ville!.trim()
+  return { m, region: liste[0].region || '', ville, liste }
 }
+
+/** Le lieu tel qu'on l'écrit dans une phrase : « en Occitanie », « à Bordeaux » */
+const dansLieu = (d: { region: string; ville: string | null }) => (d.ville ? `à ${d.ville}` : `en ${d.region}`)
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { activite, region } = await params
   const d = await donnees(activite, region)
   if (!d) return { title: 'Introuvable', robots: NOINDEX }
   const { m, liste } = d
+  const lieu = d.ville ?? d.region
+  // « conciergerie Airbnb {ville} » est la requête la plus tapée
   const titre = premierTitre(
-    `${m.court} location saisonnière ${d.region}`,
-    `${m.court} en ${d.region}`,
-    `${m.court} ${d.region}`
+    ...(m.slug === 'conciergerie' ? [`Conciergerie Airbnb ${dansLieu(d)} : location saisonnière`, `Conciergerie Airbnb ${dansLieu(d)}`] : []),
+    ...(m.slug === 'menage' ? [`Ménage location saisonnière ${dansLieu(d)}`, `Ménage Airbnb ${dansLieu(d)}`] : []),
+    `${m.court} location saisonnière ${lieu}`,
+    `${m.court} ${dansLieu(d)}`,
+    `${m.court} ${lieu}`
   )
-  const description = `${liste.length} professionnel${liste.length > 1 ? 's' : ''} « ${m.court.toLowerCase()} » en ${d.region} pour votre location de vacances. Contact direct sur WhatsApp, sans intermédiaire ni commission.`
+  const description = `${liste.length} professionnel${liste.length > 1 ? 's' : ''} « ${m.court.toLowerCase()} » ${dansLieu(d)} pour votre location de vacances. Contact direct sur WhatsApp, sans intermédiaire ni commission.`
   return {
     title: { absolute: titre },
     description,
@@ -61,7 +85,23 @@ export default async function MetierRegionPage({ params }: Props) {
   const { activite, region: regionSlug } = await params
   const [d, isLoggedIn] = await Promise.all([donnees(activite, regionSlug), getSessionUserId().then(Boolean)])
   if (!d) notFound()
-  const { m, region, liste } = d
+  const { m, region, ville, liste } = d
+  const lieu = dansLieu(d)
+
+  // Les villes de cette région où ce métier est présent (pages ville)
+  const villes = ville
+    ? []
+    : Array.from(
+        liste.reduce((acc, p) => {
+          if (!p.ville?.trim()) return acc
+          const s = slugifier(p.ville)
+          const v = acc.get(s) ?? { nom: p.ville.trim(), nombre: 0 }
+          acc.set(s, { ...v, nombre: v.nombre + 1 })
+          return acc
+        }, new Map<string, { nom: string; nombre: number }>())
+      )
+        .filter(([s]) => !REGIONS_SLUGS[s])
+        .sort((a, b) => b[1].nombre - a[1].nombre)
 
   // Les autres régions où ce métier est présent
   const { data: tous } = await supabase.from('prestataires').select('region').eq('statut', 'active').eq('activite', m.nom)
@@ -77,19 +117,42 @@ export default async function MetierRegionPage({ params }: Props) {
           etapes={[
             { nom: 'Prestataires', href: '/prestataires' },
             { nom: m.court, href: `/prestataires/${m.slug}` },
-            { nom: region },
+            ...(ville
+              ? [{ nom: region, href: `/prestataires/${m.slug}/${slugRegion(region) ?? ""}` }, { nom: ville }]
+              : [{ nom: region }]),
           ]}
         />
         <header className="-mt-4 flex flex-col gap-4">
           <h1 className="text-balance text-[34px] font-bold leading-[1.08] tracking-[-0.04em] sm:text-5xl">
-            {m.court} en {region}
+            {m.slug === 'conciergerie' && ville ? `Conciergerie Airbnb à ${ville}` : `${m.court} ${lieu}`}
           </h1>
           <p className="max-w-[68ch] text-lg leading-relaxed text-ink-soft">
             {liste.length
-              ? `${liste.length} professionnel${liste.length > 1 ? 's' : ''} en ${region} pour votre location saisonnière. ${m.intro}`
-              : `Pas encore de professionnel « ${m.court.toLowerCase()} » inscrit en ${region}. ${m.intro}`}
+              ? `${liste.length} professionnel${liste.length > 1 ? 's' : ''} ${lieu} pour votre location saisonnière. ${m.intro}`
+              : `Pas encore de professionnel « ${m.court.toLowerCase()} » inscrit ${lieu}. ${m.intro}`}
           </p>
         </header>
+
+        {villes.length > 1 && (
+          <nav aria-labelledby="villes" className="flex flex-col gap-3">
+            <h2 id="villes" className="text-lg font-bold">
+              {m.court} par ville en {region}
+            </h2>
+            <ul className="flex flex-wrap gap-2">
+              {villes.map(([s, v]) => (
+                <li key={s}>
+                  <Link
+                    href={`/prestataires/${m.slug}/${s}`}
+                    className="flex min-h-[44px] items-center gap-1.5 rounded-full bg-surface px-4 text-sm font-semibold text-ink no-underline hover:bg-brand-soft hover:text-brand-strong"
+                  >
+                    {v.nom}
+                    <span className="font-normal text-muted">{v.nombre}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
 
         {liste.length > 0 ? (
           <Suspense>
@@ -109,10 +172,10 @@ export default async function MetierRegionPage({ params }: Props) {
         )}
 
         <Faq
-          titre={`${m.court} en ${region} : vos questions`}
+          titre={`${m.court} ${lieu} : vos questions`}
           questions={[
             {
-              q: `Comment choisir un professionnel « ${m.court.toLowerCase()} » en ${region} ?`,
+              q: `Comment choisir un professionnel « ${m.court.toLowerCase()} » ${lieu} ?`,
               r: `${m.conseils.join(' ')}`,
             },
             {
@@ -122,7 +185,7 @@ export default async function MetierRegionPage({ params }: Props) {
           ]}
         />
 
-        {autres.length > 0 && (
+        {autres.length > 0 && !ville && (
           <nav aria-labelledby="autres-regions" className="flex flex-col gap-3">
             <h2 id="autres-regions" className="text-lg font-bold">
               {m.court} dans les autres régions
@@ -144,8 +207,8 @@ export default async function MetierRegionPage({ params }: Props) {
         )}
 
         <BandeauPros
-          href={isLoggedIn ? '/espace/devenir-prestataire' : '/inscription'}
-          titre={`Vous êtes « ${m.court.toLowerCase()} » en ${region} ?`}
+          href={isLoggedIn ? '/espace/devenir-prestataire' : '/rejoindre-annuaire'}
+          titre={`Vous êtes « ${m.court.toLowerCase()} » ${lieu} ?`}
         />
       </main>
     </div>

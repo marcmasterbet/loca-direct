@@ -4,7 +4,7 @@ import Link from 'next/link'
 export default function BandeauProprietaires({
   titre,
   texte,
-  href = '/inscription',
+  href = '/publier',
 }: {
   titre: string
   texte: string

@@ -71,7 +71,7 @@ export default async function VillePage({ params }: Props) {
 
   const { region, ville, logements, autresVilles } = d
   const s = statistiques(logements)
-  const lienPublier = isLoggedIn ? '/espace/ma-vitrine' : '/inscription'
+  const lienPublier = isLoggedIn ? '/espace/ma-vitrine' : '/publier'
 
   const chiffres = [
     { valeur: String(s.total), label: s.total > 1 ? 'logements' : 'logement' },

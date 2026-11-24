@@ -68,7 +68,7 @@ export default async function RegionPage({ params }: Props) {
   const s = statistiques(logements)
   const contenu = CONTENU_REGIONS[slug]
   const voisines = (contenu?.voisines || []).map(v => REGIONS_METRO.find(r => r.slug === v)).filter(Boolean) as typeof REGIONS_METRO
-  const lienPublier = isLoggedIn ? '/espace/ma-vitrine' : '/inscription'
+  const lienPublier = isLoggedIn ? '/espace/ma-vitrine' : '/publier'
 
   const chiffres = [
     { valeur: String(s.total), label: s.total > 1 ? 'logements' : 'logement' },

@@ -2,6 +2,7 @@ import { MetadataRoute } from 'next'
 import { createClient } from '@supabase/supabase-js'
 import { ARTICLES, articleDate } from '@/lib/articles'
 import { MIN_ANNONCES_INDEX, MIN_PRESTATAIRES_INDEX } from '@/lib/seo'
+import { slugifier } from '@/lib/france'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -80,6 +81,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'daily',
       priority: 0.9,
     },
+    { url: `${BASE_URL}/publier`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE_URL}/rejoindre-annuaire`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     {
       url: `${BASE_URL}/logements/chiens`,
       lastModified: now,
@@ -103,12 +106,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency: 'weekly',
       priority: 0.8,
-    },
-    {
-      url: `${BASE_URL}/inscription`,
-      lastModified: now,
-      changeFrequency: 'monthly',
-      priority: 0.7,
     },
     {
       url: `${BASE_URL}/cgu`,
@@ -239,7 +236,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { data: prestataires, error: prestatairesError } =
     await supabase
       .from('prestataires')
-      .select('id, created_at, activite, region')
+      .select('id, created_at, activite, region, ville')
       .eq('statut', 'active')
 
   if (prestatairesError) {
@@ -277,6 +274,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }))
 
+  // Pages métier + ville (/prestataires/conciergerie/bordeaux) : dès un professionnel
+  const metierVille = new Set<string>()
+  const slugsRegions = new Set(Object.keys(REGIONS_SLUGS))
+  for (const p of prestataires || []) {
+    const activiteSlug = Object.entries(ACTIVITES_SLUGS).find(([, nom]) => nom === p.activite)?.[0]
+    const villeSlug = p.ville ? slugifier(p.ville) : ''
+    if (activiteSlug && villeSlug && !slugsRegions.has(villeSlug)) metierVille.add(`${activiteSlug}/${villeSlug}`)
+  }
+  const prestatairesVillesPages: MetadataRoute.Sitemap = Array.from(metierVille).map(key => ({
+    url: `${BASE_URL}/prestataires/${key}`,
+    lastModified: now,
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }))
+
   // Pages métier (/prestataires/conciergerie…) : celles qui ont au moins un prestataire
   const metiersPresents = new Set(Array.from(metierRegion.keys()).map(k => k.split('/')[0]))
   for (const p of prestataires || []) {
@@ -297,6 +309,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...villesPages,
     ...metiersPages,
     ...prestatairesRegionsPages,
+    ...prestatairesVillesPages,
     ...vitrinesPages,
     ...prestatairesPages,
   ]
