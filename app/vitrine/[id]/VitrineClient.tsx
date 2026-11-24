@@ -9,6 +9,7 @@ import PhotoLightbox from '@/components/PhotoLightbox'
 import SiteHeader from '@/components/site/SiteHeader'
 import ListingCard, { type ListingCardData } from '@/components/listing/ListingCard'
 import MediasAnnonce from '@/components/listing/MediasAnnonce'
+import AutreContact from '@/components/listing/AutreContact'
 
 const MiniCarte = dynamic(() => import('@/components/listing/MiniCarte'), {
   ssr: false,
@@ -161,6 +162,7 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
             <IconeWhatsapp />
             Écrire au propriétaire
           </a>
+          <AutreContact id={vitrine.id} ville={vitrine.ville} />
           {siteWebUrl && (
             <a
               href={siteWebUrl}
@@ -175,7 +177,7 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
       )}
 
       <p className="border-t border-line pt-4 text-sm leading-relaxed text-muted">
-        0 € de commission : vous réglez le séjour directement avec le propriétaire.
+        0 € de commission : vous échangez directement avec le propriétaire, sans intermédiaire.
       </p>
     </div>
   )
