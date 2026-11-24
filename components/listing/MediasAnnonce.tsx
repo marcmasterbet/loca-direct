@@ -25,6 +25,21 @@ export default function MediasAnnonce({ video, visite, photo, titre }: { video?:
 
 function Lecteur({ media, photo, titre }: { media: Media; photo?: string; titre: string }) {
   const [actif, setActif] = useState(false)
+  // Vidéo hébergée chez LocaDirect : lecteur du navigateur, rien n'est chargé avant « lecture »
+  if (media.type === 'fichier') {
+    return (
+      <video
+        src={media.embed}
+        poster={photo}
+        controls
+        playsInline
+        preload="none"
+        aria-label={`Vidéo : ${titre}`}
+        onPlay={() => trackEvent('video', { source: 'fichier' })}
+        className="aspect-video w-full rounded-[22px] bg-night object-contain"
+      />
+    )
+  }
   const libelle = media.type === 'visite' ? 'Lancer la visite 3D' : 'Lire la vidéo'
   return (
     <div className="relative aspect-video overflow-hidden rounded-[22px] bg-night">

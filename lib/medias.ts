@@ -1,7 +1,11 @@
 // Vidéo et visite 3D des annonces : on n'intègre que des services connus,
 // pour ne jamais afficher une page inconnue dans le site.
 
-export type Media = { type: 'video' | 'visite'; embed: string; source: string }
+export type Media = { type: 'video' | 'visite' | 'fichier'; embed: string; source: string }
+
+export const BUCKET_VIDEOS = 'vitrines-videos'
+export const TAILLE_MAX_VIDEO = 100 * 1024 * 1024
+export const TYPES_VIDEO: Record<string, string> = { 'video/mp4': 'mp4', 'video/quicktime': 'mov', 'video/webm': 'webm' }
 
 function url(brut: string | null | undefined): URL | null {
   let t = (brut || '').trim()
@@ -19,11 +23,14 @@ function url(brut: string | null | undefined): URL | null {
 
 const hote = (u: URL) => u.hostname.replace(/^www\.|^m\./, '').toLowerCase()
 
-/** YouTube (dont Shorts) et Vimeo */
+/** Vidéo envoyée sur LocaDirect, YouTube (dont Shorts) ou Vimeo */
 export function lireVideo(brut: string | null | undefined): Media | null {
   const u = url(brut)
   if (!u) return null
   const h = hote(u)
+  if (h.endsWith('.supabase.co') && u.pathname.startsWith(`/storage/v1/object/public/${BUCKET_VIDEOS}/`)) {
+    return { type: 'fichier', source: 'Vidéo du propriétaire', embed: u.toString() }
+  }
   let id: string | null = null
   if (h === 'youtu.be') id = u.pathname.slice(1).split('/')[0]
   else if (h === 'youtube.com' || h === 'youtube-nocookie.com') {

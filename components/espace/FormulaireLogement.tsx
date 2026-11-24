@@ -6,7 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Champ, ErreurFormulaire } from '@/components/forms/Champ'
 import { PAYS, REGIONS_PAR_PAYS } from '@/lib/regions'
-import { lireVideo, lireVisite3d, SERVICES_VIDEO, SERVICES_VISITE } from '@/lib/medias'
+import { lireVideo, lireVisite3d, SERVICES_VIDEO, SERVICES_VISITE, TAILLE_MAX_VIDEO, TYPES_VIDEO } from '@/lib/medias'
 import { Bloc, Case, Choix, Grille, TeleversementPhotos, Zone } from './briques'
 
 import { LOGEMENT_VIDE, type DonneesLogement } from '@/lib/formulaire-logement'
@@ -177,7 +177,7 @@ function verifier(d: DonneesLogement, champs: (keyof DonneesLogement)[], requis:
   }
   // Facultatifs : on vérifie seulement qu'un lien rempli est lisible
   if (champs.includes('video_url') && d.video_url.trim() && !lireVideo(d.video_url)) {
-    e.video_url = `Ce lien n’est pas reconnu. Collez le lien d’une vidéo ${SERVICES_VIDEO}.`
+    e.video_url = `Ce lien n’est pas reconnu. Envoyez un fichier vidéo ou collez le lien d’une vidéo ${SERVICES_VIDEO}.`
   }
   if (champs.includes('visite_3d_url') && d.visite_3d_url.trim() && !lireVisite3d(d.visite_3d_url)) {
     e.visite_3d_url = `Ce lien n’est pas reconnu. Collez le lien de partage ${SERVICES_VISITE}.`
@@ -509,16 +509,7 @@ function EtapePhotos({ d, maj, erreurs }: PropsEtape) {
       <TeleversementPhotos photos={d.photos} onChange={p => maj('photos', p)} max={MAX_PHOTOS} erreur={erreurs.photos} />
       <div className="flex flex-col gap-4 border-t border-line pt-5">
         <h3 className="text-base font-bold">Vidéo et visite 3D (facultatif)</h3>
-        <Champ
-          label="Lien de la vidéo (facultatif)"
-          type="url"
-          inputMode="url"
-          value={d.video_url}
-          onChange={v => maj('video_url', v)}
-          erreur={erreurs.video_url}
-          placeholder="https://youtu.be/…"
-          aide={`Mettez votre vidéo sur ${SERVICES_VIDEO}, puis collez son lien ici.`}
-        />
+        <ChampVideo valeur={d.video_url} onChange={v => maj('video_url', v)} erreur={erreurs.video_url} />
         <Champ
           label="Lien de la visite 3D (facultatif)"
           type="url"
@@ -595,6 +586,97 @@ function Recapitulatif({ d, onModifier }: { d: DonneesLogement; onModifier: (i: 
       <p className="rounded-[14px] bg-dog-soft px-4 py-3 text-base leading-relaxed text-ink-soft">
         Nous vérifions chaque annonce avant sa mise en ligne, sous 24 à 48&nbsp;heures. Vous recevrez un e-mail dès qu’elle sera visible.
       </p>
+    </div>
+  )
+}
+
+/** Vidéo : fichier envoyé depuis le téléphone ou l'ordinateur, ou lien YouTube / Vimeo */
+function ChampVideo({ valeur, onChange, erreur }: { valeur: string; onChange: (v: string) => void; erreur?: string }) {
+  const entree = useRef<HTMLInputElement>(null)
+  const [progres, setProgres] = useState<number | null>(null)
+  const [probleme, setProbleme] = useState('')
+  const media = lireVideo(valeur)
+  const fichier = media?.type === 'fichier'
+
+  const envoyer = async (f: File | undefined) => {
+    if (!f) return
+    setProbleme('')
+    if (!TYPES_VIDEO[f.type]) return setProbleme('Format non pris en charge : choisissez une vidéo MP4, MOV ou WEBM.')
+    if (f.size > TAILLE_MAX_VIDEO) return setProbleme('Cette vidéo dépasse 100 Mo. Raccourcissez-la (une à deux minutes suffisent) ou publiez-la sur YouTube et collez le lien.')
+    setProgres(0)
+    try {
+      const res = await fetch('/api/upload-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: f.type, taille: f.size }),
+      })
+      const r = await res.json().catch(() => ({}))
+      if (!res.ok || !r.envoi) throw new Error(r.error || 'Envoi impossible')
+      // Envoi direct au stockage, avec la progression
+      await new Promise<void>((ok, ko) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('PUT', r.envoi)
+        xhr.setRequestHeader('Content-Type', f.type)
+        xhr.setRequestHeader('x-upsert', 'false')
+        xhr.upload.onprogress = e => e.lengthComputable && setProgres(Math.round((e.loaded / e.total) * 100))
+        xhr.onload = () => (xhr.status < 300 ? ok() : ko(new Error('Envoi interrompu')))
+        xhr.onerror = () => ko(new Error('Connexion perdue'))
+        xhr.send(f)
+      })
+      onChange(r.url)
+    } catch (e) {
+      setProbleme(`${(e as Error).message}. Réessayez, ou collez plutôt le lien d’une vidéo ${SERVICES_VIDEO}.`)
+    }
+    setProgres(null)
+    if (entree.current) entree.current.value = ''
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-sm font-semibold">Vidéo (facultatif)</p>
+      {fichier ? (
+        <div className="flex flex-col gap-2">
+          <video src={valeur} controls playsInline preload="metadata" className="aspect-video w-full rounded-[14px] bg-night object-contain" />
+          <button type="button" onClick={() => onChange('')} className="min-h-[44px] self-start rounded-[10px] px-2 text-sm font-semibold text-ink-soft hover:bg-surface">
+            Retirer la vidéo
+          </button>
+        </div>
+      ) : (
+        <>
+          <input ref={entree} type="file" accept="video/mp4,video/quicktime,video/webm" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={e => envoyer(e.target.files?.[0])} />
+          <button
+            type="button"
+            onClick={() => entree.current?.click()}
+            disabled={progres !== null}
+            aria-describedby="video-aide"
+            className="inline-flex min-h-[52px] items-center self-start rounded-[14px] bg-white px-5 text-base font-bold text-ink shadow-[inset_0_0_0_1.5px_#e4e3ee] hover:bg-surface disabled:opacity-70"
+          >
+            {progres !== null ? `Envoi de la vidéo… ${progres}\u00a0%` : 'Envoyer une vidéo'}
+          </button>
+          {progres !== null && (
+            <div className="h-2 overflow-hidden rounded-full bg-brand-tint" role="progressbar" aria-label="Envoi de la vidéo" aria-valuenow={progres} aria-valuemin={0} aria-valuemax={100}>
+              <div className="h-full rounded-full bg-brand" style={{ width: `${progres}%` }} />
+            </div>
+          )}
+          <p id="video-aide" className="text-sm text-muted">
+            MP4, MOV ou WEBM, 100&nbsp;Mo maximum : une à deux minutes filmées au téléphone suffisent.
+          </p>
+          <Champ
+            label={`Ou collez un lien ${SERVICES_VIDEO}`}
+            type="url"
+            inputMode="url"
+            value={valeur}
+            onChange={onChange}
+            erreur={erreur}
+            placeholder="https://youtu.be/…"
+          />
+        </>
+      )}
+      {probleme && (
+        <p role="alert" className="text-sm font-semibold text-[#c2410c]">
+          {probleme}
+        </p>
+      )}
     </div>
   )
 }
