@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Champ, ErreurFormulaire } from '@/components/forms/Champ'
 import { PAYS, REGIONS_PAR_PAYS } from '@/lib/regions'
+import { lireVideo, lireVisite3d, SERVICES_VIDEO, SERVICES_VISITE } from '@/lib/medias'
 import { Bloc, Case, Choix, Grille, TeleversementPhotos, Zone } from './briques'
 
 import { LOGEMENT_VIDE, type DonneesLogement } from '@/lib/formulaire-logement'
@@ -122,9 +123,9 @@ const ETAPES: Etape[] = [
   },
   {
     id: 'photos',
-    titre: 'Photos',
-    intro: 'Jusqu’à 10 photos. La première est celle qui s’affiche dans les résultats.',
-    champs: ['photos'],
+    titre: 'Photos et vidéo',
+    intro: 'Jusqu’à 10 photos. La première est celle qui s’affiche dans les résultats. La vidéo et la visite 3D sont facultatives.',
+    champs: ['photos', 'video_url', 'visite_3d_url'],
     Contenu: EtapePhotos,
   },
   {
@@ -173,6 +174,13 @@ function verifier(d: DonneesLogement, champs: (keyof DonneesLogement)[], requis:
   }
   if (champs.includes('whatsapp') && d.whatsapp.trim() && d.whatsapp.replace(/\D/g, '').length < 9) {
     e.whatsapp = 'Ce numéro paraît incomplet. Exemple : 06 12 34 56 78.'
+  }
+  // Facultatifs : on vérifie seulement qu'un lien rempli est lisible
+  if (champs.includes('video_url') && d.video_url.trim() && !lireVideo(d.video_url)) {
+    e.video_url = `Ce lien n’est pas reconnu. Collez le lien d’une vidéo ${SERVICES_VIDEO}.`
+  }
+  if (champs.includes('visite_3d_url') && d.visite_3d_url.trim() && !lireVisite3d(d.visite_3d_url)) {
+    e.visite_3d_url = `Ce lien n’est pas reconnu. Collez le lien de partage ${SERVICES_VISITE}.`
   }
   if (champs.includes('prix_nuit') && d.prix_nuit && !(Number(d.prix_nuit) > 0)) {
     e.prix_nuit = 'Le prix doit être supérieur à 0.'
@@ -496,7 +504,34 @@ function EtapeEquipements({ d, maj }: PropsEtape) {
 }
 
 function EtapePhotos({ d, maj, erreurs }: PropsEtape) {
-  return <TeleversementPhotos photos={d.photos} onChange={p => maj('photos', p)} max={MAX_PHOTOS} erreur={erreurs.photos} />
+  return (
+    <>
+      <TeleversementPhotos photos={d.photos} onChange={p => maj('photos', p)} max={MAX_PHOTOS} erreur={erreurs.photos} />
+      <div className="flex flex-col gap-4 border-t border-line pt-5">
+        <h3 className="text-base font-bold">Vidéo et visite 3D (facultatif)</h3>
+        <Champ
+          label="Lien de la vidéo (facultatif)"
+          type="url"
+          inputMode="url"
+          value={d.video_url}
+          onChange={v => maj('video_url', v)}
+          erreur={erreurs.video_url}
+          placeholder="https://youtu.be/…"
+          aide={`Mettez votre vidéo sur ${SERVICES_VIDEO}, puis collez son lien ici.`}
+        />
+        <Champ
+          label="Lien de la visite 3D (facultatif)"
+          type="url"
+          inputMode="url"
+          value={d.visite_3d_url}
+          onChange={v => maj('visite_3d_url', v)}
+          erreur={erreurs.visite_3d_url}
+          placeholder="https://poly.cam/capture/…"
+          aide={`Les voyageurs se promènent dans le logement. Créez-la gratuitement avec ${SERVICES_VISITE}, puis collez le lien de partage.`}
+        />
+      </div>
+    </>
+  )
 }
 
 function EtapeContact({ d, maj, erreurs }: PropsEtape) {

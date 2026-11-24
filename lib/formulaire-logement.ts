@@ -28,6 +28,8 @@ export type DonneesLogement = {
   duree_min: string
   equipements: string[]
   photos: string[]
+  video_url: string
+  visite_3d_url: string
   whatsapp: string
   site_web: string
   regles: string
@@ -67,6 +69,8 @@ export const LOGEMENT_VIDE: DonneesLogement = {
   duree_min: '1 nuit',
   equipements: [],
   photos: [],
+  video_url: '',
+  visite_3d_url: '',
   whatsapp: '',
   site_web: '',
   regles: '',
@@ -112,6 +116,8 @@ export function depuisVitrine(v: Record<string, unknown>): DonneesLogement {
     duree_min: texte(v.duree_min) || '1 nuit',
     equipements: Array.isArray(v.equipements) ? (v.equipements as string[]) : [],
     photos: Array.isArray(v.photos) ? (v.photos as string[]) : [],
+    video_url: texte(v.video_url),
+    visite_3d_url: texte(v.visite_3d_url),
     whatsapp: texte(v.whatsapp),
     site_web: texte(v.site_web),
     regles: texte(r.texte),

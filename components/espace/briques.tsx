@@ -150,8 +150,8 @@ export function TeleversementPhotos({
               </div>
               <div className="flex flex-wrap">
                 {i > 0 && libellePrincipale && (
-                  <button type="button" onClick={() => principale(url)} className="min-h-[44px] rounded-[10px] px-2 text-sm font-semibold text-brand-strong hover:bg-brand-soft">
-                    Mettre en principale
+                  <button type="button" onClick={() => principale(url)} aria-label={`Mettre la photo ${i + 1} en principale`} className="min-h-[44px] rounded-[10px] px-2 text-sm font-semibold text-brand-strong hover:bg-brand-soft">
+                    Principale
                   </button>
                 )}
                 <button type="button" onClick={() => retirer(url)} aria-label={`Retirer la photo ${i + 1}`} className="min-h-[44px] rounded-[10px] px-2 text-sm font-semibold text-ink-soft hover:bg-surface">

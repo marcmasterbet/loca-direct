@@ -31,6 +31,8 @@ type Vitrine = Proprio & {
   description_longue?: string | null
   whatsapp: string | null
   numero_enregistrement?: string | null
+  video_url?: string | null
+  visite_3d_url?: string | null
   equipements?: string[] | null
   motif_refus?: string | null
   nb_vues?: number | null
@@ -492,6 +494,8 @@ function CarteLogement({ v }: { v: Vitrine }) {
           ['Propriétaire', v.directloca_users?.email],
           ['WhatsApp', v.whatsapp],
           ['N° d’enregistrement', v.numero_enregistrement],
+          ['Vidéo', v.video_url],
+          ['Visite 3D', v.visite_3d_url],
           ['Chien de plus de 10 kg', v.equipements?.includes('chien_10kg') ? 'Accepté' : ''],
           ['Publiée le', date(v.created_at)],
           ['Visites', v.nb_vues ?? 0],

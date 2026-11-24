@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { champsMedias, colonneAbsente } from '@/lib/medias-serveur'
 import { getSessionUserId, escapeHtml } from '@/lib/session'
 
 const supabase = createClient(
@@ -25,9 +26,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Au moins 1 photo est requise' }, { status: 400 })
     }
 
-    const { data: vitrine, error } = await supabase
-      .from('vitrines')
-      .insert({
+    const champs = {
         user_id: userId,
         titre: data.titre,
         numero_enregistrement: data.numero_enregistrement || null,
@@ -68,9 +67,16 @@ export async function POST(req: Request) {
         site_web: data.site_web || null,
         photos: data.photos,
         statut: 'en_attente',
-      })
-      .select()
-      .single()
+      }
+    const envoyer = (valeurs: Record<string, unknown>) =>
+      supabase
+        .from('vitrines')
+        .insert(valeurs)
+        .select()
+        .single()
+    let { data: vitrine, error } = await envoyer({ ...champs, ...champsMedias(data) })
+    // Tant que les colonnes vidéo / visite 3D n'existent pas en base, on enregistre le reste
+    if (colonneAbsente(error)) ({ data: vitrine, error } = await envoyer(champs))
 
     if (error) {
       console.error('Erreur création vitrine:', error)

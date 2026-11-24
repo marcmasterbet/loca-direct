@@ -8,6 +8,7 @@ import { trackEvent } from '@/lib/analytics'
 import PhotoLightbox from '@/components/PhotoLightbox'
 import SiteHeader from '@/components/site/SiteHeader'
 import ListingCard, { type ListingCardData } from '@/components/listing/ListingCard'
+import MediasAnnonce from '@/components/listing/MediasAnnonce'
 
 const MiniCarte = dynamic(() => import('@/components/listing/MiniCarte'), {
   ssr: false,
@@ -329,6 +330,8 @@ export default function VitrineClient({ vitrine, isLoggedIn, centre, fil, voisin
                 )}
               </section>
             )}
+
+            <MediasAnnonce video={vitrine.video_url} visite={vitrine.visite_3d_url} photo={photos[0]} titre={titre} />
 
             {equipements.length > 0 && (
               <section className="flex flex-col gap-4">

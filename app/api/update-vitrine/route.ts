@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { champsMedias, colonneAbsente } from '@/lib/medias-serveur'
 import { getSessionUserId } from '@/lib/session'
 
 const supabase = createClient(
@@ -30,9 +31,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Annonce introuvable ou non autorisée' }, { status: 403 })
     }
 
-    const { data: vitrine, error } = await supabase
-      .from('vitrines')
-      .update({
+    const champs = {
         titre: data.titre,
         description_courte: data.description_courte,
         description_longue: data.description_longue,
@@ -72,11 +71,18 @@ export async function POST(req: Request) {
         photos: data.photos,
         // Seulement si le formulaire l'envoie : une ancienne version du formulaire ne l'efface pas
         ...('numero_enregistrement' in data ? { numero_enregistrement: data.numero_enregistrement || null } : {}),
-      })
-      .eq('id', data.id)
-      .eq('user_id', userId)
-      .select()
-      .single()
+      }
+    const envoyer = (valeurs: Record<string, unknown>) =>
+      supabase
+        .from('vitrines')
+        .update(valeurs)
+        .eq('id', data.id)
+        .eq('user_id', userId)
+        .select()
+        .single()
+    let { data: vitrine, error } = await envoyer({ ...champs, ...champsMedias(data) })
+    // Tant que les colonnes vidéo / visite 3D n'existent pas en base, on enregistre le reste
+    if (colonneAbsente(error)) ({ data: vitrine, error } = await envoyer(champs))
 
     if (error) {
       console.error('Erreur update vitrine:', error)
