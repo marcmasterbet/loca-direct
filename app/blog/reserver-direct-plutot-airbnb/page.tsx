@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   openGraph: { type: 'article', title: TITRE, description: CHAPEAU, url: `https://www.loca-direct.fr/blog/${SLUG}`, publishedTime: "2026-07-04" },
 }
 
-const SECTIONS = [{"id": "le-probleme-des-commissions", "titre": "Le problème des commissions"}, {"id": "5-bonnes-raisons-de-reserver-en-direct", "titre": "5 bonnes raisons de réserver en direct"}, {"id": "les-precautions-a-prendre", "titre": "Les précautions à prendre"}, {"id": "locadirect-la-location-directe-verifiee", "titre": "LocaDirect — la location directe vérifiée"}]
+const SECTIONS = [{"id": "le-probleme-des-commissions", "titre": "Le problème des commissions"}, {"id": "5-bonnes-raisons-de-reserver-en-direct", "titre": "5 bonnes raisons de réserver en direct"}, {"id": "les-precautions-a-prendre", "titre": "Les précautions à prendre"}, {"id": "locadirect-la-location-directe-verifiee", "titre": "LocaDirect : la location en direct, sans commission"}]
 
 export default function Article() {
   return (
@@ -97,14 +97,14 @@ export default function Article() {
       <li>Vérifiez que l’annonce est sur une plateforme sérieuse avec modération manuelle</li>
       <li>Échangez par écrit — WhatsApp laisse une trace</li>
       <li>Ne versez jamais d’acompte sans avoir signé un document ou sans confirmation écrite</li>
-      <li>Utilisez des plateformes où les propriétaires sont vérifiés par email</li>
+      <li>Utilisez des plateformes qui relisent les annonces et permettent de les signaler</li>
       <li>Méfiez-vous des prix anormalement bas — c’est souvent le signe d’une arnaque</li>
       </ul>
 
-      <h2 id="locadirect-la-location-directe-verifiee">LocaDirect — la location directe vérifiée</h2>
+      <h2 id="locadirect-la-location-directe-verifiee">LocaDirect : la location en direct, sans commission</h2>
 
       <p>
-      C’est exactement pour répondre à ces besoins que LocaDirect a été créé. Chaque annonce est vérifiée manuellement par notre équipe avant publication. Chaque propriétaire a confirmé son adresse email. Et le contact se fait directement sur WhatsApp — sans intermédiaire, sans commission.
+      C’est exactement pour répondre à ces besoins que LocaDirect a été créé. Chaque annonce est relue avant publication, et toute annonce signalée est suspendue. Chaque propriétaire a confirmé son adresse email. Et le contact se fait directement sur WhatsApp — sans intermédiaire, sans commission.
       </p>
 
       <div className={s.cta}>

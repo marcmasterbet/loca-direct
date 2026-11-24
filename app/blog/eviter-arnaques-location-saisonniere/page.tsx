@@ -64,7 +64,7 @@ export default function Article() {
 
       <div>
       {[
-      { num: '01', titre: 'Utilisez une plateforme avec modération humaine', desc: 'Les plateformes qui vérifient manuellement chaque annonce avant publication offrent une protection bien supérieure aux sites en auto-publication.' },
+      { num: '01', titre: 'Choisissez un site qui relit les annonces', desc: 'Préférez les sites qui relisent chaque annonce avant publication et permettent de signaler une annonce suspecte. Aucun site ne remplace votre propre vigilance.' },
       { num: '02', titre: 'Vérifiez le propriétaire', desc: "Demandez à faire un appel vidéo. Un escroc refusera toujours. Vérifiez aussi son profil sur les réseaux sociaux — un compte créé la semaine dernière est suspect." },
       { num: '03', titre: 'Exigez tout par écrit', desc: 'WhatsApp, email, SMS — peu importe, mais tout doit être écrit. Les accords verbaux ne valent rien en cas de litige.' },
       { num: '04', titre: "N'envoyez jamais d'argent avant d'avoir signé", desc: "Un propriétaire sérieux ne vous demandera pas un virement sur un compte personnel avant que vous ayez au moins un contrat de location signé." },
@@ -91,10 +91,10 @@ export default function Article() {
       </ul>
 
       <div className={s.cta}>
-        <h2>Annonces vérifiées manuellement</h2>
-        <p>Chaque annonce LocaDirect est validée par notre équipe avant publication.</p>
+        <h2>Des annonces relues avant publication</h2>
+        <p>Chaque annonce LocaDirect est relue avant sa mise en ligne. Restez vigilant : demandez un contrat et ne payez jamais par mandat cash.</p>
         <Link href="/logements" className={s.ctaButton}>
-          Voir les annonces vérifiées
+          Voir les annonces
         </Link>
       </div>
     </ArticleLayout>

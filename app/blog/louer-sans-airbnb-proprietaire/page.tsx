@@ -113,7 +113,7 @@ export default function Article() {
 
       <div className={s.cta}>
         <h2>Publiez votre logement gratuitement</h2>
-        <p>Annonce vérifiée par notre équipe. Contact direct WhatsApp. Zéro commission.</p>
+        <p>Annonce relue avant publication. Contact direct WhatsApp. Zéro commission.</p>
         <Link href="/inscription" className={s.ctaButton}>
           Créer mon annonce
         </Link>

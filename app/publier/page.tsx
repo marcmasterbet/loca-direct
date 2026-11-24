@@ -41,7 +41,7 @@ export default async function PublierPage() {
       etapes={[
         ['Créez votre compte', 'Une adresse e-mail et un mot de passe. Aucune carte bancaire demandée.'],
         ['Décrivez le logement', 'Photos, prix, équipements, et votre numéro WhatsApp, qui n’est jamais affiché sur la page.'],
-        ['Recevez les demandes', 'Après vérification sous 24 à 48 heures, l’annonce est en ligne et les voyageurs vous écrivent directement.'],
+        ['Recevez les demandes', 'Après relecture sous 24 à 48 heures, l’annonce est en ligne et les voyageurs vous écrivent directement.'],
       ]}
       avantages={[
         { titre: 'Aucune commission', texte: 'Le prix que vous fixez est celui que vous encaissez. Pas de frais pour vous, ni pour le voyageur.' },
@@ -49,11 +49,11 @@ export default async function PublierPage() {
         { titre: 'Votre numéro protégé', texte: 'Il n’apparaît jamais dans la page : les robots qui récoltent les numéros ne le trouvent pas.' },
         { titre: 'Une page vue par Google', texte: 'Chaque annonce a sa propre page, sur la carte de France et dans les pages de sa région et de sa ville.' },
         { titre: 'Les grands chiens mis en avant', texte: 'Si vous acceptez les chiens de plus de 10 kg, votre logement apparaît aussi dans la rubrique Chien accepté.' },
-        { titre: 'Des annonces vérifiées', texte: 'Chaque annonce est relue avant sa mise en ligne. Les voyageurs savent qu’ils parlent à de vrais propriétaires.' },
+        { titre: 'Des annonces relues', texte: 'Chaque annonce est relue avant sa mise en ligne, et toute annonce signalée est suspendue. Un site propre inspire confiance aux voyageurs.' },
       ]}
       questions={[
         { q: 'Déposer une annonce est-il vraiment gratuit ?', r: 'Oui. La publication est gratuite et LocaDirect ne prend aucune commission sur vos locations.' },
-        { q: 'Combien de temps pour être en ligne ?', r: 'Comptez une dizaine de minutes pour remplir l’annonce, photos comprises. Elle est vérifiée puis mise en ligne sous 24 à 48 heures.' },
+        { q: 'Combien de temps pour être en ligne ?', r: 'Comptez une dizaine de minutes pour remplir l’annonce, photos comprises. Elle est relue puis mise en ligne sous 24 à 48 heures.' },
         { q: 'Comment les voyageurs me contactent-ils ?', r: 'Par le bouton WhatsApp de votre annonce. Votre numéro n’est jamais écrit sur la page.' },
         { q: 'Faut-il un numéro d’enregistrement ?', r: 'Il est obligatoire dans certaines communes (Paris, Lyon, Bordeaux…) pour la location courte durée. Renseignez-vous auprès de votre mairie : vous pourrez l’indiquer dans l’annonce.' },
         { q: 'Puis-je garder mes annonces sur d’autres sites ?', r: 'Oui. Tenez simplement un seul calendrier à jour pour éviter les doubles réservations.' },

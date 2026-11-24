@@ -157,7 +157,7 @@ export default async function Accueil() {
           {[
             ['Vous choisissez', 'Par région, sur la carte, avec ou sans chien.'],
             ['Vous écrivez au propriétaire', 'Un bouton ouvre WhatsApp. Dates, questions, conditions : tout se règle entre vous.'],
-            ['Vous réglez directement', "LocaDirect n’encaisse rien. Demandez un contrat de location."],
+            ['Vous payez le propriétaire, pas LocaDirect', 'LocaDirect n’encaisse rien et n’intervient pas dans la location. Demandez un contrat, et ne payez jamais par mandat cash ou coupon.'],
           ].map(([titre, texte], i) => (
             <li key={titre} className="flex flex-col gap-2 rounded-[22px] bg-surface p-6">
               <span className="text-3xl font-bold text-brand">{i + 1}</span>

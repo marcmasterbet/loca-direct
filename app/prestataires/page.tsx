@@ -91,7 +91,7 @@ export default async function PrestatairesPage() {
               r: 'La plupart des conciergeries prennent un pourcentage des loyers, souvent entre 15 et 25 %, ou un forfait par séjour. Le prix dépend des services compris (accueil, ménage, linge, gestion des annonces) : demandez un devis à plusieurs prestataires de votre ville.',
             },
             {
-              q: 'Les prestataires sont-ils vérifiés ?',
+              q: 'Les prestataires sont-ils contrôlés ?',
               r: 'Chaque prestataire indique son numéro SIRET à l’inscription et chaque fiche est relue avant publication. Avant de vous engager, demandez un devis écrit et, si besoin, une attestation d’assurance.',
             },
           ]}

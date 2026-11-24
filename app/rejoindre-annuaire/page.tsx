@@ -42,7 +42,7 @@ export default async function RejoindreAnnuairePage() {
       etapes={[
         ['Créez votre compte', 'Une adresse e-mail et un mot de passe, puis cochez « Rejoindre l’annuaire ».'],
         ['Remplissez votre fiche', 'Métier, zone d’intervention, tarif ou devis, photos de vos réalisations. Le SIRET sert à vérifier votre activité.'],
-        ['Recevez les demandes', 'Après vérification, votre fiche est en ligne et les propriétaires vous appellent ou vous écrivent sur WhatsApp.'],
+        ['Recevez les demandes', 'Après relecture, votre fiche est en ligne et les propriétaires vous appellent ou vous écrivent sur WhatsApp.'],
       ]}
       avantages={[
         { titre: 'Une page par ville et par métier', texte: 'Votre fiche apparaît sur les pages « Conciergerie Airbnb à {votre ville} » et de votre région, faites pour être trouvées sur Google.' },
