@@ -51,6 +51,30 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="fr" className={`${jakarta.variable} h-full antialiased`}>
       <body className="min-h-screen flex flex-col bg-white">
+        {/* Identité du site pour Google : les recherches « loca direct », « location direct.fr »… mènent ici */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([
+              {
+                '@context': 'https://schema.org',
+                '@type': 'WebSite',
+                name: 'LocaDirect',
+                alternateName: ['Loca Direct', 'loca-direct.fr', 'Location Direct', 'Location en direct entre particuliers'],
+                url: 'https://www.loca-direct.fr/',
+              },
+              {
+                '@context': 'https://schema.org',
+                '@type': 'Organization',
+                name: 'LocaDirect',
+                alternateName: 'Loca Direct',
+                url: 'https://www.loca-direct.fr/',
+                logo: 'https://www.loca-direct.fr/icon.png',
+                email: 'contact@seokraft.fr',
+              },
+            ]),
+          }}
+        />
         <a href="#contenu" className="lien-evitement">
           Aller au contenu
         </a>

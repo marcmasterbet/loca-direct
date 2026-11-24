@@ -11,11 +11,11 @@ import CarteLogements, { type PointLogement } from '@/components/home/CarteLogem
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: { absolute: 'Location vacances entre particuliers sans commission' },
+  title: { absolute: 'Location vacances en direct entre particuliers | LocaDirect' },
   description:
-    'Maisons, appartements et gîtes en France, loués par leurs propriétaires. Chien accepté. Écrivez directement sur WhatsApp, sans commission ni frais.',
+    'LocaDirect (loca-direct.fr) : location de vacances en direct entre particuliers, sans commission. Maisons et gîtes en France, chien accepté, contact WhatsApp.',
   alternates: { canonical: 'https://www.loca-direct.fr' },
-  openGraph: { title: 'Location vacances entre particuliers sans commission', description: 'Maisons, appartements et gîtes en France, loués par leurs propriétaires. Chien accepté. Écrivez directement sur WhatsApp, sans commission ni frais.', url: 'https://www.loca-direct.fr' },
+  openGraph: { title: 'Location vacances en direct entre particuliers | LocaDirect', description: 'Maisons, appartements et gîtes en France, loués par leurs propriétaires. Chien accepté. Écrivez directement sur WhatsApp, sans commission ni frais.', url: 'https://www.loca-direct.fr' },
 }
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -72,7 +72,7 @@ export default async function Accueil() {
             Trouvez votre location. Écrivez au propriétaire.
           </h1>
           <p className="max-w-[520px] text-lg leading-relaxed text-ink-soft">
-            Des maisons et appartements de vacances en France, loués en direct par des particuliers.
+            Des maisons et appartements de vacances en France, en location directe par des particuliers.
           </p>
           <form
             action="/logements"
