@@ -597,6 +597,8 @@ function ChampVideo({ valeur, onChange, erreur }: { valeur: string; onChange: (v
   const [probleme, setProbleme] = useState('')
   const media = lireVideo(valeur)
   const fichier = media?.type === 'fichier'
+  // Le propriétaire choisit : envoyer son fichier, ou coller un lien
+  const [mode, setMode] = useState<'fichier' | 'lien'>(valeur && !fichier ? 'lien' : 'fichier')
 
   const envoyer = async (f: File | undefined) => {
     if (!f) return
@@ -643,33 +645,62 @@ function ChampVideo({ valeur, onChange, erreur }: { valeur: string; onChange: (v
         </div>
       ) : (
         <>
-          <input ref={entree} type="file" accept="video/mp4,video/quicktime,video/webm" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={e => envoyer(e.target.files?.[0])} />
-          <button
-            type="button"
-            onClick={() => entree.current?.click()}
-            disabled={progres !== null}
-            aria-describedby="video-aide"
-            className="inline-flex min-h-[52px] items-center self-start rounded-[14px] bg-white px-5 text-base font-bold text-ink shadow-[inset_0_0_0_1.5px_#e4e3ee] hover:bg-surface disabled:opacity-70"
-          >
-            {progres !== null ? `Envoi de la vidéo… ${progres}\u00a0%` : 'Envoyer une vidéo'}
-          </button>
-          {progres !== null && (
-            <div className="h-2 overflow-hidden rounded-full bg-brand-tint" role="progressbar" aria-label="Envoi de la vidéo" aria-valuenow={progres} aria-valuemin={0} aria-valuemax={100}>
-              <div className="h-full rounded-full bg-brand" style={{ width: `${progres}%` }} />
-            </div>
+          <div role="radiogroup" aria-label="Ajouter la vidéo" className="flex gap-1.5 self-start rounded-[14px] bg-surface p-1.5">
+            {(
+              [
+                ['fichier', 'Mon fichier'],
+                ['lien', 'Un lien YouTube'],
+              ] as const
+            ).map(([m, l]) => (
+              <button
+                key={m}
+                type="button"
+                role="radio"
+                aria-checked={mode === m}
+                onClick={() => {
+                  setMode(m)
+                  // Un lien à moitié tapé ne doit pas bloquer l'envoi d'un fichier
+                  if (m === 'fichier' && valeur && !fichier) onChange('')
+                }}
+                className={`min-h-[44px] whitespace-nowrap rounded-[10px] px-4 text-base font-semibold ${mode === m ? 'bg-white text-ink shadow-[0_0_0_1px_#e4e3ee]' : 'text-ink-soft hover:text-ink'}`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+          {mode === 'fichier' ? (
+            <>
+              <input ref={entree} type="file" accept="video/mp4,video/quicktime,video/webm" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={e => envoyer(e.target.files?.[0])} />
+              <button
+                type="button"
+                onClick={() => entree.current?.click()}
+                disabled={progres !== null}
+                aria-describedby="video-aide"
+                className="inline-flex min-h-[52px] items-center self-start rounded-[14px] bg-white px-5 text-base font-bold text-ink shadow-[inset_0_0_0_1.5px_#e4e3ee] hover:bg-surface disabled:opacity-70"
+              >
+                {progres !== null ? `Envoi de la vidéo… ${progres}\u00a0%` : 'Choisir une vidéo'}
+              </button>
+              {progres !== null && (
+                <div className="h-2 overflow-hidden rounded-full bg-brand-tint" role="progressbar" aria-label="Envoi de la vidéo" aria-valuenow={progres} aria-valuemin={0} aria-valuemax={100}>
+                  <div className="h-full rounded-full bg-brand" style={{ width: `${progres}%` }} />
+                </div>
+              )}
+              <p id="video-aide" className="text-sm text-muted">
+                MP4, MOV ou WEBM, 100&nbsp;Mo maximum : une à deux minutes filmées au téléphone suffisent.
+              </p>
+            </>
+          ) : (
+            <Champ
+              label={`Lien de la vidéo (${SERVICES_VIDEO})`}
+              type="url"
+              inputMode="url"
+              value={valeur}
+              onChange={onChange}
+              erreur={erreur}
+              placeholder="https://youtu.be/…"
+              aide="Collez le lien de partage de la vidéo."
+            />
           )}
-          <p id="video-aide" className="text-sm text-muted">
-            MP4, MOV ou WEBM, 100&nbsp;Mo maximum : une à deux minutes filmées au téléphone suffisent.
-          </p>
-          <Champ
-            label={`Ou collez un lien ${SERVICES_VIDEO}`}
-            type="url"
-            inputMode="url"
-            value={valeur}
-            onChange={onChange}
-            erreur={erreur}
-            placeholder="https://youtu.be/…"
-          />
         </>
       )}
       {probleme && (
