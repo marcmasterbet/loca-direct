@@ -185,7 +185,7 @@ export default async function AlternativeAirbnbPage() {
           <ol className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {[
               ['Créez votre compte', 'Une adresse e-mail et un mot de passe suffisent.'],
-              ['Décrivez le logement', 'Photos, prix, équipements, et votre numéro WhatsApp, jamais affiché sur la page.'],
+              ['Décrivez le logement', 'Photos, prix, équipements, et votre numéro WhatsApp, affiché seulement à la demande d’un voyageur.'],
               ['Recevez les messages', 'Après relecture, l’annonce est en ligne et les voyageurs vous écrivent directement.'],
             ].map(([t, d], i) => (
               <li key={t} className="flex flex-col gap-2 rounded-[22px] p-6 shadow-[0_0_0_1px_#e4e3ee]">

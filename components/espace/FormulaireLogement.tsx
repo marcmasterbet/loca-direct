@@ -537,7 +537,7 @@ function EtapeContact({ d, maj, erreurs }: PropsEtape) {
         onChange={v => maj('whatsapp', v)}
         erreur={erreurs.whatsapp}
         placeholder="06 12 34 56 78"
-        aide="Votre numéro n’est jamais écrit sur la page. Les voyageurs vous écrivent en touchant le bouton WhatsApp de l’annonce."
+        aide="Les voyageurs vous écrivent avec le bouton WhatsApp de l’annonce. Ceux qui n’ont pas WhatsApp peuvent afficher ce numéro pour vous appeler ou vous envoyer un SMS. Il n’est jamais écrit dans la page."
       />
       <Champ label="Site internet (facultatif)" type="url" inputMode="url" value={d.site_web} onChange={v => maj('site_web', v)} placeholder="https://" />
       <Grille>

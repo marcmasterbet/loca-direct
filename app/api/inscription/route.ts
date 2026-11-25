@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import { Resend } from 'resend'
+import { bouton, gabarit } from '@/lib/emails'
 import { escapeHtml } from '@/lib/session'
 
 const supabase = createClient(
@@ -74,20 +75,11 @@ export async function POST(req: Request) {
         from: 'LocaDirect <bienvenue@loca-direct.fr>',
         to: newUser.email,
         subject: 'Confirmez votre compte LocaDirect',
-        html: `
-          <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 20px;">
-            <h1 style="color: #EA580C; font-size: 22px;">🏠 LocaDirect</h1>
-            <p style="font-size: 15px; color: #1F2937; line-height: 1.6;">
-              Bienvenue ! Cliquez sur le bouton ci-dessous pour confirmer votre adresse email et activer votre compte.
-            </p>
-            <a href="${validationUrl}" style="display: inline-block; background: #EA580C; color: white; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; margin: 20px 0;">
-              Confirmer mon email
-            </a>
-            <p style="font-size: 13px; color: #6B7280;">
-              Si le bouton ne fonctionne pas, copiez ce lien : ${validationUrl}
-            </p>
-          </div>
-        `,
+        html: gabarit(`
+          <p style="margin:0 0 12px;font-size:22px;font-weight:700;">Plus qu’une étape</p>
+          <p style="margin:0 0 16px;">Confirmez votre adresse e-mail pour activer votre compte LocaDirect.</p>
+          ${bouton(validationUrl, 'Confirmer mon adresse e-mail')}
+          <p style="margin:16px 0 0;font-size:13px;color:#6B6A80;word-break:break-all;">Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur&nbsp;: ${validationUrl}</p>`),
       })
     } catch (e) {
       console.error('Erreur envoi email:', e)

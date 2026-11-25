@@ -73,8 +73,9 @@ export default function ConfidentialitePage() {
       <h2>Ce qui est visible sur le site</h2>
       <p>
         Les annonces et les fiches de l’annuaire sont publiques. Les numéros de téléphone et de WhatsApp ne sont jamais
-        écrits dans les pages&nbsp;: un visiteur vous écrit en touchant le bouton WhatsApp, et le téléphone d’un
-        prestataire s’affiche seulement à la demande. Le SIRET, l’adresse du siège et votre e-mail ne sont jamais
+        écrits dans les pages&nbsp;: un visiteur vous écrit en touchant le bouton WhatsApp, et votre numéro
+        (propriétaire ou prestataire) s’affiche seulement quand un visiteur le demande, pour vous appeler ou vous envoyer
+        un SMS. Le SIRET, l’adresse du siège et votre e-mail ne sont jamais
         affichés.
       </p>
 

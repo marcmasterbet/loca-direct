@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { Resend } from 'resend'
 import { setUserSession } from '@/lib/session'
+import { emailBienvenue, EXPEDITEUR, REPONDRE_A } from '@/lib/emails'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,6 +36,14 @@ export async function POST(req: Request) {
       .eq('id', user.id)
 
     await setUserSession(user.id)
+
+    // Bienvenue : envoyé une seule fois, au moment où le compte est activé. Ne bloque jamais.
+    try {
+      const { subject, html } = emailBienvenue(user)
+      await new Resend(process.env.RESEND_API_KEY).emails.send({ from: EXPEDITEUR, replyTo: REPONDRE_A, to: user.email, subject, html })
+    } catch (e) {
+      console.error('Erreur e-mail de bienvenue:', e)
+    }
 
     return NextResponse.json({ status: 'success' })
   } catch (e) {
