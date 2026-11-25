@@ -27,9 +27,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "fr_FR",
     siteName: "LocaDirect",
-    title: "Location vacances entre particuliers sans commission",
-    description:
-      "Maisons, appartements et gîtes en France, loués par leurs propriétaires. Chien accepté. Écrivez directement sur WhatsApp, sans commission ni frais.",
+    title: "Location vacances en direct entre particuliers | LocaDirect",
+    description: "Location de vacances en direct entre particuliers, sans commission. Maisons, gîtes, chien accepté, contact WhatsApp.",
     url: "https://www.loca-direct.fr",
   },
   twitter: {
