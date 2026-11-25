@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import SiteHeader from '@/components/site/SiteHeader'
 import ListingCard from '@/components/listing/ListingCard'
+import PhotoLightbox from '@/components/PhotoLightbox'
 
 export type Onglet = 'annonces' | 'favoris' | 'compte'
 
@@ -177,15 +178,27 @@ function Statut({ statut }: { statut: string }) {
   return <span className={`inline-flex self-start rounded-[8px] px-2.5 py-1 text-sm font-semibold ${s.classes}`}>{s.label}</span>
 }
 
-function Vignette({ src, alt }: { src?: string | null; alt: string }) {
-  return (
-    <div className="relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-[14px] bg-surface sm:h-[104px] sm:w-[136px]">
-      {src ? (
-        <Image src={src} alt={alt} fill sizes="136px" className="object-cover" />
-      ) : (
+function Vignette({ src, alt, photos = [] }: { src?: string | null; alt: string; photos?: string[] }) {
+  const [ouverte, setOuverte] = useState(false)
+  const cadre = 'relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-[14px] bg-surface sm:h-[104px] sm:w-[136px]'
+  if (!src) {
+    return (
+      <div className={cadre}>
         <span className="flex h-full items-center justify-center px-2 text-center text-sm text-muted">Pas de photo</span>
-      )}
-    </div>
+      </div>
+    )
+  }
+  const liste = photos.length ? photos : [src]
+  return (
+    <>
+      <button type="button" onClick={() => setOuverte(true)} aria-label={`Voir les photos de ${alt}`} className={`${cadre} hover:opacity-90`}>
+        <Image src={src} alt={alt} fill sizes="136px" className="object-cover" />
+        {liste.length > 1 && (
+          <span className="absolute bottom-1.5 right-1.5 rounded-full bg-ink/80 px-2 py-0.5 text-sm font-semibold tabular-nums text-white">{liste.length}</span>
+        )}
+      </button>
+      {ouverte && <PhotoLightbox photos={liste} startIndex={0} onClose={() => setOuverte(false)} />}
+    </>
   )
 }
 
@@ -288,7 +301,7 @@ function LigneLogement({ v }: { v: Vitrine }) {
   return (
     <li className={`${carte} flex flex-col gap-4 p-4 sm:p-5`}>
       <div className="flex gap-4">
-        <Vignette src={v.photos?.[0]} alt={titre} />
+        <Vignette src={v.photos?.[0]} alt={titre} photos={v.photos || []} />
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <Statut statut={v.statut} />
           <h3 className="truncate text-[18px] font-bold">{titre}</h3>

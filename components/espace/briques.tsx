@@ -2,6 +2,7 @@
 
 import { useId, useRef, useState, type ReactNode } from 'react'
 import Image from 'next/image'
+import PhotoLightbox from '@/components/PhotoLightbox'
 
 /** Briques communes aux formulaires de l’espace */
 
@@ -108,6 +109,7 @@ export function TeleversementPhotos({
   id?: string
 }) {
   const [envoi, setEnvoi] = useState(0)
+  const [ouverte, setOuverte] = useState<number | null>(null)
   const [probleme, setProbleme] = useState('')
   const entree = useRef<HTMLInputElement>(null)
   const place = max - photos.length
@@ -145,8 +147,10 @@ export function TeleversementPhotos({
           {photos.map((url, i) => (
             <li key={url} className="flex flex-col gap-1.5">
               <div className="relative aspect-[4/3] overflow-hidden rounded-[14px] bg-surface">
-                <Image src={url} alt={`Photo ${i + 1}`} fill sizes="(max-width: 640px) 50vw, 240px" className="object-cover" />
-                {i === 0 && libellePrincipale && <span className="absolute left-2 top-2 rounded-[8px] bg-white px-2 py-1 text-sm font-bold text-brand-strong">{libellePrincipale}</span>}
+                <button type="button" onClick={() => setOuverte(i)} aria-label={`Agrandir la photo ${i + 1}`} className="absolute inset-0 hover:opacity-90">
+                  <Image src={url} alt={`Photo ${i + 1}`} fill sizes="(max-width: 640px) 50vw, 240px" className="object-cover" />
+                </button>
+                {i === 0 && libellePrincipale && <span className="pointer-events-none absolute left-2 top-2 rounded-[8px] bg-white px-2 py-1 text-sm font-bold text-brand-strong">{libellePrincipale}</span>}
               </div>
               <div className="flex flex-wrap">
                 {i > 0 && libellePrincipale && (
@@ -183,6 +187,7 @@ export function TeleversementPhotos({
           </p>
         </div>
       )}
+      {ouverte !== null && <PhotoLightbox photos={photos} startIndex={ouverte} onClose={() => setOuverte(null)} />}
       {(erreur || probleme) && (
         <p role="alert" className="text-sm font-semibold text-[#c2410c]">
           {probleme || erreur}

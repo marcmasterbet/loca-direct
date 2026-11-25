@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import Logo from '@/components/site/Logo'
+import PhotoLightbox from '@/components/PhotoLightbox'
 import { Champ } from '@/components/forms/Champ'
 import { Case, Choix, Grille, TeleversementPhotos, Zone } from '@/components/espace/briques'
 import { METIERS } from '@/lib/prestataires'
@@ -257,17 +258,26 @@ function Statut({ statut }: { statut: string }) {
 }
 
 function Vignettes({ photos, alt }: { photos: string[]; alt: string }) {
+  const [ouverte, setOuverte] = useState<number | null>(null)
   if (!photos.length) return <div className="flex h-[96px] items-center justify-center rounded-[14px] bg-surface px-4 text-sm text-muted">Aucune photo</div>
   return (
-    <ul className="flex gap-2 overflow-x-auto">
-      {photos.map((src, i) => (
-        <li key={src} className="shrink-0">
-          <a href={src} target="_blank" rel="noreferrer" aria-label={`Ouvrir la photo ${i + 1} de ${alt}`} className="relative block h-[96px] w-[128px] overflow-hidden rounded-[12px] bg-surface">
-            <Image src={src} alt="" fill sizes="128px" className="object-cover" />
-          </a>
-        </li>
-      ))}
-    </ul>
+    <>
+      <ul className="flex gap-2 overflow-x-auto">
+        {photos.map((src, i) => (
+          <li key={src} className="shrink-0">
+            <button
+              type="button"
+              onClick={() => setOuverte(i)}
+              aria-label={`Agrandir la photo ${i + 1} de ${alt}`}
+              className="relative block h-[96px] w-[128px] overflow-hidden rounded-[12px] bg-surface hover:opacity-90"
+            >
+              <Image src={src} alt="" fill sizes="128px" className="object-cover" />
+            </button>
+          </li>
+        ))}
+      </ul>
+      {ouverte !== null && <PhotoLightbox photos={photos} startIndex={ouverte} onClose={() => setOuverte(null)} />}
+    </>
   )
 }
 
