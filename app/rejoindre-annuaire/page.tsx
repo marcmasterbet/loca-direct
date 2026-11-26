@@ -32,7 +32,7 @@ export default async function RejoindreAnnuairePage() {
       connecte={connecte}
       ariane="Rejoindre l’annuaire"
       titre="Trouvez des propriétaires de locations saisonnières près de chez vous"
-      intro="Conciergeries, ménage, linge, photographes, artisans : inscrivez-vous gratuitement dans l’annuaire LocaDirect. Les propriétaires vous contactent directement, sans plateforme qui prélève sa part. Pour le moment, l’inscription est gratuite."
+      intro="Conciergeries, ménage, linge, photographes, artisans : inscrivez-vous gratuitement dans l’annuaire LocaDirect. Les propriétaires vous contactent directement, sans plateforme qui prélève sa part. L’inscription est gratuite."
       cta={{ href: connecte ? '/espace/devenir-prestataire' : '/inscription?profil=prestataire', label: 'Créer ma fiche gratuitement' }}
       chiffres={[
         { valeur: '0 €', label: 'de commission' },
@@ -70,7 +70,7 @@ export default async function RejoindreAnnuairePage() {
         </section>
       }
       questions={[
-        { q: 'L’inscription dans l’annuaire est-elle gratuite ?', r: 'Oui, pour le moment l’inscription est gratuite. Si cela change un jour, le prix sera affiché sur cette page avant toute inscription. Dans tous les cas, LocaDirect ne prend aucune commission sur vos prestations.' },
+        { q: 'L’inscription dans l’annuaire est-elle gratuite ?', r: 'Oui, l’inscription est gratuite, et LocaDirect ne prend aucune commission sur vos prestations.' },
         { q: 'Comment trouver des propriétaires quand on lance sa conciergerie ?', r: 'Soyez visible là où ils cherchent : une fiche complète avec photos et tarifs dans l’annuaire LocaDirect, votre fiche Google, et le bouche-à-oreille des premiers clients. Les propriétaires de LocaDirect louent en direct et cherchent justement des relais locaux.' },
         { q: 'Pourquoi demander mon SIRET ?', r: 'Pour vérifier que votre activité existe avant de publier la fiche. Il n’est pas affiché sur le site.' },
         { q: 'Puis-je proposer plusieurs services ?', r: 'Oui, vous pouvez créer une fiche par métier, par exemple une pour la conciergerie et une pour le ménage.' },
