@@ -59,3 +59,54 @@ export function emailBienvenue(u: Profil): { subject: string; html: string } {
       <p style="margin:12px 0 0;">Marc, fondateur de LocaDirect</p>`),
   }
 }
+
+function partage(url: string, texte: string) {
+  const lien = (href: string, label: string) =>
+    `<a href="${href}" style="display:inline-block;color:#3F22C9;font-weight:600;text-decoration:underline;margin-right:16px;">${label}</a>`
+  return `<p style="margin:16px 0 0;font-size:15px;">Partagez-la pour gagner en visibilité&nbsp;: ${lien(`https://wa.me/?text=${encodeURIComponent(`${texte} ${url}`)}`, 'WhatsApp')}${lien(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, 'Facebook')}</p>`
+}
+
+/** Annonce de logement mise en ligne */
+export function emailAnnonceEnLigne(v: { id: string; titre?: string | null; ville?: string | null }) {
+  const titre = (v.titre || 'Votre logement').trim()
+  const url = `${SITE}/vitrine/${encodeURIComponent(v.id)}`
+  return {
+    subject: `Votre annonce « ${titre.replace(/[\r\n]/g, ' ').slice(0, 120)} » est en ligne`,
+    html: gabarit(`
+      <p style="margin:0 0 12px;font-size:22px;font-weight:700;">Votre annonce est en ligne 🎉</p>
+      <p style="margin:0 0 16px;">Bonne nouvelle&nbsp;: votre annonce <strong>${echapper(titre)}</strong>${v.ville ? ` à ${echapper(v.ville)}` : ''} a été relue et elle est maintenant visible par tous les voyageurs, sur la carte et dans les pages de sa région.</p>
+      ${bouton(url, 'Voir mon annonce')}
+      ${partage(url, `Mon logement « ${titre} » sur LocaDirect :`)}
+      <p style="margin:20px 0 0;font-size:15px;color:#55536B;">Les voyageurs vous écrivent directement sur WhatsApp. Pensez à garder vos disponibilités et vos prix à jour depuis votre espace.</p>
+      <p style="margin:20px 0 0;">Une question&nbsp;? Répondez simplement à cet e-mail.<br>Marc, fondateur de LocaDirect</p>`),
+  }
+}
+
+/** Fiche prestataire mise en ligne */
+export function emailFicheEnLigne(p: { id: string; prenom?: string | null; nom?: string | null; activite?: string | null }) {
+  const nom = [p.prenom, p.nom].filter(Boolean).join(' ').trim() || 'Votre fiche'
+  const url = `${SITE}/prestataires/${encodeURIComponent(p.id)}`
+  return {
+    subject: 'Votre fiche est en ligne dans l’annuaire LocaDirect',
+    html: gabarit(`
+      <p style="margin:0 0 12px;font-size:22px;font-weight:700;">Votre fiche est en ligne 🎉</p>
+      <p style="margin:0 0 16px;">Bonne nouvelle&nbsp;: la fiche <strong>${echapper(nom)}</strong>${p.activite ? ` (${echapper(p.activite)})` : ''} a été relue et figure maintenant dans l’annuaire LocaDirect, sur les pages de votre métier, de votre ville et de votre région.</p>
+      ${bouton(url, 'Voir ma fiche')}
+      ${partage(url, `Retrouvez-moi sur LocaDirect :`)}
+      <p style="margin:20px 0 0;font-size:15px;color:#55536B;">Astuce référencement&nbsp;: ajoutez un lien vers votre fiche sur votre site ou vos réseaux. Plus elle est citée, mieux elle est trouvée sur Google.</p>
+      <p style="margin:20px 0 0;">Une question&nbsp;? Répondez simplement à cet e-mail.<br>Marc, fondateur de LocaDirect</p>`),
+  }
+}
+
+/** Annonce ou fiche à corriger, avec le motif écrit par l'administrateur */
+export function emailACorriger(quoi: 'annonce' | 'fiche', nom: string, motif: string, lienModifier: string) {
+  return {
+    subject: quoi === 'annonce' ? 'Votre annonce LocaDirect est à corriger' : 'Votre fiche LocaDirect est à corriger',
+    html: gabarit(`
+      <p style="margin:0 0 12px;font-size:22px;font-weight:700;">Encore un petit effort</p>
+      <p style="margin:0 0 16px;">${quoi === 'annonce' ? 'Votre annonce' : 'Votre fiche'} <strong>${echapper(nom)}</strong> ne peut pas encore être mise en ligne. Voici ce qu’il faut corriger&nbsp;:</p>
+      <p style="margin:0 0 16px;padding:14px 16px;background:#FFF4D6;border-radius:12px;">${echapper(motif)}</p>
+      ${bouton(lienModifier, quoi === 'annonce' ? 'Modifier mon annonce' : 'Modifier ma fiche')}
+      <p style="margin:20px 0 0;">Une fois corrigée, nous la relisons de nouveau. Une question&nbsp;? Répondez simplement à cet e-mail.<br>Marc, fondateur de LocaDirect</p>`),
+  }
+}

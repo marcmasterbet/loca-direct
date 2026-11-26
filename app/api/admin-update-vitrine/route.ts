@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
-import { isAdmin, escapeHtml } from '@/lib/session'
+import { emailACorriger, emailAnnonceEnLigne, EXPEDITEUR, REPONDRE_A } from '@/lib/emails'
+import { isAdmin } from '@/lib/session'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -59,28 +60,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Erreur' }, { status: 500 })
   }
 
+  // Refus avec motif : l'annonceur reçoit ce qu'il faut corriger
+  if (data.motif_refus && vitrineAvant?.statut === 'en_attente' && data.statut !== 'active') {
+    const userEmail = (vitrineAvant as { directloca_users?: { email?: string } } | null)?.directloca_users?.email
+    if (userEmail) {
+      try {
+        const { subject, html } = emailACorriger('annonce', String(vitrineAvant.titre || 'Votre logement'), String(data.motif_refus), `https://www.loca-direct.fr/espace/ma-vitrine/${encodeURIComponent(data.id)}/modifier`)
+        await resend.emails.send({ from: EXPEDITEUR, replyTo: REPONDRE_A, to: userEmail, subject, html })
+      } catch (e) {
+        console.error('Erreur e-mail à corriger:', e)
+      }
+    }
+  }
+
   // Email de confirmation uniquement lors du passage en_attente → active
   if (data.statut === 'active' && vitrineAvant?.statut === 'en_attente') {
     const userEmail = (vitrineAvant as { directloca_users?: { email?: string } } | null)?.directloca_users?.email
     if (userEmail) {
       try {
-        await resend.emails.send({
-          from: 'LocaDirect <bienvenue@loca-direct.fr>',
-          to: userEmail,
-          subject: `✅ Votre annonce "${String(vitrineAvant.titre).replace(/[\r\n]/g, ' ').slice(0, 150)}" est en ligne !`,
-          html: `
-            <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 20px;">
-              <h1 style="color: #EA580C; font-size: 22px;">🏠 LocaDirect</h1>
-              <p style="font-size: 15px; color: #1F2937; line-height: 1.6;">
-                Bonne nouvelle ! Votre annonce <strong>"${escapeHtml(vitrineAvant.titre)}"</strong> à ${escapeHtml(vitrineAvant.ville)} a été vérifiée et est maintenant visible par tous les voyageurs.
-              </p>
-              <a href="https://loca-direct.fr/vitrine/${encodeURIComponent(data.id)}" style="display: inline-block; background: #EA580C; color: white; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; margin: 20px 0;">
-                Voir mon annonce en ligne
-              </a>
-              <p style="font-size: 13px; color: #6B7280;">N'hésitez pas à la partager sur vos réseaux pour augmenter sa visibilité !</p>
-            </div>
-          `,
-        })
+        const { subject, html } = emailAnnonceEnLigne({ id: data.id, titre: vitrineAvant.titre, ville: vitrineAvant.ville })
+        await resend.emails.send({ from: EXPEDITEUR, replyTo: REPONDRE_A, to: userEmail, subject, html })
       } catch (e) {
         console.error('Erreur envoi email confirmation vitrine:', e)
       }
