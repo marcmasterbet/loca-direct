@@ -13,7 +13,7 @@ export function bouton(href: string, texte: string) {
 export function gabarit(contenu: string) {
   return `<!DOCTYPE html><html lang="fr"><body style="margin:0;background:#F4F3FB;">
   <div style="font-family:-apple-system,'Segoe UI',Roboto,sans-serif;max-width:520px;margin:0 auto;padding:32px 20px;color:#17162A;">
-    <p style="margin:0 0 24px;font-size:20px;font-weight:700;"><span style="display:inline-block;background:#5534E8;color:#fff;border-radius:8px;padding:2px 9px;margin-right:6px;">L</span>locadirect</p>
+    <p style="margin:0 0 24px;font-size:20px;font-weight:700;line-height:32px;"><img src="https://www.loca-direct.fr/icon-192.png" width="32" height="32" alt="" style="display:inline-block;vertical-align:middle;border:0;border-radius:8px;margin-right:8px;">locadirect</p>
     <div style="background:#ffffff;border-radius:18px;padding:28px 24px;border:1px solid #E4E3EE;font-size:16px;line-height:1.6;">${contenu}</div>
     <p style="font-size:13px;color:#6B6A80;line-height:1.5;margin:20px 4px 0;">LocaDirect, la location de vacances en direct entre particuliers, sans commission.<br><a href="${SITE}" style="color:#3F22C9;">loca-direct.fr</a></p>
   </div></body></html>`

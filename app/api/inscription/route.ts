@@ -87,7 +87,7 @@ export async function POST(req: Request) {
 
     // Notification email à l'admin — ne bloque jamais la réponse si ça échoue
     try {
-      const profils = [estVoyageur && 'Voyageur', estHebergeur && 'Hébergeur', estPrestataire && 'Prestataire']
+      const profils = [estVoyageur && 'Voyageur', estHebergeur && 'Propriétaire', estPrestataire && 'Prestataire']
         .filter(Boolean)
         .join(' + ')
 
