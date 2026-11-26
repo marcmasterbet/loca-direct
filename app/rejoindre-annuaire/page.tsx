@@ -32,7 +32,7 @@ export default async function RejoindreAnnuairePage() {
       connecte={connecte}
       ariane="Rejoindre l’annuaire"
       titre="Trouvez des propriétaires de locations saisonnières près de chez vous"
-      intro="Conciergeries, ménage, linge, photographes, artisans : inscrivez-vous gratuitement dans l’annuaire LocaDirect. Les propriétaires vous contactent directement, sans plateforme qui prélève sa part."
+      intro="Conciergeries, ménage, linge, photographes, artisans : inscrivez-vous gratuitement dans l’annuaire LocaDirect. Les propriétaires vous contactent directement, sans plateforme qui prélève sa part. Inscrivez-vous avant le 31 décembre 2026 : votre fiche reste gratuite à vie."
       cta={{ href: connecte ? '/espace/devenir-prestataire' : '/inscription?profil=prestataire', label: 'Créer ma fiche gratuitement' }}
       chiffres={[
         { valeur: '0 €', label: 'de commission' },
@@ -70,7 +70,7 @@ export default async function RejoindreAnnuairePage() {
         </section>
       }
       questions={[
-        { q: 'L’inscription dans l’annuaire est-elle gratuite ?', r: 'Oui. Créer et garder votre fiche est gratuit, et LocaDirect ne prend aucune commission sur vos prestations.' },
+        { q: 'L’inscription dans l’annuaire est-elle gratuite ?', r: 'Oui, pour toute fiche créée avant le 31 décembre 2026 : elle reste gratuite à vie, sans aucune démarche. À partir du 1er janvier 2027, l’entrée dans l’annuaire deviendra payante pour les nouveaux inscrits, avec un prix affiché sur cette page avant toute inscription. Dans tous les cas, LocaDirect ne prend aucune commission sur vos prestations.' },
         { q: 'Comment trouver des propriétaires quand on lance sa conciergerie ?', r: 'Soyez visible là où ils cherchent : une fiche complète avec photos et tarifs dans l’annuaire LocaDirect, votre fiche Google, et le bouche-à-oreille des premiers clients. Les propriétaires de LocaDirect louent en direct et cherchent justement des relais locaux.' },
         { q: 'Pourquoi demander mon SIRET ?', r: 'Pour vérifier que votre activité existe avant de publier la fiche. Il n’est pas affiché sur le site.' },
         { q: 'Puis-je proposer plusieurs services ?', r: 'Oui, vous pouvez créer une fiche par métier, par exemple une pour la conciergerie et une pour le ménage.' },
