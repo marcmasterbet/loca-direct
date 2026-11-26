@@ -112,6 +112,7 @@ export default function AdminDashboardClient({
   const [onglet, setOnglet] = useState<Onglet>(ongletInitial)
   const [filtre, setFiltre] = useState('en_attente')
   const [recherche, setRecherche] = useState('')
+  const [tri, setTri] = useState<'recent' | 'visites'>('recent')
 
   const liste: (Vitrine | Prestataire)[] = onglet === 'logements' ? vitrines : prestataires
   const compte = (s: string) => (s === 'tous' ? liste.length : liste.filter(x => x.statut === s).length)
@@ -127,7 +128,8 @@ export default function AdminDashboardClient({
           : [nomPresta(x as Prestataire), (x as Prestataire).activite, x.ville, x.directloca_users?.email, (x as Prestataire).siret]
       return texte.join(' ').toLowerCase().includes(q)
     })
-  }, [liste, filtre, recherche, onglet])
+      .sort((a, b) => (tri === 'visites' ? (b.nb_vues || 0) - (a.nb_vues || 0) : 0))
+  }, [liste, filtre, recherche, onglet, tri])
 
   const changerOnglet = (o: Onglet) => {
     setOnglet(o)
@@ -147,6 +149,8 @@ export default function AdminDashboardClient({
     { label: 'Logements en ligne', valeur: vitrines.filter(v => v.statut === 'active').length },
     { label: 'Prestataires en ligne', valeur: prestataires.filter(p => p.statut === 'active').length },
     { label: 'Comptes', valeur: nbComptes ?? '—' },
+    { label: 'Visites des annonces', valeur: vitrines.reduce((t, v) => t + (v.nb_vues || 0), 0).toLocaleString('fr-FR') },
+    { label: 'Visites des fiches', valeur: prestataires.reduce((t, x) => t + (x.nb_vues || 0), 0).toLocaleString('fr-FR') },
   ]
 
   return (
@@ -173,7 +177,7 @@ export default function AdminDashboardClient({
       <main id="contenu" className="mx-auto flex max-w-[1120px] flex-col gap-6 px-5 py-8 sm:px-8">
         <h1 className="text-[28px] font-bold tracking-[-0.03em]">Tableau de bord</h1>
 
-        <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <dl className="grid grid-cols-2 gap-3 lg:grid-cols-3">
           {chiffres.map(c => (
             <div key={c.label} className={`flex flex-col-reverse gap-1 rounded-[18px] p-4 ${c.fort ? 'bg-dog' : 'bg-white shadow-[0_0_0_1px_#e4e3ee]'}`}>
               <dt className="text-base text-ink-soft">{c.label}</dt>
@@ -211,6 +215,20 @@ export default function AdminDashboardClient({
                 {s === 'tous' ? 'Tous' : STATUTS[s]?.label} <span className="tabular-nums opacity-70">{compte(s)}</span>
               </button>
             ))}
+          </div>
+          <div className="flex flex-col gap-1.5 lg:w-[200px]">
+            <label htmlFor="tri-admin" className="text-sm font-semibold">
+              Trier par
+            </label>
+            <select
+              id="tri-admin"
+              value={tri}
+              onChange={e => setTri(e.target.value as 'recent' | 'visites')}
+              className="min-h-[48px] w-full rounded-[14px] border-0 bg-white px-4 text-base shadow-[inset_0_0_0_1.5px_#e4e3ee] focus:shadow-[inset_0_0_0_2px_#5534e8]"
+            >
+              <option value="recent">Plus récents</option>
+              <option value="visites">Plus visités</option>
+            </select>
           </div>
           <div className="flex flex-col gap-1.5 lg:w-[320px]">
             <label htmlFor="recherche-admin" className="text-sm font-semibold">
@@ -612,6 +630,7 @@ function CartePrestataire({ p }: { p: Prestataire }) {
           ['WhatsApp', p.whatsapp],
           ['Site', p.site_web],
           ['Inscrit le', date(p.created_at)],
+          ['Visites', p.nb_vues ?? 0],
         ]}
       />
       {p.siret && (
