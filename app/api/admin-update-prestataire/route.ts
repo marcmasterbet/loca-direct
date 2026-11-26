@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { emailACorriger, emailFicheEnLigne, EXPEDITEUR, REPONDRE_A } from '@/lib/emails'
 import { isAdmin } from '@/lib/session'
+import { signalerPages } from '@/lib/indexnow'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -72,6 +73,7 @@ export async function POST(req: Request) {
 
     // Email de confirmation uniquement lors du passage en_attente → active
     if (data.statut === 'active' && prestataireAvant?.statut === 'en_attente') {
+      await signalerPages([`/prestataires/${data.id}`])
       const userEmail = (prestataireAvant as { directloca_users?: { email?: string } } | null)?.directloca_users?.email
       if (userEmail) {
         try {

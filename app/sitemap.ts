@@ -2,7 +2,8 @@ import { MetadataRoute } from 'next'
 import { createClient } from '@supabase/supabase-js'
 import { ARTICLES, articleDate } from '@/lib/articles'
 import { MIN_ANNONCES_INDEX, MIN_PRESTATAIRES_INDEX } from '@/lib/seo'
-import { slugifier } from '@/lib/france'
+import { slugifier, accepteGrandChien } from '@/lib/france'
+import { departementDuCodePostal } from '@/lib/departements'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,6 +14,20 @@ const supabase = createClient(
 export const revalidate = 3600
 
 const BASE_URL = 'https://www.loca-direct.fr'
+
+// Date de la dernière mise à jour des pages légales
+const PAGES_LEGALES = new Date('2026-11-24')
+
+/** Vraie date de dernière modification d'une annonce */
+function dateDe(v: { created_at?: string | null; updated_at?: string | null }): Date {
+  const d = v.updated_at || v.created_at
+  return d ? new Date(d) : new Date()
+}
+
+/** Date la plus récente d'une liste d'annonces */
+function plusRecente(liste: { created_at?: string | null; updated_at?: string | null }[]): Date {
+  return liste.reduce((max, v) => (dateDe(v) > max ? dateDe(v) : max), new Date(0))
+}
 
 const REGIONS_SLUGS: Record<string, string> = {
   'auvergne-rhone-alpes': 'Auvergne-Rhône-Alpes',
@@ -109,25 +124,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: `${BASE_URL}/cgu`,
-      lastModified: now,
+      lastModified: PAGES_LEGALES,
       changeFrequency: 'yearly',
       priority: 0.3,
     },
     {
       url: `${BASE_URL}/mentions-legales`,
-      lastModified: now,
+      lastModified: PAGES_LEGALES,
       changeFrequency: 'yearly',
       priority: 0.3,
     },
     {
       url: `${BASE_URL}/politique-confidentialite`,
-      lastModified: now,
+      lastModified: PAGES_LEGALES,
       changeFrequency: 'yearly',
       priority: 0.3,
     },
     {
       url: `${BASE_URL}/cookies`,
-      lastModified: now,
+      lastModified: PAGES_LEGALES,
       changeFrequency: 'yearly',
       priority: 0.3,
     },
@@ -144,7 +159,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Logements
   const { data: vitrines, error: vitrinesError } = await supabase
     .from('vitrines')
-    .select('id, ville, region, created_at')
+    .select('id, ville, region, code_postal, equipements, created_at, updated_at')
     .in('statut', [
       'active',
       'deja_loue',
@@ -159,24 +174,44 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const vitrinesPages: MetadataRoute.Sitemap =
     (vitrines || []).map(vitrine => ({
       url: `${BASE_URL}/vitrine/${vitrine.id}`,
-      lastModified: vitrine.created_at
-        ? new Date(vitrine.created_at)
-        : now,
+      lastModified: dateDe(vitrine),
       changeFrequency: 'weekly' as const,
       priority: 0.8,
     }))
 
   // Pages régions : seulement celles qui ont assez d'annonces
-  const parRegion = new Map<string, number>()
-  for (const vitrine of vitrines || []) {
-    const regionSlug = vitrine.region ? getRegionSlug(vitrine.region) : undefined
-    if (regionSlug) parRegion.set(regionSlug, (parRegion.get(regionSlug) || 0) + 1)
+  type V = NonNullable<typeof vitrines>[number]
+  const grouper = (cle: (v: V) => string | undefined) => {
+    const m = new Map<string, V[]>()
+    for (const v of vitrines || []) {
+      const k = cle(v)
+      if (k) m.set(k, [...(m.get(k) || []), v])
+    }
+    return Array.from(m.entries()).filter(([, l]) => l.length >= MIN_ANNONCES_INDEX)
   }
-  const regionsPages: MetadataRoute.Sitemap = Array.from(parRegion.entries())
-    .filter(([, nb]) => nb >= MIN_ANNONCES_INDEX)
-    .map(([regionSlug]) => ({
+
+  // Pages « chien accepté » par région et pages département
+  const chiensRegionsPages: MetadataRoute.Sitemap = grouper(v =>
+    v.region && accepteGrandChien(v.equipements) ? getRegionSlug(v.region) : undefined
+  ).map(([regionSlug, liste]) => ({
+    url: `${BASE_URL}/logements/chiens/${regionSlug}`,
+    lastModified: plusRecente(liste),
+    changeFrequency: 'weekly' as const,
+    priority: 0.85,
+  }))
+  const departementsPages: MetadataRoute.Sitemap = grouper(v => departementDuCodePostal(v.code_postal)?.slug).map(
+    ([slug, liste]) => ({
+      url: `${BASE_URL}/location-vacances/departement/${slug}`,
+      lastModified: plusRecente(liste),
+      changeFrequency: 'weekly' as const,
+      priority: 0.85,
+    })
+  )
+
+  const regionsPages: MetadataRoute.Sitemap = grouper(v => (v.region ? getRegionSlug(v.region) : undefined))
+    .map(([regionSlug, liste]) => ({
       url: `${BASE_URL}/location-vacances/${regionSlug}`,
-      lastModified: now,
+      lastModified: plusRecente(liste),
       changeFrequency: 'weekly' as const,
       priority: 0.8,
     }))
@@ -203,9 +238,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const key = `${regionSlug}/${villeSlug}`
 
-    const lastModified = vitrine.created_at
-      ? new Date(vitrine.created_at)
-      : now
+    const lastModified = dateDe(vitrine)
 
     const existing = villesMap.get(key)
 
@@ -306,6 +339,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...staticPages,
     ...articlesPages,
     ...regionsPages,
+    ...departementsPages,
+    ...chiensRegionsPages,
     ...villesPages,
     ...metiersPages,
     ...prestatairesRegionsPages,

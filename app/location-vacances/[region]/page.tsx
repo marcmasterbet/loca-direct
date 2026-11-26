@@ -13,6 +13,7 @@ import Faq from '@/components/pages/Faq'
 import Chiffres from '@/components/pages/Chiffres'
 import BandeauProprietaires from '@/components/pages/BandeauProprietaires'
 import LogementsClient, { type Logement } from '@/app/logements/LogementsClient'
+import { departementsPresents } from '@/lib/pages-seo'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,7 +24,7 @@ type Props = { params: Promise<{ region: string }> }
 async function logementsDeLaRegion(nom: string): Promise<Logement[]> {
   const { data } = await supabase
     .from('vitrines')
-    .select('id, titre, ville, pays, region, type_logement, prix_nuit, capacite, nb_chambres, statut, photos, equipements, created_at')
+    .select('id, titre, ville, code_postal, pays, region, type_logement, prix_nuit, capacite, nb_chambres, statut, photos, equipements, created_at')
     .in('statut', STATUTS_VISIBLES)
     .eq('region', nom)
     .order('created_at', { ascending: false })
@@ -69,6 +70,7 @@ export default async function RegionPage({ params }: Props) {
   const contenu = CONTENU_REGIONS[slug]
   const voisines = (contenu?.voisines || []).map(v => REGIONS_METRO.find(r => r.slug === v)).filter(Boolean) as typeof REGIONS_METRO
   const lienPublier = isLoggedIn ? '/espace/ma-vitrine' : '/publier'
+  const departements = departementsPresents(logements as { code_postal?: string | null }[])
 
   const chiffres = [
     { valeur: String(s.total), label: s.total > 1 ? 'logements' : 'logement' },
@@ -115,6 +117,27 @@ export default async function RegionPage({ params }: Props) {
           </p>
           <Chiffres elements={chiffres} />
         </header>
+
+        {departements.length > 1 && (
+          <nav aria-labelledby="departements-titre" className="flex flex-col gap-3">
+            <h2 id="departements-titre" className="text-lg font-bold">
+              Par département
+            </h2>
+            <ul className="flex flex-wrap gap-2">
+              {departements.map(({ d, nombre }) => (
+                <li key={d.code}>
+                  <Link
+                    href={`/location-vacances/departement/${d.slug}`}
+                    className="flex min-h-[44px] items-center gap-1.5 rounded-full bg-surface px-4 text-sm font-semibold text-ink no-underline hover:bg-brand-soft hover:text-brand-strong"
+                  >
+                    {d.nom} ({d.code})
+                    <span className="font-normal text-muted">{nombre}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
 
         {s.villes.length > 1 && (
           <nav aria-labelledby="villes-titre" className="flex flex-col gap-3">
@@ -182,8 +205,8 @@ export default async function RegionPage({ params }: Props) {
             <aside className="flex flex-col gap-3 self-start rounded-[22px] bg-dog p-6">
               <h2 className="text-lg font-bold">En {nom} avec votre chien</h2>
               <p className="text-base leading-relaxed text-ink-soft">{contenu.chien}</p>
-              <Link href="/logements/chiens" className="flex min-h-[44px] items-center text-base font-bold text-ink">
-                Voir les logements où le chien est accepté
+              <Link href={`/logements/chiens/${slug}`} className="flex min-h-[44px] items-center text-base font-bold text-ink">
+                Voir les logements avec chien en {nom}
               </Link>
             </aside>
           </section>

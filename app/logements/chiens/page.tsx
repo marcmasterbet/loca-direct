@@ -96,7 +96,7 @@ export default async function ChiensPage() {
                 {parRegion.map(r => (
                   <li key={r.slug}>
                     <Link
-                      href={`/location-vacances/${r.slug}?chien=1`}
+                      href={`/logements/chiens/${r.slug}`}
                       className="flex min-h-[44px] items-center gap-1.5 rounded-full bg-surface px-4 text-sm font-semibold text-ink no-underline hover:bg-brand-soft hover:text-brand-strong"
                     >
                       {r.nom}

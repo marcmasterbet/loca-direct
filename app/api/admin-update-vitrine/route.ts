@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { emailACorriger, emailAnnonceEnLigne, EXPEDITEUR, REPONDRE_A } from '@/lib/emails'
 import { isAdmin } from '@/lib/session'
+import { signalerPages } from '@/lib/indexnow'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -75,6 +76,7 @@ export async function POST(req: Request) {
 
   // Email de confirmation uniquement lors du passage en_attente → active
   if (data.statut === 'active' && vitrineAvant?.statut === 'en_attente') {
+    await signalerPages([`/vitrine/${data.id}`])
     const userEmail = (vitrineAvant as { directloca_users?: { email?: string } } | null)?.directloca_users?.email
     if (userEmail) {
       try {
