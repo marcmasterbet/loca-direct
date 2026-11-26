@@ -95,18 +95,10 @@ export async function POST(req: Request) {
         from: 'LocaDirect <bienvenue@loca-direct.fr>',
         to: ADMIN_EMAIL,
         subject: `🎉 Nouvel inscrit : ${String(newUser.email).replace(/[\r\n]/g, ' ')}`,
-        html: `
-          <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 20px;">
-            <h1 style="color: #EA580C; font-size: 22px;">🎉 Nouvelle inscription LocaDirect</h1>
-            <p style="font-size: 15px; color: #1F2937; line-height: 1.6;">
-              <strong>${escapeHtml(newUser.email)}</strong><br />
-              Profil : ${profils}
-            </p>
-            <p style="font-size: 13px; color: #6B7280;">
-              L'utilisateur doit encore confirmer son email avant d'être actif.
-            </p>
-          </div>
-        `,
+        html: gabarit(`
+          <p style="margin:0 0 12px;font-size:22px;font-weight:700;">Nouvelle inscription</p>
+          <p style="margin:0 0 12px;"><strong>${escapeHtml(newUser.email)}</strong><br>Profil : ${profils}</p>
+          <p style="margin:0;font-size:14px;color:#6B6A80;">L’utilisateur doit encore confirmer son adresse e-mail pour activer son compte.</p>`),
       })
     } catch (e) {
       console.error('Erreur envoi email notification admin:', e)

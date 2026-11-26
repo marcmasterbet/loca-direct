@@ -137,7 +137,7 @@ function InscriptionForm() {
             </label>
           ))}
           {erreurs.profil && (
-            <p id="erreur-profil" className="text-sm font-semibold text-[#c2410c]">
+            <p id="erreur-profil" className="text-sm font-semibold text-[#b42318]">
               {erreurs.profil}
             </p>
           )}

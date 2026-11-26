@@ -178,7 +178,7 @@ export function TeleversementPhotos({
             aria-describedby={`${id}-aide`}
             className={`inline-flex min-h-[52px] items-center rounded-[14px] px-5 text-base font-bold ${
               photos.length ? 'bg-white text-ink shadow-[inset_0_0_0_1.5px_#e4e3ee] hover:bg-surface' : 'bg-brand text-white hover:bg-brand-strong'
-            } ${erreur ? 'shadow-[inset_0_0_0_2px_#c2410c]' : ''} disabled:opacity-70`}
+            } ${erreur ? 'shadow-[inset_0_0_0_2px_#b42318]' : ''} disabled:opacity-70`}
           >
             {envoi > 0 ? `Envoi en cours (${envoi})…` : photos.length ? 'Ajouter des photos' : 'Choisir des photos'}
           </button>
@@ -189,7 +189,7 @@ export function TeleversementPhotos({
       )}
       {ouverte !== null && <PhotoLightbox photos={photos} startIndex={ouverte} onClose={() => setOuverte(null)} />}
       {(erreur || probleme) && (
-        <p role="alert" className="text-sm font-semibold text-[#c2410c]">
+        <p role="alert" className="text-sm font-semibold text-[#b42318]">
           {probleme || erreur}
         </p>
       )}

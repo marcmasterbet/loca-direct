@@ -72,7 +72,7 @@ const STATUTS: Record<string, { label: string; classes: string }> = {
   deja_loue: { label: 'Déjà loué', classes: 'bg-surface text-ink-soft' },
   bientot_dispo: { label: 'Bientôt disponible', classes: 'bg-brand-soft text-brand-strong' },
   suspendue: { label: 'Suspendue', classes: 'bg-surface text-ink-soft' },
-  refuse: { label: 'Refusée', classes: 'bg-[#fff1ec] text-[#9a3412]' },
+  refuse: { label: 'Refusée', classes: 'bg-[#fef3f2] text-[#912018]' },
 }
 
 const FILTRES: Record<Onglet, string[]> = {
@@ -84,7 +84,7 @@ const bouton = 'inline-flex min-h-[44px] items-center justify-center rounded-[12
 const clair = `${bouton} bg-white text-ink shadow-[inset_0_0_0_1.5px_#e4e3ee] hover:bg-surface`
 const violet = `${bouton} bg-brand text-white hover:bg-brand-strong`
 const vert = `${bouton} bg-mint-ink text-white hover:bg-[#095640]`
-const danger = `${bouton} text-[#9a3412] hover:bg-[#fff1ec]`
+const danger = `${bouton} text-[#912018] hover:bg-[#fef3f2]`
 const carte = 'rounded-[22px] bg-white shadow-[0_0_0_1px_#e4e3ee,0_4px_16px_rgba(23,22,42,0.04)]'
 
 const date = (d: string) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -375,7 +375,7 @@ function Moderation({
               type="button"
               disabled={!!action}
               onClick={() => faire('refus', () => envoyer(api, { id, statut: statutRefus, motif_refus: motif.trim() || 'Annonce refusée' }))}
-              className={`${bouton} bg-[#c2410c] text-white hover:bg-[#9a3412]`}
+              className={`${bouton} bg-[#b42318] text-white hover:bg-[#912018]`}
             >
               {action === 'refus' ? 'Envoi…' : 'Refuser'}
             </button>
@@ -387,10 +387,10 @@ function Moderation({
       )}
 
       {mode === 'suppression' && (
-        <div role="alertdialog" aria-label="Confirmer la suppression" className="flex flex-col gap-3 rounded-[14px] bg-[#fff1ec] p-4">
-          <p className="text-base text-[#7c2d12]">Supprimer «&nbsp;{nom}&nbsp;» ? Elle sera effacée définitivement de la base.</p>
+        <div role="alertdialog" aria-label="Confirmer la suppression" className="flex flex-col gap-3 rounded-[14px] bg-[#fef3f2] p-4">
+          <p className="text-base text-[#7a271a]">Supprimer «&nbsp;{nom}&nbsp;» ? Elle sera effacée définitivement de la base.</p>
           <div className="flex flex-wrap gap-2">
-            <button type="button" disabled={!!action} onClick={() => faire('suppr', () => envoyer(apiSupprimer, { id }))} className={`${bouton} bg-[#c2410c] text-white hover:bg-[#9a3412]`}>
+            <button type="button" disabled={!!action} onClick={() => faire('suppr', () => envoyer(apiSupprimer, { id }))} className={`${bouton} bg-[#b42318] text-white hover:bg-[#912018]`}>
               {action === 'suppr' ? 'Suppression…' : 'Supprimer définitivement'}
             </button>
             <button type="button" onClick={() => setMode(null)} className={clair} autoFocus>
@@ -401,7 +401,7 @@ function Moderation({
       )}
 
       {erreur && (
-        <p role="alert" className="text-base font-semibold text-[#c2410c]">
+        <p role="alert" className="text-base font-semibold text-[#b42318]">
           {erreur}
         </p>
       )}
@@ -430,7 +430,7 @@ function Edition({ children, onAnnuler, onEnregistrer }: { children: ReactNode; 
     >
       {children}
       {erreur && (
-        <p role="alert" className="text-base font-semibold text-[#c2410c]">
+        <p role="alert" className="text-base font-semibold text-[#b42318]">
           {erreur}
         </p>
       )}
@@ -512,7 +512,7 @@ function CarteLogement({ v }: { v: Vitrine }) {
         ]}
       />
       {v.motif_refus && v.statut !== 'active' && (
-        <p className="rounded-[14px] bg-[#fff1ec] px-4 py-3 text-base text-[#9a3412]">
+        <p className="rounded-[14px] bg-[#fef3f2] px-4 py-3 text-base text-[#912018]">
           <strong className="font-semibold">Motif envoyé&nbsp;:</strong> {v.motif_refus}
         </p>
       )}
@@ -625,7 +625,7 @@ function CartePrestataire({ p }: { p: Prestataire }) {
         </a>
       )}
       {p.motif_refus && p.statut !== 'active' && (
-        <p className="rounded-[14px] bg-[#fff1ec] px-4 py-3 text-base text-[#9a3412]">
+        <p className="rounded-[14px] bg-[#fef3f2] px-4 py-3 text-base text-[#912018]">
           <strong className="font-semibold">Motif envoyé&nbsp;:</strong> {p.motif_refus}
         </p>
       )}

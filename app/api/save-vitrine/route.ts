@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { bouton, gabarit } from '@/lib/emails'
 import { champsMedias, colonneAbsente } from '@/lib/medias-serveur'
 import { getSessionUserId, escapeHtml } from '@/lib/session'
 
@@ -88,18 +89,10 @@ export async function POST(req: Request) {
         from: 'LocaDirect <bienvenue@loca-direct.fr>',
         to: ADMIN_EMAIL,
         subject: `🏠 Nouvelle annonce à valider : ${String(vitrine.titre).replace(/[\r\n]/g, ' ').slice(0, 150)}`,
-        html: `
-          <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 20px;">
-            <h1 style="color: #EA580C; font-size: 22px;">🏠 Nouvelle annonce LocaDirect</h1>
-            <p style="font-size: 15px; color: #1F2937; line-height: 1.6;">
-              <strong>${escapeHtml(vitrine.titre)}</strong><br />
-              ${escapeHtml(vitrine.ville)}${vitrine.region ? `, ${escapeHtml(vitrine.region)}` : ''} · ${escapeHtml(vitrine.pays || 'France')} · ${escapeHtml(vitrine.prix_nuit)}€/nuit · ${escapeHtml(vitrine.type_logement)}
-            </p>
-            <a href="https://loca-direct.fr/admin/dashboard" style="display: inline-block; background: #EA580C; color: white; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; margin: 20px 0;">
-              Voir et valider l'annonce
-            </a>
-          </div>
-        `,
+        html: gabarit(`
+          <p style="margin:0 0 12px;font-size:22px;font-weight:700;">Nouvelle annonce à valider</p>
+          <p style="margin:0 0 16px;"><strong>${escapeHtml(vitrine.titre)}</strong><br>${escapeHtml(vitrine.ville)}${vitrine.region ? `, ${escapeHtml(vitrine.region)}` : ''} · ${escapeHtml(vitrine.pays || 'France')} · ${escapeHtml(vitrine.prix_nuit)}&nbsp;€/nuit · ${escapeHtml(vitrine.type_logement)}</p>
+          ${bouton('https://www.loca-direct.fr/admin/dashboard', 'Voir et valider l’annonce')}`),
       })
     } catch (e) {
       console.error('Erreur envoi email notification admin:', e)

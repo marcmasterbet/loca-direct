@@ -32,7 +32,7 @@ export function Champ({ label, value, onChange, erreur, aide, type = 'text', ...
           onChange={e => onChange(e.target.value)}
           aria-invalid={erreur ? true : undefined}
           aria-describedby={decrit}
-          className={`${base} ${motDePasse ? 'pr-14' : ''} ${erreur ? 'shadow-[inset_0_0_0_2px_#c2410c]' : ''}`}
+          className={`${base} ${motDePasse ? 'pr-14' : ''} ${erreur ? 'shadow-[inset_0_0_0_2px_#b42318]' : ''}`}
           {...reste}
         />
         {motDePasse && (
@@ -57,7 +57,7 @@ export function Champ({ label, value, onChange, erreur, aide, type = 'text', ...
         </p>
       )}
       {erreur && (
-        <p id={`${id}-erreur`} className="text-sm font-semibold text-[#c2410c]">
+        <p id={`${id}-erreur`} className="text-sm font-semibold text-[#b42318]">
           {erreur}
         </p>
       )}
@@ -83,7 +83,7 @@ export function BoutonPrincipal({ children, chargement, libelleChargement }: { c
 export function ErreurFormulaire({ children }: { children: ReactNode }) {
   if (!children) return null
   return (
-    <p role="alert" className="rounded-[14px] bg-[#fff1ec] px-4 py-3 text-base text-[#9a3412]">
+    <p role="alert" className="rounded-[14px] bg-[#fef3f2] px-4 py-3 text-base text-[#912018]">
       {children}
     </p>
   )

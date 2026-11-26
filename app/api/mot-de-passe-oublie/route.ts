@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 import { Resend } from 'resend'
+import { bouton, gabarit } from '@/lib/emails'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -48,20 +49,11 @@ export async function POST(req: Request) {
         from: 'LocaDirect <bienvenue@loca-direct.fr>',
         to: user.email,
         subject: 'Réinitialisez votre mot de passe LocaDirect',
-        html: `
-          <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 20px;">
-            <h1 style="color: #EA580C; font-size: 22px;">🏠 LocaDirect</h1>
-            <p style="font-size: 15px; color: #1F2937; line-height: 1.6;">
-              Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le bouton ci-dessous pour en choisir un nouveau.
-            </p>
-            <a href="${resetUrl}" style="display: inline-block; background: #EA580C; color: white; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; margin: 20px 0;">
-              Réinitialiser mon mot de passe
-            </a>
-            <p style="font-size: 13px; color: #6B7280;">
-              Ce lien expire dans 1 heure. Si vous n'êtes pas à l'origine de cette demande, ignorez simplement cet email.
-            </p>
-          </div>
-        `,
+        html: gabarit(`
+          <p style="margin:0 0 12px;font-size:22px;font-weight:700;">Nouveau mot de passe</p>
+          <p style="margin:0 0 16px;">Vous avez demandé à changer votre mot de passe LocaDirect. Cliquez sur le bouton pour en choisir un nouveau.</p>
+          ${bouton(resetUrl, 'Choisir un nouveau mot de passe')}
+          <p style="margin:16px 0 0;font-size:14px;color:#6B6A80;">Ce lien est valable 1&nbsp;heure. Si vous n’êtes pas à l’origine de cette demande, ignorez cet e-mail : votre mot de passe ne change pas.</p>`),
       })
     } catch (e) {
       console.error('Erreur envoi email reset:', e)

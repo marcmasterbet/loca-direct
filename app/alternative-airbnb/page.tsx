@@ -98,7 +98,7 @@ export default async function AlternativeAirbnbPage() {
                 </p>
                 <div className="flex items-baseline justify-between gap-3 border-b border-line pb-3">
                   <span className="text-base text-ink-soft">Airbnb</span>
-                  <span className="text-[22px] font-bold tabular-nums text-[#9a3412]">−{euros(montant * 0.155)}</span>
+                  <span className="text-[22px] font-bold tabular-nums text-[#912018]">−{euros(montant * 0.155)}</span>
                 </div>
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-base text-ink-soft">LocaDirect</span>

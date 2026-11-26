@@ -54,7 +54,7 @@ const STATUTS: Record<string, { label: string; classes: string }> = {
   deja_loue: { label: 'Déjà loué', classes: 'bg-surface text-ink-soft' },
   bientot_dispo: { label: 'Bientôt disponible', classes: 'bg-brand-soft text-brand-strong' },
   suspendue: { label: 'Suspendue', classes: 'bg-surface text-ink-soft' },
-  refuse: { label: 'Refusée', classes: 'bg-[#fff1ec] text-[#9a3412]' },
+  refuse: { label: 'Refusée', classes: 'bg-[#fef3f2] text-[#912018]' },
 }
 
 const ONGLETS: { id: Onglet; label: string }[] = [
@@ -320,7 +320,7 @@ function LigneLogement({ v }: { v: Vitrine }) {
         </p>
       )}
       {v.motif_refus && (
-        <p className="rounded-[14px] bg-[#fff1ec] px-4 py-3 text-base text-[#9a3412]">
+        <p className="rounded-[14px] bg-[#fef3f2] px-4 py-3 text-base text-[#912018]">
           <strong className="font-semibold">À corriger&nbsp;:</strong> {v.motif_refus}
         </p>
       )}
@@ -359,7 +359,7 @@ function LigneLogement({ v }: { v: Vitrine }) {
           <button
             type="button"
             onClick={() => setConfirmer(true)}
-            className={`${bouton} text-[#9a3412] hover:bg-[#fff1ec] sm:ml-auto`}
+            className={`${bouton} text-[#912018] hover:bg-[#fef3f2] sm:ml-auto`}
           >
             Supprimer
           </button>
@@ -367,8 +367,8 @@ function LigneLogement({ v }: { v: Vitrine }) {
       </div>
 
       {confirmer && (
-        <div role="alertdialog" aria-label="Confirmer la suppression" className="flex flex-col gap-3 rounded-[14px] bg-[#fff1ec] p-4">
-          <p className="text-base text-[#7c2d12]">
+        <div role="alertdialog" aria-label="Confirmer la suppression" className="flex flex-col gap-3 rounded-[14px] bg-[#fef3f2] p-4">
+          <p className="text-base text-[#7a271a]">
             Supprimer «&nbsp;{titre}&nbsp;» ? L’annonce sera effacée définitivement.
           </p>
           <div className="flex flex-wrap gap-2">
@@ -376,7 +376,7 @@ function LigneLogement({ v }: { v: Vitrine }) {
               type="button"
               onClick={supprimer}
               disabled={enCours}
-              className={`${bouton} bg-[#c2410c] text-white hover:bg-[#9a3412]`}
+              className={`${bouton} bg-[#b42318] text-white hover:bg-[#912018]`}
             >
               {enCours ? 'Suppression…' : 'Supprimer l’annonce'}
             </button>
@@ -424,7 +424,7 @@ function LignePrestataire({ p }: { p: Prestataire }) {
         </p>
       )}
       {p.motif_refus && (
-        <p className="rounded-[14px] bg-[#fff1ec] px-4 py-3 text-base text-[#9a3412]">
+        <p className="rounded-[14px] bg-[#fef3f2] px-4 py-3 text-base text-[#912018]">
           <strong className="font-semibold">À corriger&nbsp;:</strong> {p.motif_refus}
         </p>
       )}
@@ -438,18 +438,18 @@ function LignePrestataire({ p }: { p: Prestataire }) {
           </Link>
         )}
         {!confirmer && (
-          <button type="button" onClick={() => setConfirmer(true)} className={`${bouton} text-[#9a3412] hover:bg-[#fff1ec] sm:ml-auto`}>
+          <button type="button" onClick={() => setConfirmer(true)} className={`${bouton} text-[#912018] hover:bg-[#fef3f2] sm:ml-auto`}>
             Supprimer
           </button>
         )}
       </div>
       {confirmer && (
-        <div role="alertdialog" aria-label="Confirmer la suppression" className="flex flex-col gap-3 rounded-[14px] bg-[#fff1ec] p-4">
-          <p className="text-base text-[#7c2d12]">
+        <div role="alertdialog" aria-label="Confirmer la suppression" className="flex flex-col gap-3 rounded-[14px] bg-[#fef3f2] p-4">
+          <p className="text-base text-[#7a271a]">
             Supprimer la fiche «&nbsp;{nom}&nbsp;» de l’annuaire ? Elle sera effacée définitivement.
           </p>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={supprimer} disabled={enCours} className={`${bouton} bg-[#c2410c] text-white hover:bg-[#9a3412]`}>
+            <button type="button" onClick={supprimer} disabled={enCours} className={`${bouton} bg-[#b42318] text-white hover:bg-[#912018]`}>
               {enCours ? 'Suppression…' : 'Supprimer la fiche'}
             </button>
             <button type="button" onClick={() => setConfirmer(false)} className={boutonClair} autoFocus>

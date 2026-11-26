@@ -704,7 +704,7 @@ function ChampVideo({ valeur, onChange, erreur }: { valeur: string; onChange: (v
         </>
       )}
       {probleme && (
-        <p role="alert" className="text-sm font-semibold text-[#c2410c]">
+        <p role="alert" className="text-sm font-semibold text-[#b42318]">
           {probleme}
         </p>
       )}

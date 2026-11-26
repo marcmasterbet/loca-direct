@@ -47,7 +47,7 @@ export default function AutreContact({ id, ville }: { id: string; ville?: string
         {etat === 'chargement' ? 'Affichage…' : 'Pas WhatsApp ? Afficher le numéro'}
       </button>
       {etat === 'erreur' && (
-        <p role="alert" className="text-center text-sm text-[#c2410c]">
+        <p role="alert" className="text-center text-sm text-[#b42318]">
           Numéro indisponible pour le moment. Réessayez ou écrivez sur WhatsApp.
         </p>
       )}
