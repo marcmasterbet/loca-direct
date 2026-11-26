@@ -41,7 +41,7 @@ export function emailBienvenue(u: Profil): { subject: string; html: string } {
       <li style="margin-bottom:6px;"><strong>Vos tarifs ou « sur devis »</strong>, et une présentation de vos services.</li>
       <li style="margin-bottom:6px;"><strong>Des photos de vos réalisations</strong> et votre logo : une fiche illustrée inspire confiance.</li>
     </ol>
-    <p style="margin:16px 0;">Inscrit avant le 31&nbsp;décembre 2026, votre fiche reste <strong>gratuite à vie</strong>.</p>
+    <p style="margin:16px 0;">Pour le moment, l’inscription dans l’annuaire est gratuite.</p>
     ${bouton(`${SITE}/espace/devenir-prestataire`, 'Créer ma fiche')}`
 
   const corps =
