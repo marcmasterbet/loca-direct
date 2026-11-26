@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getSessionUserId } from '@/lib/session'
+import { supprimerPrestataire } from '@/lib/suppression'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
 
   if (!prestataire) return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
 
-  await supabase.from('prestataires').delete().eq('id', id)
+  await supprimerPrestataire(id)
 
   return NextResponse.json({ success: true })
 }
