@@ -16,7 +16,7 @@ export const revalidate = 3600
 const BASE_URL = 'https://www.loca-direct.fr'
 
 // Date de la dernière mise à jour des pages légales
-const PAGES_LEGALES = new Date('2026-11-24')
+const PAGES_LEGALES = new Date('2026-11-27')
 
 /** Vraie date de dernière modification d'une annonce */
 function dateDe(v: { created_at?: string | null; updated_at?: string | null }): Date {
