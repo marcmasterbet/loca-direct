@@ -88,8 +88,7 @@ export default function CGUPage() {
       <p>
         Si vous recevez une proposition commerciale d’un professionnel, par WhatsApp, SMS, téléphone ou e-mail, celui-ci l’envoie de sa propre initiative et sous
         sa seule responsabilité. LocaDirect n’en est ni l’auteur ni le commanditaire, et ne peut être tenu responsable de
-        son contenu ni des suites que vous lui donnez. Un professionnel de l’annuaire qui démarche les annonceurs sans
-        leur accord s’expose au retrait de sa fiche et à la fermeture de son compte. Signalez-le à{' '}
+        son contenu ni des suites que vous lui donnez. Vous pouvez nous le signaler à{' '}
         <a href="mailto:contact@seokraft.fr">contact@seokraft.fr</a>.
       </p>
 
