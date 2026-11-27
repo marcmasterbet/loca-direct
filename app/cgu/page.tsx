@@ -45,7 +45,7 @@ export default function CGUPage() {
         <li>qu’il respecte les règles de la location saisonnière&nbsp;: déclaration en mairie, numéro d’enregistrement là où il est exigé, taxe de séjour, limite de jours pour une résidence principale.</li>
       </ul>
       <p>
-        Chaque annonce est vérifiée avant sa mise en ligne. LocaDirect peut refuser, suspendre ou retirer une annonce
+        Chaque annonce est relue avant sa mise en ligne. LocaDirect peut refuser, suspendre ou retirer une annonce
         trompeuse, incomplète, en double ou contraire à la loi, en indiquant la raison au propriétaire.
       </p>
 
