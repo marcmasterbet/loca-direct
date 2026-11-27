@@ -81,11 +81,12 @@ export default function CGUPage() {
       <h2>Démarchage entre utilisateurs</h2>
       <p>
         LocaDirect ne vend, ne loue et ne transmet jamais les coordonnées de ses utilisateurs, et n’autorise aucun
-        prestataire, conciergerie ou autre entreprise à démarcher les annonceurs en son nom. Les adresses e-mail ne sont
-        jamais affichées sur le site.
+        prestataire, conciergerie ou autre entreprise à démarcher les annonceurs en son nom. Le bouton WhatsApp et le
+        numéro de téléphone d’une annonce servent uniquement à contacter le propriétaire au sujet de son logement&nbsp;:
+        les utiliser pour proposer des services (conciergerie, ménage, gestion…) est interdit.
       </p>
       <p>
-        Si vous recevez une proposition commerciale d’un professionnel, celui-ci l’envoie de sa propre initiative et sous
+        Si vous recevez une proposition commerciale d’un professionnel, par WhatsApp, SMS, téléphone ou e-mail, celui-ci l’envoie de sa propre initiative et sous
         sa seule responsabilité. LocaDirect n’en est ni l’auteur ni le commanditaire, et ne peut être tenu responsable de
         son contenu ni des suites que vous lui donnez. Un professionnel de l’annuaire qui démarche les annonceurs sans
         leur accord s’expose au retrait de sa fiche et à la fermeture de son compte. Signalez-le à{' '}

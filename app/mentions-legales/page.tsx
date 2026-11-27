@@ -42,7 +42,7 @@ export default function MentionsLegalesPage() {
       </p>
       <p>
         LocaDirect ne transmet pas les coordonnées des annonceurs et ne mandate aucun professionnel pour les démarcher.
-        Toute sollicitation commerciale reçue d’un tiers relève de la seule responsabilité de son auteur.
+        Le contact WhatsApp d’une annonce est réservé aux voyageurs&nbsp;; toute sollicitation commerciale reçue d’un tiers relève de la seule responsabilité de son auteur.
       </p>
 
       <h2>Propriété intellectuelle</h2>

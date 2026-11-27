@@ -80,7 +80,7 @@ export default function ConfidentialitePage() {
       </p>
       <p>
         LocaDirect ne vend, ne loue et ne transmet vos coordonnées à aucun tiers à des fins commerciales. Si un
-        professionnel (conciergerie, prestataire…) vous démarche, il agit de sa propre initiative et reste seul
+        professionnel (conciergerie, prestataire…) vous démarche, par WhatsApp ou autrement, après avoir trouvé votre annonce, il agit de sa propre initiative et reste seul
         responsable de l’usage qu’il fait de vos données, au sens du RGPD. Vous pouvez exercer vos droits directement
         auprès de lui, et nous signaler ce démarchage à <a href="mailto:contact@seokraft.fr">contact@seokraft.fr</a>.
       </p>
