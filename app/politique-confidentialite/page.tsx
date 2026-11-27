@@ -11,7 +11,7 @@ const mail = <a href="mailto:contact@seokraft.fr">contact@seokraft.fr</a>
 
 export default function ConfidentialitePage() {
   return (
-    <PageLegale titre="Politique de confidentialité" maj="23 novembre 2026">
+    <PageLegale titre="Politique de confidentialité" maj="27 novembre 2026">
       <p>
         Cette page explique quelles données personnelles LocaDirect utilise, pourquoi, et comment vous gardez la main
         dessus. Nous ne vendons aucune donnée et n’affichons aucune publicité.
@@ -77,6 +77,12 @@ export default function ConfidentialitePage() {
         (propriétaire ou prestataire) s’affiche seulement quand un visiteur le demande, pour vous appeler ou vous envoyer
         un SMS. Le SIRET, l’adresse du siège et votre e-mail ne sont jamais
         affichés.
+      </p>
+      <p>
+        LocaDirect ne vend, ne loue et ne transmet vos coordonnées à aucun tiers à des fins commerciales. Si un
+        professionnel (conciergerie, prestataire…) vous démarche, il agit de sa propre initiative et reste seul
+        responsable de l’usage qu’il fait de vos données, au sens du RGPD. Vous pouvez exercer vos droits directement
+        auprès de lui, et nous signaler ce démarchage à <a href="mailto:contact@seokraft.fr">contact@seokraft.fr</a>.
       </p>
 
       <h2>Combien de temps</h2>

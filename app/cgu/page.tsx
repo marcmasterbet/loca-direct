@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function CGUPage() {
   return (
-    <PageLegale titre="Conditions générales d’utilisation" maj="23 novembre 2026">
+    <PageLegale titre="Conditions générales d’utilisation" maj="27 novembre 2026">
       <p>
         Ces conditions s’appliquent à toute personne qui utilise loca-direct.fr (LocaDirect), édité par Marc Bretzner,
         entrepreneur individuel (voir les <a href="/mentions-legales">mentions légales</a>). En utilisant le site, vous
@@ -77,6 +77,20 @@ export default function CGUPage() {
         <li>publier un contenu illicite, injurieux ou discriminatoire.</li>
       </ul>
       <p>En cas de manquement, LocaDirect peut supprimer le contenu concerné et fermer le compte.</p>
+
+      <h2>Démarchage entre utilisateurs</h2>
+      <p>
+        LocaDirect ne vend, ne loue et ne transmet jamais les coordonnées de ses utilisateurs, et n’autorise aucun
+        prestataire, conciergerie ou autre entreprise à démarcher les annonceurs en son nom. Les adresses e-mail ne sont
+        jamais affichées sur le site.
+      </p>
+      <p>
+        Si vous recevez une proposition commerciale d’un professionnel, celui-ci l’envoie de sa propre initiative et sous
+        sa seule responsabilité. LocaDirect n’en est ni l’auteur ni le commanditaire, et ne peut être tenu responsable de
+        son contenu ni des suites que vous lui donnez. Un professionnel de l’annuaire qui démarche les annonceurs sans
+        leur accord s’expose au retrait de sa fiche et à la fermeture de son compte. Signalez-le à{' '}
+        <a href="mailto:contact@seokraft.fr">contact@seokraft.fr</a>.
+      </p>
 
       <h2>7. Disponibilité du site</h2>
       <p>

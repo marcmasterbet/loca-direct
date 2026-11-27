@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function MentionsLegalesPage() {
   return (
-    <PageLegale titre="Mentions légales" maj="23 novembre 2026">
+    <PageLegale titre="Mentions légales" maj="27 novembre 2026">
       <h2>Éditeur du site</h2>
       <p>
         Le site loca-direct.fr (LocaDirect) est édité par <strong>Marc Bretzner</strong>, entrepreneur individuel (EI).
@@ -39,6 +39,10 @@ export default function MentionsLegalesPage() {
         LocaDirect présente des logements de vacances proposés par des particuliers et un annuaire de prestataires
         (conciergerie, ménage, photo…). Les voyageurs contactent directement le propriétaire ou le prestataire.
         LocaDirect ne prend aucune commission et n’intervient ni dans la réservation, ni dans le paiement.
+      </p>
+      <p>
+        LocaDirect ne transmet pas les coordonnées des annonceurs et ne mandate aucun professionnel pour les démarcher.
+        Toute sollicitation commerciale reçue d’un tiers relève de la seule responsabilité de son auteur.
       </p>
 
       <h2>Propriété intellectuelle</h2>
